@@ -99,11 +99,11 @@ More complete demos can be found in pydpm/distribution/...
 >Compare
 >
 Compare the sampling speed of distribution functions with numpy:
-![Image text](https://github.com/BoChenGroup/pydpm/compare with numpy.png)
+![Image text](https://github.com/BoChenGroup/pydpm/blob/master/compare%20with%20numpy.png)
 The compared code can be found in pydpm/example/Sample_Demo.py
 
 Compare the sampling speed of distribution functions with tensorflow and torch:
-![Image text](https://github.com/BoChenGroup/pydpm/compare with tf2,torch.png)
+![Image text](https://github.com/BoChenGroup/pydpm/blob/master/compare%20with%20tf2%2Ctorch.png)
 The compared code can be found in pydpm/example/Sample_Demo2.py
 
 Contact
