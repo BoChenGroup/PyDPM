@@ -8,7 +8,7 @@ Install
 Temporarily support Linux system only and the Windows version will be launched soon.
 
 ```
-pip install pydgm
+pip install pydpm
 ```
 Requirements
 =============
