@@ -1,4 +1,4 @@
-pydpm
+Pydpm
 ======
 A python package focuses on constructing deep probabilistic models on GPU.
 Pydpm provides efficient distribution sampling functions and has included lots of probabilistic models.
@@ -110,6 +110,6 @@ Contact
 ========
 License: Apache License Version 2.0
 
-Contact:  Jiawen Wu <wjw19960807@163.com> or Chaojie Wang <xd_silly@163.com>
+Contact:  Chaojie Wang <xd_silly@163.com>, Wei Zhao <13279389260@163.com>, Jiawen Wu <wjw19960807@163.com>
 
-Copyright (c), 2020, Jiawen Wu, Chaojie Wang, Bo Chen and Mingyuan Zhou
+Copyright (c), 2020, Chaojie Wang, Wei Zhao, Jiawen Wu, Bo Chen and Mingyuan Zhou
