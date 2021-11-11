@@ -35,7 +35,7 @@ Model list is as following:
 |Poisson Gamma Dynamical Systems           |PGDS   |[Link](http://mingyuanzhou.github.io/Papers/ScheinZhouWallach2016_paper.pdf )|
 |Deep Poisson Gamma Dynamical Systems      |DPGDS  |[Link](http://mingyuanzhou.github.io/Papers/Guo_DPGDS_NIPS2018.pdf)|
 
-More probabilistic models will be included further...
+More probabilistic models will be further included in pydpm/_model/...
 
 >Demo
 
@@ -81,7 +81,8 @@ The parameters of partial distribution functions are as following:
 from pydpm._sampler import Basic_Sampler
 
 sampler = Basic_Sampler('gpu')
-a = sampler.gamma(np.ones(100)*1, 1, times=10)
+a = sampler.gamma(np.ones(100)*5, 1, times=10)
+b = sampler.gamma(np.ones([100, 100])*5, 1, times=10)
 ```
 More complete demos can be found in pydpm/_sampler/...
 
