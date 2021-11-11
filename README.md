@@ -5,7 +5,7 @@ Pydpm provides efficient distribution sampling functions and has included lots o
 
 Install
 =============
-Temporarily support Linux system only and the Windows version will be launched soon.
+Temporarily support both Windows and Linux systems.
 
 ```
 pip install pydpm
@@ -41,29 +41,16 @@ More probabilistic models will be included further...
 
 Create a PGBN model:
 ```
-from pydpm.model import PGBN
-test_model = PGBN([128, 64, 32], device='gpu')
-test_model.initial(train_data)
-test_model.train(100)
+from pydpm.layer import data_base,prob_layer,model
+# create the model and deploy it on gpu or cpu
+model = PGBN([128, 64, 32], device='gpu')
+model.initial(train_data)
+train_local_params = model.train(100, train_data)
+train_local_params = model.test(100, train_data)
+test_local_params = model.test(100, test_data)
 ```
 More complete demos can be found in pydpm/examples/...
 
-
->Layer construction
-
-Construct your own probabilistic model as you wish.
-
-```
-from pydpm.layer import data_base,prob_layer,model
-data = data_base('./mnist_gray')
-layer1 = prob_layer(128)
-layer2 = prob_layer(64)
-layer3 = prob_layer(32)
-pgbn = model([data, layer1, layer2, layer3],'gpu')
-pgbn.train(iter=100)
-```
-
-This module is under construction and will be launched soon...
 
 Sample on GPU
 =============
@@ -90,11 +77,11 @@ The parameters of partial distribution functions are as following:
 >Example
 
 ```
-import pydpm.distribution as dsg
-a=dsg.gamma(1.5,1,100000)
-b=dsg.gamma([1.5,2.5],[1,2],100000)
+from pydpm._sampler import Basic_Sampler
+sampler = Basic_Sampler('gpu')
+a = sampler.gamma(np.ones(100)*1, 1, times=10)
 ```
-More complete demos can be found in pydpm/distribution/...
+More complete demos can be found in pydpm/_sampler/...
 
 >Compare
 >
