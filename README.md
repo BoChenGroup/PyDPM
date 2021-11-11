@@ -1,6 +1,6 @@
 Pydpm
 ======
-A python package focuses on constructing deep probabilistic models on GPU.
+A python library focuses on constructing deep probabilistic models on GPU.
 Pydpm provides efficient distribution sampling functions and has included lots of implemented probabilistic models.
 
 Install
