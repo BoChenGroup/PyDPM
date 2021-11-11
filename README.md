@@ -50,7 +50,7 @@ train_local_params = model.train(100, train_data)
 train_local_params = model.test(100, train_data)
 test_local_params = model.test(100, test_data)
 ```
-More complete demos can be found in pydpm/examples/...
+More model demos can be found in pydpm/examples/...
 
 
 Sample on GPU
@@ -84,7 +84,7 @@ sampler = Basic_Sampler('gpu')
 a = sampler.gamma(np.ones(100)*5, 1, times=10)
 b = sampler.gamma(np.ones([100, 100])*5, 1, times=10)
 ```
-More complete demos can be found in pydpm/_sampler/...
+More sampler demos can be found in pydpm/_sampler/...
 
 >Compare
 >
