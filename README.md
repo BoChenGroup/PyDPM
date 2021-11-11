@@ -41,7 +41,8 @@ More probabilistic models will be included further...
 
 Create a PGBN model:
 ```
-from pydpm.layer import data_base,prob_layer,model
+from pydpm._model import PGBN
+
 # create the model and deploy it on gpu or cpu
 model = PGBN([128, 64, 32], device='gpu')
 model.initial(train_data)
