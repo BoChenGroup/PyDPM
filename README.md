@@ -79,6 +79,7 @@ The parameters of partial distribution functions are as following:
 
 ```
 from pydpm._sampler import Basic_Sampler
+
 sampler = Basic_Sampler('gpu')
 a = sampler.gamma(np.ones(100)*1, 1, times=10)
 ```
