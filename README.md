@@ -1,4 +1,4 @@
-#Pydpm
+Pydpm
 
 [![PyPI](https://img.shields.io/pypi/v/gluonts.svg?style=flat-square)](https://pypi.org/project/gluonts/)
 [![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
@@ -9,7 +9,7 @@ Pydpm provides efficient distribution sampling functions and has included lots o
 
 ![Image text](https://github.com/BoChenGroup/pydpm/blob/master/pydpm_framework.png)
 
-##Install
+Install
 
 This library can be installed under both Windows and Linux systems.
 
