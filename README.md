@@ -42,7 +42,7 @@ More probabilistic models will be further included in pydpm/_model/...
 >Demo
 
 Create a PGBN model:
-```
+```python
 from pydpm._model import PGBN
 
 # create the model and deploy it on gpu or cpu
@@ -86,7 +86,7 @@ The parameters of partial distribution functions are as following:
 
 >Example
 
-```
+```python
 from pydpm._sampler import Basic_Sampler
 
 sampler = Basic_Sampler('gpu')
