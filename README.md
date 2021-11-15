@@ -16,13 +16,6 @@ This library can be installed under both Windows and Linux systems.
 ```
 $ pip install pydpm
 ```
-Requirements
-=============
-```
-pycuda
-scipy
-numpy
-```
 
 Create Probabilistic Model
 =============
