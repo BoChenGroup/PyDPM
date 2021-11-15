@@ -10,7 +10,7 @@ Install
 This library can be installed under both Windows and Linux systems.
 
 ```
-pip install pydpm
+$ pip install pydpm
 ```
 Requirements
 =============
