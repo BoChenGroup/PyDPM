@@ -49,6 +49,13 @@ model.initial(train_data)
 train_local_params = model.train(100, train_data)
 train_local_params = model.test(100, train_data)
 test_local_params = model.test(100, test_data)
+
+# evaluate the model with classification accuracy
+# the demo accuracy can achieve 0.8549
+results = ACC(train_local_params.Theta[0], test_local_params.Theta[0], train_label, test_label, 'SVM')
+
+# save the model after training
+model.save()
 ```
 More model demos can be found in pydpm/examples/...
 
