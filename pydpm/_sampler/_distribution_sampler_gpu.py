@@ -40,7 +40,7 @@ class distribution_sampler_gpu(object):
 
         # ------------------------------------------------ basic sampler ------------------------------------------
         if system_type == 'Windows':
-            compact_path = os.path.dirname(__file__) + ".\_compact\sampler_kernel.dll"
+            compact_path = os.path.dirname(__file__) + "\_compact\sampler_kernel.dll"
             if not os.path.exists(compact_path):
                 nvcc_path = get_nvcc_path()
                 os.system(nvcc_path+' -o '+compact_path+' --shared '+compact_path[:-4]+'_win.cu')
@@ -202,6 +202,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_beta(a_p, b_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def normal(self, loc=0.0, scale=1.0, times=1):
         # scale: non-negative
@@ -212,6 +213,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_normal(loc_p, scale_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def standard_normal(self, size=1):  # times换一种方式:size，int or tuple of ints, optional
         assert type(size) == int or type(size) == tuple, "param size(Output shape) should be int or tuple of ints"
@@ -221,6 +223,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_standard_normal(output_p, nElems, self.rand_status)
         return output[0] if size == 1 else output
+
     #
     def uniform(self, low=0.0, high=1.0, times=1):
         # low < high
@@ -231,6 +234,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_uniform(low_p, high_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def standard_uniform(self, size=1):
         assert type(size) == int or type(size) == tuple, "param size(Output shape) should be int or tuple of ints"
@@ -240,6 +244,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_standard_uniform(output_p, nElems, self.rand_status)
         return output[0] if size == 1 else output
+
     #
     def binomial(self, count=1, prob=0.5, times=1):  # 可以进行很深的优化cupy, 但依然转调multinomial
         """
@@ -265,6 +270,7 @@ class distribution_sampler_gpu(object):
             del_prob = 1 - prob
             prob = np.concatenate([prob, del_prob], axis=-1)
         return self.multinomial(count, prob, times)
+
     # 转调multinomial需要进行修改
     def negative_binomial(self, r, p, times=1):
         # r: *int, larger than 1
@@ -307,6 +313,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_multinomial(count_p, prob_p, output_p, matrix_scale_1, matrix_scale_2, times, self.rand_status)
         return output
+
     # input param count must be int scalar, just as numpy
     def poisson(self, lam=1.0, times=1):
         # lam: non-negative
@@ -317,6 +324,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_poisson(lam_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def crt(self, customers, prob, times=1):  # dirichlet相近
         # Chinese restaurant process
@@ -332,6 +340,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_crt(customers_p, prob_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def cauchy(self, loc=0.0, scale=1.0, times=1):
         matrix_scale, nElems, loc, scale, output, output_scale, scalar_flag = para_preprocess(times, np.float32, np.float32, loc, scale)
@@ -341,6 +350,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_cauchy(loc_p, scale_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def standard_cauchy(self, size=1):
         assert type(size) == int or type(size) == tuple, "param size(Output shape) should be int or tuple of ints"
@@ -350,6 +360,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_standard_cauchy(output_p, nElems, self.rand_status)
         return output[0] if size == 1 else output
+
     #
     def chisquare(self, degrees, times=1):
         # degrees int
@@ -359,6 +370,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_chisquare(degrees_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def noncentral_chisquare(self, degrees, loc, scale, times=1):
         # degrees int
@@ -377,6 +389,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_noncentral_chisquare(degrees_p, loc_p, scale_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     # without comparsion. the sampler is differ from np and stats.
     def exponential(self, Lambda=1.0, times=1):
         matrix_scale, nElems, Lambda, output, output_scale, scalar_flag = para_preprocess(times, np.float32, np.float32, Lambda)
@@ -385,6 +398,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_exponential(Lambda_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def standard_exponential(self, size=1):
         assert type(size) == int or type(size) == tuple, "param size(Output shape) should be int or tuple of ints"
@@ -396,6 +410,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_exponential(Lambda_p, output_p, matrix_scale, 1, self.rand_status)
         return output[0] if size == 1 else output
+
     #
     def f(self, n1, n2, times=1):
         # n1, n2: int
@@ -406,6 +421,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_f(n1_p, n2_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def noncentral_f(self, n1, n2, loc, scale, times=1):
         # n1, n2: int
@@ -422,6 +438,7 @@ class distribution_sampler_gpu(object):
         output = output[0] if scalar_flag else output
 
         return output
+
     # later
     def geometric(self, p, times=1):
         # p: (0, 1)
@@ -432,6 +449,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_geometric(p_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def gumbel(self, loc=0.0, scale=1.0, times=1):
         # scale: non-negative
@@ -442,6 +460,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_gumbel(loc_p, scale_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def hypergeometric(self, ngood, nbad, nsample, times=1):
         # all input int
@@ -456,6 +475,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_hypergeometric(prob_p, nsample_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     # the sample of _sampler is wrong. It should be without replacement.
     def laplace(self, loc=0.0, scale=1.0, times=1):
         # scale: non-negative
@@ -466,6 +486,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_laplace(loc_p, scale_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def logistic(self, loc=0.0, scale=1.0, times=1):
         # scale: non-negative
@@ -476,6 +497,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_logistic(loc_p, scale_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def power(self, a, times=1):
         # a: non-negative
@@ -485,6 +507,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_power(a_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def zipf(self, a, times=1):
         # a: > 1
@@ -495,6 +518,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_zipf(a_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def pareto(self, k, xm=1, times=1):
         # k > 1 (sampler, why?) 幂级数
@@ -505,6 +529,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_pareto(k_p, xm_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     # without comparison. unknown definition. (_sampler) differ from numpy
     def rayleigh(self, scale=1.0, times=1):
         # scale: non-negative
@@ -514,6 +539,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_rayleigh(scale_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def t(self, df, times=1):
         # df: positive
@@ -523,6 +549,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_t(df_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def triangular(self, left, mode, right, times=1):
         # 等长
@@ -542,6 +569,7 @@ class distribution_sampler_gpu(object):
 
         self._sample_triangular(left_p, mode_p, right_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
+
     #
     def weibull(self, shape, scale, times=1):
         # a: non-negative (np. said)
@@ -552,4 +580,3 @@ class distribution_sampler_gpu(object):
 
         self._sample_weibull(shape_p, scale_p, output_p, matrix_scale, times, self.rand_status)
         return output[0] if scalar_flag else output
-    #

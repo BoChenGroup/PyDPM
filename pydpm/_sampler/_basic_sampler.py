@@ -38,19 +38,23 @@ class Basic_Sampler(object):
 
     def _cpu_sampler_initial(self):
 
-        # from ._distribution_sampler_cpu import distribution_sampler_cpu
-        # from ._model_sampler_cpu import model_sampler_cpu
-        #
-        # # sampler for training the probabilistic models
-        # setattr(self, 'crt', crt)
-        # setattr(self, 'multi_aug', multi_aug)
-        # setattr(self, 'crt_multi_aug', crt_multi_aug)
+        from ._distribution_sampler_cpu import distribution_sampler_cpu
+        sampler = distribution_sampler_cpu()
+        for distribution_name in dir(sampler):
+            if distribution_name[0] != '_':
+                setattr(self, distribution_name, getattr(sampler, distribution_name))
+            else:
+                continue
 
-        if self.system_type == 'Windows':
-            pass
 
-        elif self.system_type == 'Linux':
-            pass
+        from ._model_sampler_cpu import model_sampler_cpu
+        sampler = model_sampler_cpu(self.system_type)
+        for distribution_name in dir(sampler):
+            if distribution_name[0] != '_':
+                setattr(self, distribution_name, getattr(sampler, distribution_name))
+            else:
+                continue
+
 
 
     def _gpu_sampler_initial(self):

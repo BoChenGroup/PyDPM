@@ -274,19 +274,19 @@ def debug_sampler_and_plot():
     plt.show()
 
 
-# -----------------est the accuracy --------------------
+# -----------------test the accuracy --------------------
 if __name__ =="__main__":
     plot_all_distribution_example = True  # plot all distribution samplers' example and compare with its pdf/pmf.
 
-    # if plot_all_distribution_example:
-    #     debug_sampler_and_plot()
+    if plot_all_distribution_example:
+        debug_sampler_and_plot()
 
-    sampler = Basic_Sampler('gpu')
-    while (1):
-        a = sampler.gamma(0.01*np.ones([5, 3, 2, 1]), times=100)
-        if np.sum(np.isinf(a)):
-            print('OK')
-            print(a[np.where(np.isinf(a))])
+    # sampler = Basic_Sampler('gpu')
+    # while (1):
+    #     a = sampler.gamma(0.01*np.ones([5, 3, 2, 1]), times=100)
+    #     if np.sum(np.isinf(a)):
+    #         print('OK')
+    #         print(a[np.where(np.isinf(a))])
 
     # a = sampler.binomial([[50, 50]], [[0.2, 1], [0.3, 1]], times=10)
     # a = sampler.multinomial(50, [0.5, 0.5], times=10)

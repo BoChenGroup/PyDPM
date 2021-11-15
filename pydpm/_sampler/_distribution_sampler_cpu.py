@@ -16,10 +16,10 @@ class distribution_sampler_cpu(object):
         setattr(self, 'standard_gamma', np.random.standard_gamma)
         setattr(self, 'gamma', np.random.gamma)
         setattr(self, 'standard_cauchy', np.random.standard_cauchy)
-        setattr(self, 'cauchy', np.random.cauchy)
+        # setattr(self, 'cauchy', np.random.cauchy) # numpy doesnot has this distribution
         setattr(self, 'chisquare', np.random.chisquare)
         setattr(self, 'beta', np.random.beta)
-        setattr(self, 'crt', np.random.crt)
+        # setattr(self, 'crt', np.random.crt) # numpy doesnot has this distribution
         setattr(self, 'dirichlet', np.random.dirichlet)
         setattr(self, 'poisson', np.random.poisson)
         setattr(self, 'weibull', np.random.weibull)
@@ -36,7 +36,7 @@ class distribution_sampler_cpu(object):
         setattr(self, 'triangular', np.random.triangular)
         setattr(self, 'noncentral_f', np.random.noncentral_f)
         setattr(self, '_f', np.random.f)
-        setattr(self, 't', np.random.t)
+        # setattr(self, 't', np.random.t) # numpy doesnot has this distribution
         setattr(self, 'geometric', np.random.geometric)
         setattr(self, 'hypergeometric', np.random.hypergeometric)
         setattr(self, 'gumbel', np.random.gumbel)
