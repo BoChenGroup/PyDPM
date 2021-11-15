@@ -73,18 +73,18 @@ The parameters of partial distribution functions are as following:
 
 |Function        | Parameters List   | 
 |----------------|-------------------|
-|Normal          |mean,std,times     |
-|Multinomial     |count,prob,times   |
-|Poisson         |lambda,times       |
-|Gamma           |shape,scale,times  |
-|Beta            |alpha,beta,times   |
-|F               |n1,n2,times        |
-|StudentT        |n,times            |
-|Dirichlet       |alpha,times        |
-|Crt             |point,p,times      |
-|Weibull         |shape,scale,times  |
-|Chisquare       |n,times            |
-|Geometric       |p,times            |
+|Normal          |mean, std, times   |
+|Multinomial     |count, prob, times |
+|Poisson         |lambda, times      |
+|Gamma           |shape, scale, times|
+|Beta            |alpha, beta, times |
+|F               |n1, n2, times      |
+|StudentT        |n, times           |
+|Dirichlet       |alpha, times       |
+|Crt             |point, p, times    |
+|Weibull         |shape, scale, times|
+|Chisquare       |n, times           |
+|Geometric       |p, times           |
 |...             |...                |
 
 >Example
