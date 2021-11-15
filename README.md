@@ -2,8 +2,6 @@ Pydpm
 
 [![PyPI](https://img.shields.io/pypi/v/gluonts.svg?style=flat-square)](https://pypi.org/project/gluonts/)
 [![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
-[![Static](https://img.shields.io/static/v1?label=docs&message=stable&color=blue&style=flat-square)][stable docs url]
-[![Static](https://img.shields.io/static/v1?label=docs&message=latest&color=blue&style=flat-square)][latest docs url]
 
 ======
 A python library focuses on constructing deep probabilistic models on GPU.
