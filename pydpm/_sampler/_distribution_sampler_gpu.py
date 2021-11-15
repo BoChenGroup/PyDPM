@@ -4,6 +4,28 @@ import ctypes
 
 from ._pre_process import para_preprocess
 
+def find_in_path(name, path):
+    "Find a file in a search path"
+    #adapted fom http://code.activestate.com/recipes/52224-find-a-file-given-a-search-path/
+    for dir in path.split(os.pathsep):
+        binpath = os.path.join(dir, name)
+        if os.path.exists(binpath):
+            return os.path.abspath(binpath)
+    return None
+
+def get_nvcc_path():
+    # get nvcc path
+    if 'CUDAHOME' in os.environ:
+        home = os.environ['CUDAHOME']
+        nvcc = os.path.join(home, 'bin', 'nvcc')
+    else:
+        # otherwise, search the PATH for NVCC
+        default_path = os.path.join(os.sep, 'usr', 'local', 'cuda', 'bin')
+        nvcc = find_in_path('nvcc', os.environ['PATH'] + os.pathsep + default_path)
+        if nvcc is None:
+            raise EnvironmentError('The nvcc binary could not be '
+                                   'located in your $PATH. Either add it to your path, or set $CUDAHOME')
+    return nvcc
 
 class distribution_sampler_gpu(object):
 
@@ -16,14 +38,19 @@ class distribution_sampler_gpu(object):
         self.system_type = system_type
         self.seed = seed
 
+        # ------------------------------------------------ basic sampler ------------------------------------------
         if system_type == 'Windows':
-            # ------------------------------------------------ basic sampler ------------------------------------------
             compact_path = os.path.dirname(__file__) + ".\_compact\sampler_kernel.dll"
+            if not os.path.exists(compact_path):
+                nvcc_path = get_nvcc_path()
+                os.system(nvcc_path+' -o '+compact_path+' --shared '+compact_path[:-4]+'_win.cu')
             dll = ctypes.cdll.LoadLibrary(compact_path)
 
         elif system_type == 'Linux':
-            # ------------------------------------------------ basic sampler ------------------------------------------
-            compact_path = os.path.dirname(__file__) + ".\_compact\sampler_kernel.so"
+            compact_path = os.path.dirname(__file__) + "/_compact/sampler_kernel.so"
+            if not os.path.exists(compact_path):
+                nvcc_path = get_nvcc_path()
+                os.system(nvcc_path+' -Xcompiler -fPIC -shared -o '+compact_path+' '+compact_path[:-3]+'_linux.cu')
             dll = ctypes.cdll.LoadLibrary(compact_path)
 
         # ------------------------------------------------substorage ------------------------------------------
