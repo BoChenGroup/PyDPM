@@ -1,7 +1,11 @@
 Pydpm
 ======
+[![PyPI](https://img.shields.io/pypi/v/gluonts.svg?style=flat-square)](https://pypi.org/project/gluonts/)
+[![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
+
 A python library focuses on constructing deep probabilistic models on GPU.
 Pydpm provides efficient distribution sampling functions and has included lots of implemented probabilistic models.
+
 
 ![Image text](https://github.com/BoChenGroup/pydpm/blob/master/pydpm_framework.png)
 
