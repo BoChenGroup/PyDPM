@@ -171,21 +171,7 @@ class CPFA(Basic_Model):
             self.local_params.c_n = self.local_params.c_n / (self._hyper_params.c_n_f0 + np.sum(np.sum(np.sum(W_nk_aug, axis=3), axis=2), axis=1) + realmin)
             self.local_params.p_n = 1 / (self.local_params.c_n + 1)
 
-
-            temp_1 = self._sampler.gamma(W_nk_aug + self._hyper_params.W_nk_gamma)
-            temp_2 = (1 + self.local_params.c_n)[:, np.newaxis, np.newaxis, np.newaxis]
-            self.local_params.W_nk = temp_1 / temp_2
-            # self.local_params.W_nk = self._sampler.gamma(W_nk_aug + self._hyper_params.W_nk_gamma) / (1 + self.local_params.c_n)[:, np.newaxis, np.newaxis, np.newaxis]
-            np.sum(np.isinf(temp_1 / temp_2))
-            if np.sum(np.isinf(self.local_params.W_nk)):
-                # temp_1 = self._sampler.gamma(W_nk_aug + self._hyper_params.W_nk_gamma)
-                # temp_2 = (1 + self.local_params.c_n)[:, np.newaxis, np.newaxis, np.newaxis]
-
-                # temp = self._sampler.gamma(W_nk_aug + self._hyper_params.W_nk_gamma) / (1 + self.local_params.c_n)[:, np.newaxis, np.newaxis, np.newaxis]
-                print(temp_1[np.where(np.isinf(self.local_params.W_nk))])
-                print((temp_1/temp_2)[np.where(np.isinf(self.local_params.W_nk))])
-                # print(self._hyper_params.W_nk_gamma[np.where(np.isinf(self.local_params.W_nk))])
-                print(self.local_params.W_nk[np.where(np.isinf(self.local_params.W_nk))])
+            self.local_params.W_nk = self._sampler.gamma(W_nk_aug + self._hyper_params.W_nk_gamma) / (1 + self.local_params.c_n)[:, np.newaxis, np.newaxis, np.newaxis]
 
             end_time = time.time()
             stages = 'Training' if is_train else 'Testing'
