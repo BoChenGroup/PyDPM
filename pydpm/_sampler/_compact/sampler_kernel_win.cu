@@ -1,6 +1,5 @@
-#include <curand_kernel_win.h>
+#include <curand_kernel.h>
 #include "sampler_kernel_win.h"
-// 本版本为kernel的简化版本，保留init，gamma等功能，同时将status结构体直接更换为随机数发生器，增加随机数发生器规模接口并优化其使用情况
 
 // ------------------------------------------------rand status ------------------------------------------
 __global__ void _build_status_shared (size_t seed, curandStateXORWOW_t* status) {
@@ -24,10 +23,10 @@ DLLEXPORT void* _init_status(size_t seed) {
 // ================================================== sampler ============================================
 
 // ------------------------------------------------sample gamma ------------------------------------------
-__global__ void _rand_gamma(float* shape, float* scale, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {//根据输入采样，得到sst->output
+__global__ void _rand_gamma(float* shape, float* scale, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {//根据输入采样，得到sst->output
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x; //grid(nElm/(32*4)) block(32*4)  均1维  range nElm
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale; // idx%(nElm/1)=idx 如果repeat是其他整数，则重复选取nElm/repeat元素
+        size_t matrix_idx = idx / repeats; // idx%(nElm/1)=idx 如果repeat是其他整数，则重复选取nElm/repeat元素
         float sh = shape[matrix_idx]; //matrix_idx可能会超出shape的索引范围，尽管可以引用(nElm肯能大于matrix_scale(lyw_g L34)): the reason:可以对冗余的值进行采样，因为return时会截取
         float sc = scale[matrix_idx];
         if (sh <= 0) {
@@ -131,7 +130,7 @@ DLLEXPORT void _sample_gamma(float* shape_host, float* scale_host, float* output
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma); // grid(nElm/(32*4)) block(32*4)   nThreads_g-xy
 
-    _rand_gamma <<<grid, block>>> (shape_device, scale_device, output_device, matrix_scale, nElems, status);
+    _rand_gamma <<<grid, block>>> (shape_device, scale_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 //    printf("matrix_scale:%zu, require:%zu  grid:%zu, block:%d\n\n", matrix_scale, sst_device->nElems, size_t(ceil(float(sst_device ->nElems) / float(nThreads_gamma))), nThreads_gamma); //=========================
 
@@ -142,10 +141,10 @@ DLLEXPORT void _sample_gamma(float* shape_host, float* scale_host, float* output
 
 // -------------------------------------------sample standrad_gamma --------------------------------------
 // cupy/random/_kernels.py: the difference of gamma and standdrad gamma mainly in the allocation of status and the for loop
-__global__ void _rand_standard_gamma(float* shape, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_standard_gamma(float* shape, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         float sh = shape[matrix_idx];
         //        output[idx] = curand_normal(&status[state_idx]) * scale[matrix_idx] + loc[matrix_idx];
@@ -208,7 +207,7 @@ DLLEXPORT void _sample_standard_gamma(float* shape_host, float* output, size_t m
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_standard_gamma <<<grid, block>>> (shape_device, output_device, matrix_scale, nElems, status);
+    _rand_standard_gamma <<<grid, block>>> (shape_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(shape_device);
@@ -216,12 +215,12 @@ DLLEXPORT void _sample_standard_gamma(float* shape_host, float* output, size_t m
 }
 
 // -------------------------------------------------sample beta ------------------------------------------
-__global__ void _rand_beta(float* a, float* b, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_beta(float* a, float* b, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < nElems) {
         size_t state_idx = idx % (nStatus / 2);  // ================
         size_t state_idx_normal = idx % (nStatus / 2) + nStatus / 2;
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         float sh1 = a[matrix_idx];
         float sh2 = b[matrix_idx];
 
@@ -364,7 +363,7 @@ DLLEXPORT void _sample_beta(float* a_host, float* b_host, float* output, size_t 
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_beta <<<grid, block>>> (a_device, b_device, output_device, matrix_scale, nElems, status);
+    _rand_beta <<<grid, block>>> (a_device, b_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(a_device);
@@ -393,10 +392,10 @@ DLLEXPORT void _sample_standard_normal(void* output, size_t nElems, curandStateX
 }
 
 // -----------------------------------------------sample normal ------------------------------------------
-__global__ void _rand_normal(float* loc, float* scale, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_normal(float* loc, float* scale, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         output[idx] = curand_normal(&status[state_idx]) * scale[matrix_idx] + loc[matrix_idx];
     }
@@ -415,7 +414,7 @@ DLLEXPORT void _sample_normal(float* loc_host, float* scale_host, float* output,
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_normal <<<grid, block>>> (loc_device, scale_device, output_device, matrix_scale, nElems, status);
+    _rand_normal <<<grid, block>>> (loc_device, scale_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(loc_device);
@@ -444,10 +443,10 @@ DLLEXPORT void _sample_standard_uniform(void* output, size_t nElems, curandState
 }
 
 // -----------------------------------------------sample uniform -----------------------------------------
-__global__ void _rand_uniform(float* low, float* high, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_uniform(float* low, float* high, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         output[idx] = curand_uniform(&status[state_idx]) * (high[matrix_idx] - low[matrix_idx]) + low[matrix_idx];
     }
@@ -466,7 +465,7 @@ DLLEXPORT void _sample_uniform(float* low_host, float* high_host, float* output,
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_uniform <<<grid, block>>> (low_device, high_device, output_device, matrix_scale, nElems, status);
+    _rand_uniform <<<grid, block>>> (low_device, high_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(low_device);
@@ -475,10 +474,10 @@ DLLEXPORT void _sample_uniform(float* low_host, float* high_host, float* output,
 }
 
 // ------------------------------------------sample negative_binomial ------------------------------------
-__global__ void _rand_negative_binomial(int* r, float* p, int* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_negative_binomial(int* r, float* p, int* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
 
         int suc = 0;
@@ -510,7 +509,7 @@ DLLEXPORT void _sample_negative_binomial(int* r_host, float* p_host, int* output
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_negative_binomial <<<grid, block>>> (r_device, p_device, output_device, matrix_scale, nElems, status);
+    _rand_negative_binomial <<<grid, block>>> (r_device, p_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(r_device);
@@ -598,10 +597,10 @@ DLLEXPORT void _sample_crt(float* point_host, float* p_host, int* output, size_t
 }
 
 // -----------------------------------------------sample cauchy ------------------------------------------
-__global__ void _rand_cauchy(float* loc, float* scale, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_cauchy(float* loc, float* scale, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         float u = curand_uniform(&status[state_idx]) - 0.5;
         output[idx] = loc[matrix_idx] + tanf(u * Pi) * scale[matrix_idx]; // rows first
@@ -621,7 +620,7 @@ DLLEXPORT void _sample_cauchy(float* loc_host, float* scale_host, float* output,
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_cauchy <<<grid, block>>> (loc_device, scale_device, output_device, matrix_scale, nElems, status);
+    _rand_cauchy <<<grid, block>>> (loc_device, scale_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(loc_device);
@@ -651,10 +650,10 @@ DLLEXPORT void _sample_standard_cauchy(float* output, size_t nElems, curandState
 }
 
 // ---------------------------------------------sample chisquare -----------------------------------------
-__global__ void _rand_chisquare(int* degrees, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_chisquare(int* degrees, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         float sum = 0;
         for (int i = 0; i < degrees[matrix_idx]; i++) {
@@ -676,7 +675,7 @@ DLLEXPORT void _sample_chisquare(int* degrees_host, float* output, size_t matrix
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_chisquare <<<grid, block>>> (degrees_device, output_device, matrix_scale, nElems, status);
+    _rand_chisquare <<<grid, block>>> (degrees_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(degrees_device);
@@ -684,10 +683,10 @@ DLLEXPORT void _sample_chisquare(int* degrees_host, float* output, size_t matrix
 }
 
 // ----------------------------------------sample noncentral_chisquare ------------------------------------
-__global__ void _rand_noncentral_chisquare(int* df_, float* nonc_, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_noncentral_chisquare(int* df_, float* nonc_, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         int df = df_[matrix_idx];
         float nonc = nonc_[matrix_idx];
@@ -729,7 +728,7 @@ DLLEXPORT void _sample_noncentral_chisquare(int* df_host, float* nonc_host, floa
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_noncentral_chisquare <<<grid, block>>> (df_device, nonc_device, output_device, matrix_scale, nElems, status);
+    _rand_noncentral_chisquare <<<grid, block>>> (df_device, nonc_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(df_device);
@@ -738,10 +737,10 @@ DLLEXPORT void _sample_noncentral_chisquare(int* df_host, float* nonc_host, floa
 }
 
 // --------------------------------------------sample exponential ----------------------------------------
-__global__ void _rand_exponential(float* Lambda, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_exponential(float* Lambda, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         output[idx] = -Lambda[matrix_idx] * log(curand_uniform(&status[state_idx]));
     }
@@ -758,7 +757,7 @@ DLLEXPORT void _sample_exponential(float* Lambda_host, float* output, size_t mat
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_exponential <<<grid, block>>> (Lambda_device, output_device, matrix_scale, nElems, status);
+    _rand_exponential <<<grid, block>>> (Lambda_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(Lambda_device);
@@ -766,10 +765,10 @@ DLLEXPORT void _sample_exponential(float* Lambda_host, float* output, size_t mat
 }
 
 // -------------------------------------------------sample f ---------------------------------------------
-__global__ void _rand_f(int* n1, int* n2, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_f(int* n1, int* n2, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
 
         float sum1 = 0;
@@ -801,7 +800,7 @@ DLLEXPORT void _sample_f(int* n1_host, int* n2_host, float* output, size_t matri
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_f <<<grid, block>>> (n1_device, n2_device, output_device, matrix_scale, nElems, status);
+    _rand_f <<<grid, block>>> (n1_device, n2_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(n1_device);
@@ -810,10 +809,10 @@ DLLEXPORT void _sample_f(int* n1_host, int* n2_host, float* output, size_t matri
 }
 
 // -------------------------------------------------sample noncentral_f ---------------------------------------------
-__global__ void _rand_noncentral_f(int* dfnum_, int* dfden_, float* nonc_, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_noncentral_f(int* dfnum_, int* dfden_, float* nonc_, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         int dfnum = dfnum_[matrix_idx];
         int dfden = dfden_[matrix_idx];
@@ -872,7 +871,7 @@ DLLEXPORT void _sample_noncentral_f(int* dfnum_host, int* dfden_host, float* non
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_noncentral_f <<<grid, block>>> (dfnum_device, dfden_device, nonc_device, output_device, matrix_scale, nElems, status);
+    _rand_noncentral_f <<<grid, block>>> (dfnum_device, dfden_device, nonc_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(dfnum_device);
@@ -882,10 +881,10 @@ DLLEXPORT void _sample_noncentral_f(int* dfnum_host, int* dfden_host, float* non
 }
 
 // ---------------------------------------------sample geometric -----------------------------------------
-__global__ void _rand_geometric(float* p, int* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_geometric(float* p, int* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         int rnd = 0;
         while (++rnd) {
@@ -912,7 +911,7 @@ DLLEXPORT void _sample_geometric(float* p_host, int* output, size_t matrix_scale
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_geometric <<<grid, block>>> (p_device, output_device, matrix_scale, nElems, status);
+    _rand_geometric <<<grid, block>>> (p_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(p_device);
@@ -920,10 +919,10 @@ DLLEXPORT void _sample_geometric(float* p_host, int* output, size_t matrix_scale
 }
 
 // -----------------------------------------------sample gumbel ------------------------------------------
-__global__ void _rand_gumbel(float* loc, float* scale, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_gumbel(float* loc, float* scale, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         output[idx] = loc[matrix_idx] - scale[matrix_idx] * log(-log(curand_uniform(&status[state_idx])));
     }
@@ -942,7 +941,7 @@ DLLEXPORT void _sample_gumbel(float* loc_host, float* scale_host, float* output,
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_gumbel <<<grid, block>>> (loc_device, scale_device, output_device, matrix_scale, nElems, status);
+    _rand_gumbel <<<grid, block>>> (loc_device, scale_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(loc_device);
@@ -983,10 +982,10 @@ static __device__ float loggam(float x) {
     }
     return (float)gl;
 }
-__global__ void _rand_hypergeometric(int* ngood, int* nbad, int* nsample, int* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_hypergeometric(int* ngood, int* nbad, int* nsample, int* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         int good = ngood[matrix_idx];
         int bad = nbad[matrix_idx];
@@ -1085,7 +1084,7 @@ DLLEXPORT void _sample_hypergeometric(int* ngood_host, int* nbad_host, int* nsam
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_hypergeometric <<<grid, block>>> (ngood_device, nbad_device, nsample_device, output_device, matrix_scale, nElems, status);
+    _rand_hypergeometric <<<grid, block>>> (ngood_device, nbad_device, nsample_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(ngood_device);
@@ -1095,10 +1094,10 @@ DLLEXPORT void _sample_hypergeometric(int* ngood_host, int* nbad_host, int* nsam
 }
 
 // -----------------------------------------------sample laplace ------------------------------------------
-__global__ void _rand_laplace(float* loc, float* scale, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_laplace(float* loc, float* scale, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         float u = curand_uniform(&status[state_idx]) - 0.5;
         int sign = (u == 0? 0: u / abs(u));
@@ -1119,7 +1118,7 @@ DLLEXPORT void _sample_laplace(float* loc_host, float* scale_host, float* output
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_laplace <<<grid, block>>> (loc_device, scale_device, output_device, matrix_scale, nElems, status);
+    _rand_laplace <<<grid, block>>> (loc_device, scale_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(loc_device);
@@ -1128,10 +1127,10 @@ DLLEXPORT void _sample_laplace(float* loc_host, float* scale_host, float* output
 }
 
 // ----------------------------------------------sample logistic -----------------------------------------
-__global__ void _rand_logistic(float* loc, float* scale, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_logistic(float* loc, float* scale, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         float u = curand_uniform(&status[state_idx]);
         output[idx] = loc[matrix_idx] + scale[matrix_idx] * (log(u) - log(1 - u));
@@ -1151,7 +1150,7 @@ DLLEXPORT void _sample_logistic(float* loc_host, float* scale_host, float* outpu
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_logistic <<<grid, block>>> (loc_device, scale_device, output_device, matrix_scale, nElems, status);
+    _rand_logistic <<<grid, block>>> (loc_device, scale_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(loc_device);
@@ -1160,10 +1159,10 @@ DLLEXPORT void _sample_logistic(float* loc_host, float* scale_host, float* outpu
 }
 
 // ------------------------------------------------sample power ------------------------------------------
-__global__ void _rand_power(float* a, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_power(float* a, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         output[idx] = pow(double(1 - curand_uniform(&status[state_idx])), double(1 / a[matrix_idx]));
     }
@@ -1180,7 +1179,7 @@ DLLEXPORT void _sample_power(float* a_host, float* output, size_t matrix_scale, 
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_power <<<grid, block>>> (a_device, output_device, matrix_scale, nElems, status);
+    _rand_power <<<grid, block>>> (a_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(a_device);
@@ -1188,10 +1187,10 @@ DLLEXPORT void _sample_power(float* a_host, float* output, size_t matrix_scale, 
 }
 
 // -------------------------------------------------sample zipf ------------------------------------------
-__global__ void _rand_zipf(float* a, int* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_zipf(float* a, int* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         double am1, b;
         am1 = a[matrix_idx] - 1.0;
@@ -1224,7 +1223,7 @@ DLLEXPORT void _sample_zipf(float* a_host, int* output, size_t matrix_scale, siz
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_zipf <<<grid, block>>> (a_device, output_device, matrix_scale, nElems, status);
+    _rand_zipf <<<grid, block>>> (a_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(a_device);
@@ -1232,10 +1231,10 @@ DLLEXPORT void _sample_zipf(float* a_host, int* output, size_t matrix_scale, siz
 }
 
 // ------------------------------------------------sample pareto ------------------------------------------
-__global__ void _rand_pareto(float* k, float* xm, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_pareto(float* k, float* xm, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         output[idx] = xm[matrix_idx] / powf(1 - curand_uniform(&status[state_idx]), 1. / k[matrix_idx]) - 1;
     }
@@ -1254,7 +1253,7 @@ DLLEXPORT void _sample_pareto(float* k_host, float* xm_host, float* output, size
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_pareto <<<grid, block>>> (k_device, xm_device, output_device, matrix_scale, nElems, status);
+    _rand_pareto <<<grid, block>>> (k_device, xm_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(k_device);
@@ -1263,10 +1262,10 @@ DLLEXPORT void _sample_pareto(float* k_host, float* xm_host, float* output, size
 }
 
 // ----------------------------------------------sample rayleigh -----------------------------------------
-__global__ void _rand_rayleigh(float* scale, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_rayleigh(float* scale, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         float sc = scale[matrix_idx];
         float U, V;
@@ -1292,7 +1291,7 @@ DLLEXPORT void _sample_rayleigh(float* scale_host, float* output, size_t matrix_
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_rayleigh <<<grid, block>>> (scale_device, output_device, matrix_scale, nElems, status);
+    _rand_rayleigh <<<grid, block>>> (scale_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(scale_device);
@@ -1300,10 +1299,10 @@ DLLEXPORT void _sample_rayleigh(float* scale_host, float* output, size_t matrix_
 }
 
 // --------------------------------------------------sample t --------------------------------------------
-__global__ void _rand_t(float* df, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_t(float* df, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         float N = df[matrix_idx];
         float sum = 0;
@@ -1326,7 +1325,7 @@ DLLEXPORT void _sample_t(float* df_host, float* output, size_t matrix_scale, siz
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_t <<<grid, block>>> (df_device, output_device, matrix_scale, nElems, status);
+    _rand_t <<<grid, block>>> (df_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(df_device);
@@ -1334,10 +1333,10 @@ DLLEXPORT void _sample_t(float* df_host, float* output, size_t matrix_scale, siz
 }
 
 // ---------------------------------------------sample triangular ----------------------------------------
-__global__ void _rand_triangular(float* left, float* mode, float* right, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_triangular(float* left, float* mode, float* right, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         float l = left[matrix_idx];
         float r = right[matrix_idx];
@@ -1370,7 +1369,7 @@ DLLEXPORT void _sample_triangular(float* left_host, float* mode_host, float* rig
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_triangular <<<grid, block>>> (left_device, mode_device, right_device, output_device, matrix_scale, nElems, status);
+    _rand_triangular <<<grid, block>>> (left_device, mode_device, right_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(left_device);
@@ -1383,10 +1382,10 @@ DLLEXPORT void _sample_triangular(float* left_host, float* mode_host, float* rig
 __device__ float log_max(float x) {
     return log(max(x, float(2.2e-10)));
 }
-__global__ void _rand_weibull(float* shape, float* scale, float* output, size_t matrix_scale, size_t nElems, curandStateXORWOW_t* status) {
+__global__ void _rand_weibull(float* shape, float* scale, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
-        size_t matrix_idx = idx % matrix_scale;
+        size_t matrix_idx = idx / repeats;
         size_t state_idx = idx % nStatus;
         output[idx] = float(scale[matrix_idx] * pow(double(-log_max(1 - curand_uniform(&status[state_idx]))), double(1.0 / shape[matrix_idx])));
     }
@@ -1405,7 +1404,7 @@ DLLEXPORT void _sample_weibull(float* shape_host, float* scale_host, float* outp
     cudaMalloc((void**)&output_device, nBytes);
 
     dim3 grid(size_t(ceil(float(nElems) / float(nThreads_gamma)))), block(nThreads_gamma);
-    _rand_weibull <<<grid, block>>> (shape_device, scale_device, output_device, matrix_scale, nElems, status);
+    _rand_weibull <<<grid, block>>> (shape_device, scale_device, output_device, repeats, nElems, status);
     cudaMemcpy(output, output_device, nBytes, cudaMemcpyDeviceToHost);
 
     cudaFree(shape_device);
@@ -1433,8 +1432,8 @@ __global__ void _rand_multinomial(int* count, float* prob, int* output, size_t m
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < matrix_scale_1*repeats) {
         size_t K = int(float(matrix_scale_2) / float(matrix_scale_1));
-        size_t matrix_idx = idx / repeats;  // % matrix_scale_1;  // row idx in prob_device
-        size_t repeat_idx = idx % repeats;  //floor(float(idx) / float(matrix_scale_1));  // times
+        size_t matrix_idx = idx / repeats;  // row idx in prob_device
+        size_t repeat_idx = idx % repeats;  // times
         size_t state_idx = idx % nStatus;
 
         for (int num=0; num<count[matrix_idx]; num++)

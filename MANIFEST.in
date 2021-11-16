@@ -1,0 +1,16 @@
+include pydpm/_sampler/_compact/crt_cpu.c
+include pydpm/_sampler/_compact/crt_cpu.dll
+include pydpm/_sampler/_compact/crt_cpu.so
+include pydpm/_sampler/_compact/crt_multi_aug_cpu.c
+include pydpm/_sampler/_compact/crt_multi_aug_cpu.dll
+include pydpm/_sampler/_compact/crt_multi_aug_cpu.so
+include pydpm/_sampler/_compact/multi_aug_cpu.c
+include pydpm/_sampler/_compact/multi_aug_cpu.dll
+include pydpm/_sampler/_compact/multi_aug_cpu.so
+include pydpm/_sampler/_compact/sampler_kernel_win.cu
+include pydpm/_sampler/_compact/sampler_kernel_win.h
+include pydpm/_sampler/_compact/sampler_kernel_linux.cu
+include pydpm/_sampler/_compact/sampler_kernel_linux.h
+include compare_numpy.jpg
+include compare_tf2_torch.jpg
+include pydpm_framework.png

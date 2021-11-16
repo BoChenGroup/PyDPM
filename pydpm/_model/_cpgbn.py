@@ -20,6 +20,7 @@ from ._basic_model import Basic_Model, Params
 from .._sampler import Basic_Sampler
 from .._utils import *
 
+
 class CPGBN(Basic_Model):
 
     def __init__(self, K: list, device='gpu'):

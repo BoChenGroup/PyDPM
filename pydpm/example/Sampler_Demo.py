@@ -1,14 +1,13 @@
 from pydpm._sampler import Basic_Sampler
 
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import scipy.stats as stats
+from collections import Counter
 
 
 def debug_sampler_and_plot():
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    import scipy.stats as stats
-    from collections import Counter
 
     sampler = Basic_Sampler('gpu')
 
@@ -32,7 +31,8 @@ def debug_sampler_and_plot():
     output = sampler.dirichlet(np.ones(1000)*4.5)
     plt.figure()
     plt.hist(output, bins=20, density=True)
-    # plt.plot(np.linspace(0, 1, 100), stats.dirichlet.pdf(np.linspace(0, 1, 100), np.ones(100)*4.5))
+    # x = np.linspace(np.min(output), np.max(output), 100)
+    # plt.plot(x, stats.dirichlet.pdf(x, alpha=np.ones(100)*4.5))
     plt.title('dirichlet(4.5)')
     plt.show()
 
@@ -84,6 +84,14 @@ def debug_sampler_and_plot():
     plt.title('standard_uniform()')
     plt.show()
 
+    # binomial
+    output = sampler.binomial(np.ones(1000)*10, np.ones(1000)*0.5)
+    plt.figure()
+    plt.hist(output, bins=np.max(output)-np.min(output), density=True, range=(np.min(output)-0.5, np.max(output)-0.5))
+    # plt.scatter(np.arange(10), stats.binom._pmf(np.arange(10), 10, 0.5), c='orange', zorder=10)
+    plt.title('binomial(10, 0.5)')
+    plt.show()
+
     # negative_binomial
     output = sampler.negative_binomial(np.ones(1000)*10, 0.5)
     plt.figure()
@@ -92,13 +100,13 @@ def debug_sampler_and_plot():
     plt.title('negative_binomial(10, 0.5)')
     plt.show()
 
-    # # multinomial
-    # output = sampler.multinomial(5, [0.8, 0.2], 1000)
-    # output = output[:, 0]
-    # plt.figure()
-    # plt.hist(output, bins=, density=True)
-    # plt.title('multinomial(5, [0.8, 0.2])')
-    # plt.show()
+    # multinomial
+    output = sampler.multinomial(5, [0.8, 0.2], 1000)
+    # output = sampler.multinomial([10]*4, [[0.8, 0.2]]*4, 3)
+    plt.figure()
+    plt.hist(output[0], bins=10, density=True)
+    plt.title('multinomial(5, [0.8, 0.2])')
+    plt.show()
 
     a = np.array([np.array([[i] * 6 for i in range(6)]).reshape(-1), np.array(list(range(6)) * 6)]).T
     output = stats.multinomial(n=5, p=[0.8, 0.2]).pmf(a)
@@ -141,12 +149,13 @@ def debug_sampler_and_plot():
     plt.show()
 
     # noncentral_chisquare
-    output = sampler.noncentral_chisquare(np.ones(1000)*10, 5, 2)
+    output = sampler.noncentral_chisquare(np.ones(1000)*10, 5)
     plt.figure()
     plt.hist(output, bins=20, density=True)
     # nocentral_chi2 = scale^2 * (chi2 + 2*loc*chi + df*loc^2)
-    # plt.plot(np.linspace(0, 150, 100), stats.chi2.pdf(np.linspace(0, 150, 100), 10, loc=5, scale=2))
-    plt.title('noncentral_chisquare(10, loc=5, scale=2)')
+    # E(Z) = nonc + df
+    # Var(Z) = 2(df+2nonc)
+    plt.title('noncentral_chisquare(df=10, nonc=5)')
     plt.show()
 
     # exponential
@@ -174,6 +183,15 @@ def debug_sampler_and_plot():
     plt.title('f(10, 10)')
     plt.show()
 
+    # noncentral_f
+    output = sampler.noncentral_f(np.ones(1000)*10, 10, 5)
+    plt.figure()
+    plt.hist(output, bins=20, density=True)
+    # E(F) = (m+nonc)*n / (m*(n-2)), n>2.
+    # Var(F) = 2*(n/m)**2 * ((m+nonc)**2 + (m+2*nonc)*(n-2)) / ((n-2)**2 * (n-4))
+    plt.title('noncentral_f(dfnum=10, dfden=10, nonc=5)')
+    plt.show()
+
     # geometric
     output = sampler.geometric(np.ones(1000)*0.1)
     plt.figure()
@@ -194,9 +212,9 @@ def debug_sampler_and_plot():
     # hypergeometric
     output = sampler.hypergeometric(np.ones(1000)*5, 10, 10)
     plt.figure()
-    plt.hist(output, bins=np.max(output)-np.min(output), density=True, range=(np.min(output)-0.5, np.max(output)-0.5))
+    plt.hist(output, bins=np.max(output)-np.min(output), density=True, range=(np.min(output)+0.5, np.max(output)+0.5))
     plt.scatter(np.arange(10), stats.hypergeom(15, 5, 10).pmf(np.arange(10)), c='orange', zorder=10)  # hypergeom(M, n, N), total, I, tiems
-    plt.title('hypergeometric(5, 10, 10)with replacement, need2do')
+    plt.title('hypergeometric(5, 10, 10)')
     plt.show()
 
     # laplace
@@ -234,10 +252,12 @@ def debug_sampler_and_plot():
     plt.show()
 
     # pareto
-    output = sampler.pareto(np.ones(1000)*2, np.ones(1000)*5)
+    output = sampler.pareto(np.ones(1000) * 2, np.ones(1000) * 5)
     plt.figure()
-    plt.hist(output[output < 40], bins=20, density=True)
-    # plt.plot(np.linspace(0, 15, 100), stats.pareto(a=2, b=5).pdf(np.linspace(0, 15, 100)))  # param1 scale,
+    count, bins, _ = plt.hist(output, bins=50, density=True, range=(np.min(output), 100))
+    a, m = 2., 5.  # shape and mode
+    fit = a * m ** a / bins ** (a + 1)
+    plt.plot(bins, max(count) * fit / max(fit), linewidth=2, color='r')
     plt.title('pareto(2, 5)')
     plt.show()
 
@@ -274,21 +294,11 @@ def debug_sampler_and_plot():
     plt.show()
 
 
-# -----------------est the accuracy --------------------
-if __name__ =="__main__":
+# -----------------test the accuracy --------------------
+if __name__ == "__main__":
     plot_all_distribution_example = True  # plot all distribution samplers' example and compare with its pdf/pmf.
 
-    # if plot_all_distribution_example:
-    #     debug_sampler_and_plot()
+    if plot_all_distribution_example:
+        debug_sampler_and_plot()
 
-    sampler = Basic_Sampler('gpu')
-    while (1):
-        a = sampler.gamma(0.01*np.ones([5, 3, 2, 1]), times=100)
-        if np.sum(np.isinf(a)):
-            print('OK')
-            print(a[np.where(np.isinf(a))])
 
-    # a = sampler.binomial([[50, 50]], [[0.2, 1], [0.3, 1]], times=10)
-    # a = sampler.multinomial(50, [0.5, 0.5], times=10)
-    # a = sampler.gamma(1.0, times=100)
-    # print(a)
