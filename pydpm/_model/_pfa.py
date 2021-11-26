@@ -121,7 +121,9 @@ class PFA(Basic_Model):
 
             # update Phi
             Xt_to_t1, WSZS = self._sampler.multi_aug(data, self.global_params.Phi, self.local_params.Theta)
-            self.global_params.Phi = self._update_Phi(WSZS, self._hyper_params.Phi_eta)
+
+            if is_train:
+                self.global_params.Phi = self._update_Phi(WSZS, self._hyper_params.Phi_eta)
 
             # Update c_j, p_j
             self.local_params.p_j[0, :] = self._sampler.beta(Xt_to_t1.sum(0) + self._hyper_params.p_j_a0, self._hyper_params.Theta_r_k.sum(0) + self._hyper_params.p_j_b0)
