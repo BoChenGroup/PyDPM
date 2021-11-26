@@ -42,12 +42,19 @@ class distribution_sampler_gpu(object):
 
         # ------------------------------------------------ basic sampler ------------------------------------------
         if system_type == 'Windows':
+            '''
+            To compile CUDA C/C++ under Windows system, Visual Studio and CUDA should have been installed.
+            This module has been tested under Visual Studio 2019(with MSVC v142 - VS 2019 C++ x64/x86 tools) and CUDA Toolkit 11.5.
+            '''
             compact_path = os.path.dirname(__file__) + "\_compact\sampler_kernel.dll"
             if not os.path.exists(compact_path):
                 nvcc_path = get_nvcc_path()
-                os.system(nvcc_path+' -o '+compact_path+' --shared '+compact_path[:-4]+'_win.cu')
+                try:
+                    os.system(nvcc_path+' -o '+compact_path+' --shared '+compact_path[:-4]+'_win.cu')
+                except:
+                    os.system(r'nvcc -o '+'"'+compact_path+'"'+' --shared '+'"'+compact_path[:-4]+'_win.cu'+'"')
             dll = ctypes.cdll.LoadLibrary(compact_path)
-
+        
         elif system_type == 'Linux':
             compact_path = os.path.dirname(__file__) + "/_compact/sampler_kernel.so"
             if not os.path.exists(compact_path):

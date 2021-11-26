@@ -967,7 +967,7 @@ static __device__ float loggam(float x) {
         x0 = x + n;
     }
     x2 = 1.0/(x0*x0);
-    xp = 2*M_PI;
+    xp = 2*Pi;
     gl0 = a[9];
     for (k=8; k>=0; k--) {
         gl0 *= x2;

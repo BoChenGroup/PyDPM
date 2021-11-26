@@ -17,6 +17,8 @@ This library can be installed under both Windows and Linux systems.
 $ pip install pydpm
 ```
 
+Under Windows system, we recommed to install Visual Studio 2019 and latest CUDA Toolkit. The combination of VS2019(with MSVC v142) and CUDA 11.5 has been tested in pydpm2.0.
+
 Create Probabilistic Model
 =============
 
@@ -60,6 +62,8 @@ results = ACC(train_local_params.Theta[0], test_local_params.Theta[0], train_lab
 model.save()
 ```
 More model demos can be found in pydpm/examples/...
+
+Source data can be found in [Link](https://drive.google.com/drive/folders/1_BH_0N6wfbUvTS-CCWs4YLFpDWqGRw7w?usp=sharing)
 
 
 Sample on GPU
@@ -111,4 +115,4 @@ License: Apache License Version 2.0
 
 Contact:  Chaojie Wang <xd_silly@163.com>, Wei Zhao <13279389260@163.com>, Jiawen Wu <wjw19960807@163.com>
 
-Copyright (c), 2020, Chaojie Wang, Wei Zhao, Jiawen Wu, Bo Chen and Mingyuan Zhou
+Copyright (c), 2020, Chaojie Wang, Wei Zhao, Jiawen Wu, Xinyang Liu, Jie Ren, Yewen Li, Hao Zhang, Bo Chen and Mingyuan Zhou
