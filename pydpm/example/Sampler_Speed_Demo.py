@@ -166,7 +166,7 @@ def plotComparision(distributions, title, types, *args):
     plt.legend()
     plt.xticks(index + bar_width/2, distributions, rotation=90)
     plt.ylabel('time(s)')
-    plt.title(title)
+    # plt.title(title)
     plt.tight_layout()
     plt.show()
 
