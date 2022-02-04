@@ -77,46 +77,6 @@ class DirBN(Basic_Model):
 
         self._hyper_params.Phi_eta = 0.05
 
-
-    def init_DirBN(self, ks, V, eta):
-        '''
-        initial DirBN params
-        '''
-        T = len(ks)
-        DirBN_para = []
-        for t in range(T):
-            DirBN_para.append({'None': None})
-        '''
-        [0]
-                 psi: [100×13370 double]
-        n_topic_word: [100×13370 double]
-                 phi: [100×13370 double]
-        [1]
-                  psi: [100×13370 double]
-                  phi: [100×13370 double]
-                 beta: [100×100 double]
-          beta_gammak: [100×1 double]
-               beta_c: 1.0298
-          beta_gamma0: 16.8023
-              beta_c0: 0.3564
-         n_topic_word: [100×13370 double]
-        n_topic_topic: [100×100 double]'''
-        for t in range(T):
-            DirBN_para[t]['psi'] = eta * np.ones((ks[t], V))
-            if t > 0:
-                if t < T - 1:
-                    DirBN_para[t]['phi'] = self._sampler.gamma(DirBN_para[t]['psi'])
-                else:
-                    DirBN_para[t]['phi'] = self._sampler.gamma(DirBN_para[t]['psi'] * np.ones((ks[t], V)))
-                DirBN_para[t]['phi'] = DirBN_para[t]['phi'] / DirBN_para[t]['phi'].sum(axis=1, keepdims=1)
-                DirBN_para[t]['beta'] = 0.5 * np.ones((ks[t], ks[t - 1]))
-                DirBN_para[t]['beta_gammak'] = 0.1 * np.ones((ks[t], 1))
-                DirBN_para[t]['beta_c'] = 0.1
-                DirBN_para[t]['beta_gamma0'] = 1.0
-                DirBN_para[t]['beta_c0'] = 1.0
-        return DirBN_para
-
-
     def train(self, iter_all: int, data: np.ndarray, is_train: bool = True):
         '''
         Inputs:
@@ -146,8 +106,8 @@ class DirBN(Basic_Model):
         self.local_params.Theta = np.zeros((self._model_setting.K[0], self._model_setting.N)).astype(int)
 
         # initial _hyper_params
-        self._hyper_params.DirBN_para = self.init_DirBN(self._model_setting.K, self._model_setting.V, self._hyper_params.Phi_eta)
-        self._hyper_params.theta_para = self.init_theta(self._model_setting.K[0], self._model_setting.N)
+        self._hyper_params.DirBN_para = self._init_DirBN(self._model_setting.K, self._model_setting.V, self._hyper_params.Phi_eta)
+        self._hyper_params.theta_para = self._init_theta(self._model_setting.K[0], self._model_setting.N)
 
         self.data = dict()
         self.data['train_ws'] = []
@@ -174,7 +134,7 @@ class DirBN(Basic_Model):
             start_time = time.time()
 
             # sample topic assignments by the collapsed Gibbs sampling
-            self.local_params.Theta, temp, self.n_dot_k, self.zs = self.collapsed_gibbs_topic_assignment_mex(self.local_params.Theta, copy.deepcopy(self.global_params.Phi), self.n_dot_k, self.zs, self.data['train_ws'],
+            self.local_params.Theta, temp, self.n_dot_k, self.zs = self._collapsed_gibbs_topic_assignment_mex(self.local_params.Theta, copy.deepcopy(self.global_params.Phi), self.n_dot_k, self.zs, self.data['train_ws'],
                                                                              self.data['train_ds'],
                                                                              np.tile(self._hyper_params.theta_para['r_k'], (1, self._model_setting.N)),
                                                                              self._hyper_params.DirBN_para[0]['psi'],
@@ -182,8 +142,8 @@ class DirBN(Basic_Model):
             if is_train:
                 self.global_params.Phi = temp
 
-            self.sample_DirBN(self.global_params.Phi)  # get self._hyper_params.DirBN_para
-            self.sample_theta(self.local_params.Theta)  # get self._hyper_params.theta_para
+            self._sample_DirBN(self.global_params.Phi)  # get self._hyper_params.DirBN_para
+            self._sample_theta(self.local_params.Theta)  # get self._hyper_params.theta_para
 
             end_time = time.time()
             stages = 'Training' if is_train else 'Testing'
@@ -242,8 +202,49 @@ class DirBN(Basic_Model):
             if params in model:
                 setattr(self, params, model[params])
 
+    def _init_DirBN(self, ks, V, eta):
+        '''
+        initial DirBN params
+        '''
+        T = len(ks)
+        DirBN_para = []
+        for t in range(T):
+            DirBN_para.append({'None': None})
+        '''
+        [0]
+                 psi: [100×13370 double]
+        n_topic_word: [100×13370 double]
+                 phi: [100×13370 double]
+        [1]
+                  psi: [100×13370 double]
+                  phi: [100×13370 double]
+                 beta: [100×100 double]
+          beta_gammak: [100×1 double]
+               beta_c: 1.0298
+          beta_gamma0: 16.8023
+              beta_c0: 0.3564
+         n_topic_word: [100×13370 double]
+        n_topic_topic: [100×100 double]'''
+        for t in range(T):
+            DirBN_para[t]['psi'] = eta * np.ones((ks[t], V))
+            if t > 0:
+                if t < T - 1:
+                    DirBN_para[t]['phi'] = self._sampler.gamma(DirBN_para[t]['psi'])
+                else:
+                    DirBN_para[t]['phi'] = self._sampler.gamma(DirBN_para[t]['psi'] * np.ones((ks[t], V)))
+                DirBN_para[t]['phi'] = DirBN_para[t]['phi'] / DirBN_para[t]['phi'].sum(axis=1, keepdims=1)
+                DirBN_para[t]['beta'] = 0.5 * np.ones((ks[t], ks[t - 1]))
+                DirBN_para[t]['beta_gammak'] = 0.1 * np.ones((ks[t], 1))
+                DirBN_para[t]['beta_c'] = 0.1
+                DirBN_para[t]['beta_gamma0'] = 1.0
+                DirBN_para[t]['beta_c0'] = 1.0
+        return DirBN_para
 
-    def collapsed_gibbs_topic_assignment_mex(self, ZSDS, ZSWS, n_dot_k, ZS, WS, DS, shape, eta, eta_sum):
+    def _init_theta(self, K = None, N = None):
+        theta_para = {'gamma0': 1, 'c0': 1, 'r_k': 1 / K*np.ones((K, 1)), 'p_j': (1 - np.exp(- 1)) * np.ones((1, N))}
+        return theta_para
+
+    def _collapsed_gibbs_topic_assignment_mex(self, ZSDS, ZSWS, n_dot_k, ZS, WS, DS, shape, eta, eta_sum):
         Ksize, Nsize = ZSDS.shape
         WordNum = WS.shape[0]
         prob_cumsum = np.zeros(Ksize)
@@ -262,7 +263,7 @@ class DirBN(Basic_Model):
                 cum_sum += (eta[k, v] + ZSWS[k, v]) / (eta_sum[k] + n_dot_k[k]) * (ZSDS[k, j] + shape[k, j])
                 prob_cumsum[k] = cum_sum
             probrnd = np.random.rand() * cum_sum
-            k = self.BinarySearch(probrnd, prob_cumsum, Ksize)
+            k = self._binary_search(probrnd, prob_cumsum, Ksize)
             ZS[i] = k
             ZSDS[k, j] += 1
             ZSWS[k, v] += 1
@@ -270,8 +271,7 @@ class DirBN(Basic_Model):
 
         return ZSDS, ZSWS, n_dot_k, ZS
 
-
-    def BinarySearch(self, probrnd, prob_cumsum, Ksize):
+    def _binary_search(self, probrnd, prob_cumsum, Ksize):
         if probrnd <= prob_cumsum[0]:
             return 0
         else:
@@ -291,39 +291,37 @@ class DirBN(Basic_Model):
 
         return k
 
-
-    def sample_DirBN(self, n_topic_word1 = None):
+    def _sample_DirBN(self, n_topic_word1 = None):
         T = len(self._hyper_params.DirBN_para)
         T_current = T
         self._hyper_params.DirBN_para[0]['n_topic_word'] = n_topic_word1
         if T > 1:
             # propagate the latent counts from the bottom up
             for t in range(T_current - 1):
-                self.sample_DirBN_counts(t)
+                self._sample_DirBN_counts(t)
             # update the latent variables from the top down
             for t in range(T_current-1, -1, -1):
                 # update psi
                 if t < T-1:
                     self._hyper_params.DirBN_para[t]['psi'] = np.dot(self._hyper_params.DirBN_para[t+1]['beta'].T, self._hyper_params.DirBN_para[t+1]['phi'])
                 else:
-                    psi = self.sample_DirBN_eta(self._hyper_params.DirBN_para[T-1]['psi'][0, 0], self._hyper_params.DirBN_para[T-1]['n_topic_word'])
+                    psi = self._sample_DirBN_eta(self._hyper_params.DirBN_para[T-1]['psi'][0, 0], self._hyper_params.DirBN_para[T-1]['n_topic_word'])
                     self._hyper_params.DirBN_para[T-1]['psi'] = np.ones_like(self._hyper_params.DirBN_para[T-1]['n_topic_word']) * psi
                 # update beta
                 if t > 0:
-                    self.sample_DirBN_beta(t)
+                    self._sample_DirBN_beta(t)
                 # update phi
                 phi = self._sampler.gamma(np.abs(self._hyper_params.DirBN_para[t]['psi'] + self._hyper_params.DirBN_para[t]['n_topic_word'])) + 2.2204e-16
                 phi = phi / phi.sum(axis=1, keepdims=1)
                 self._hyper_params.DirBN_para[t]['phi'] = phi
         else:
-            psi = self.sample_DirBN_eta(self._hyper_params.DirBN_para[T-1]['psi'][0, 0], self._hyper_params.DirBN_para[T-1]['n_topic_word'])
+            psi = self._sample_DirBN_eta(self._hyper_params.DirBN_para[T-1]['psi'][0, 0], self._hyper_params.DirBN_para[T-1]['n_topic_word'])
             self._hyper_params.DirBN_para[T-1]['psi'] = np.ones_like(n_topic_word1) * psi
             phi = self._sampler.gamma(self._hyper_params.DirBN_para[T-1]['psi'] + self._hyper_params.DirBN_para[T-1]['n_topic_word']) + 2.2204e-16
             phi = phi / (np.sum(phi, 1).reshape(-1, 1))
             self._hyper_params.DirBN_para[T-1]['phi'] = phi
 
-
-    def sample_DirBN_eta(self, eta=None, n=None):
+    def _sample_DirBN_eta(self, eta=None, n=None):
         mu_0 = 0.1
         nu_0 = 10.0
         K, V = n.shape
@@ -332,7 +330,7 @@ class DirBN(Basic_Model):
         #     log_q = -np.log(np.random.beta(np.maximum(V*eta, realmin), np.maximum(np.sum(n, 1), realmin)))
         # else:
         #     log_q = -np.log(np.random.beta(V*eta, np.sum(n, 1)))
-        log_q = -np.log(np.random.beta(np.maximum(V * eta, realmin), np.maximum(np.sum(n, 1), realmin)))
+        log_q = -np.log(self._sampler.beta(np.maximum(V * eta, realmin), np.maximum(np.sum(n, 1), realmin)))
         t = np.zeros((K, V))
         t[n > 0] = 1
         for k in range(K):
@@ -344,8 +342,7 @@ class DirBN(Basic_Model):
 
         return eta
 
-
-    def sample_DirBN_beta(self, t=None):
+    def _sample_DirBN_beta(self, t=None):
         a0 = 0.01
         b0 = 0.01
         e0 = 1
@@ -357,7 +354,7 @@ class DirBN(Basic_Model):
 
         if (np.sum(np.sum(self._hyper_params.DirBN_para[t - 1]['psi'], 1) < 0) + np.sum(np.sum(self._hyper_params.DirBN_para[t-1]['n_topic_word'], 1) < 0)) > 0:
             Warning('negative value')
-        w_log_inv_q = -np.log(np.random.beta(np.maximum(np.sum(self._hyper_params.DirBN_para[t - 1]['psi'], 1), realmin),
+        w_log_inv_q = -np.log(self._sampler.beta(np.maximum(np.sum(self._hyper_params.DirBN_para[t - 1]['psi'], 1), realmin),
                                               np.maximum(np.sum(self._hyper_params.DirBN_para[t-1]['n_topic_word'], 1), realmin)))
         w_t_k2_k1 = self._hyper_params.DirBN_para[t]['n_topic_topic']
         K2, K1 = w_t_k2_k1.shape
@@ -393,8 +390,7 @@ class DirBN(Basic_Model):
         self._hyper_params.DirBN_para[t]['beta_gamma0'] = beta_gamma0
         self._hyper_params.DirBN_para[t]['beta_c0'] = beta_c0
 
-
-    def sample_DirBN_counts(self, t=None):
+    def _sample_DirBN_counts(self, t=None):
         n_topic_word = self._hyper_params.DirBN_para[t]['n_topic_word']
         phi = self._hyper_params.DirBN_para[t + 1]['phi']
         DirBN_beta = self._hyper_params.DirBN_para[t + 1]['beta']
@@ -420,25 +416,18 @@ class DirBN(Basic_Model):
         self._hyper_params.DirBN_para[t+1]['n_topic_word'] = w_t_k2_v
         self._hyper_params.DirBN_para[t+1]['n_topic_topic'] = w_t_k2_k1
 
-
-    def init_theta(self, K=None, N=None):
-        theta_para = {'gamma0': 1, 'c0': 1, 'r_k': 1 / K*np.ones((K, 1)), 'p_j': (1 - np.exp(- 1)) * np.ones((1, N))}
-        return theta_para
-
-
-    def sample_theta(self, theta_count=None):
+    def _sample_Theta(self, theta_count=None):
         '''theta_count:  [numpy.ndarray]'''
         b0 = 0.01
         a0 = 0.01
-        t = self.CRT_sum_mex_matrix_v1(theta_count.T, self._hyper_params.theta_para['r_k'].flatten())
+        t = self._crt_sum_mex_matrix_v1(theta_count.T, self._hyper_params.theta_para['r_k'].flatten())
 
-        self.Sample_rk(t, self._hyper_params.theta_para['r_k'], self._hyper_params.theta_para['p_j'], self._hyper_params.theta_para['gamma0'], self._hyper_params.theta_para['c0'])
-        self._hyper_params.theta_para['p_j'] = np.random.beta(np.sum(theta_count, 0) + a0, np.sum(self._hyper_params.theta_para['r_k'], 0) + b0).reshape(1, -1)
+        self._sample_rk(t, self._hyper_params.theta_para['r_k'], self._hyper_params.theta_para['p_j'], self._hyper_params.theta_para['gamma0'], self._hyper_params.theta_para['c0'])
+        self._hyper_params.theta_para['p_j'] = self._sampler.beta(np.sum(theta_count, 0) + a0, np.sum(self._hyper_params.theta_para['r_k'], 0) + b0).reshape(1, -1)
         self._hyper_params.theta_para['theta'] = self._sampler.gamma(self._hyper_params.theta_para['r_k'] + theta_count) * self._hyper_params.theta_para['p_j']
 
-
-    def Sample_rk(self, XTplusOne_sum=None, r_k=None, p_jTplusOne=None, gamma0=None, c0=None, IsNoSample=None, e0=None,
-                  f0=None, a0=None, b0=None):
+    def _sample_rk(self, XTplusOne_sum=None, r_k=None, p_jTplusOne=None, gamma0=None, c0=None, IsNoSample=None, e0=None,
+                   f0=None, a0=None, b0=None):
         p_jTplusOne = p_jTplusOne.flatten()
         r_k = r_k.flatten()
         IsNoSample = False
@@ -458,7 +447,7 @@ class DirBN(Basic_Model):
             p_prime = - sumlogpi / (c0 - sumlogpi)
             # L_k = full(sum(XTplusOne,2));
             # XTplusOne_sum
-            gamma0 = self._sampler.gamma(a0 + self.CRT_sum_mex_v1(XTplusOne_sum, (gamma0 / KT))) / (b0 - np.log(np.maximum(1 - p_prime, realmin)))
+            gamma0 = self._sampler.gamma(a0 + self._crt_sum_mex_v1(XTplusOne_sum, (gamma0 / KT))) / (b0 - np.log(np.maximum(1 - p_prime, realmin)))
             r_k = self._sampler.gamma(gamma0 / KT + XTplusOne_sum) / (c0 - sumlogpi)
         else:
             raise('unexcepted error')
@@ -476,8 +465,7 @@ class DirBN(Basic_Model):
         self._hyper_params.theta_para['gamma0'] = gamma0
         self._hyper_params.theta_para['c0'] = c0
 
-
-    def CRT_sum_mex_matrix_v1(self, X, r):
+    def _crt_sum_mex_matrix_v1(self, X, r):
         '''
         X: sparse(theta_count.T) N*K，
         r: self._hyper_params.theta_para['r_k'].T 1*K 0.1
@@ -510,7 +498,7 @@ class DirBN(Basic_Model):
 
         return lsum
 
-    def CRT_sum_mex_v1(self, x, r):
+    def _crt_sum_mex_v1(self, x, r):
         if len(x.shape) == 2:
             Lenx = x.shape[0] * x.shape[1]
         else:

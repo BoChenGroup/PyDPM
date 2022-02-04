@@ -178,7 +178,7 @@ class DPFA(Basic_Model):
                 # (1). update gamma0
                 Xmat = np.dot(W1, H2train) + c1
                 Xvec = Xmat.reshape(self._model_setting.K1 * self._model_setting.N, 1)
-                gamma0vec = self.PolyaGamRndTruncated(np.ones((self._model_setting.K1 * self._model_setting.N, 1)), Xvec, 20)
+                gamma0vec = self._polya_gam_rnd_truncated(np.ones((self._model_setting.K1 * self._model_setting.N, 1)), Xvec, 20)
                 gamma0Train = gamma0vec.reshape(self._model_setting.K1, self._model_setting.N)
 
                 # (2). update W1
@@ -186,7 +186,7 @@ class DPFA(Basic_Model):
                     Hgam = H2train * gamma0Train[j, :]
                     invSigmaW = np.eye(self._model_setting.K2) + np.dot(Hgam, H2train.T)
                     MuW = np.dot(np.linalg.inv(invSigmaW), (np.sum(H2train * (H1train[j, :] - 0.5 - c1[j] * gamma0Train[j, :]), 1)))
-                    R = self.choll(invSigmaW)
+                    R = self._choll(invSigmaW)
                     W1[j, :] = MuW + np.dot(np.linalg.inv(R), np.random.rand(self._model_setting.K2, 1)).flatten()
 
                 # (3). update H2
@@ -209,7 +209,7 @@ class DPFA(Basic_Model):
                 # (5). update gamma1
                 Xmat = np.dot(W2, H3train) + c2
                 Xvec = Xmat.reshape(self._model_setting.K2 * self._model_setting.N, 1)
-                gamma1vec = self.PolyaGamRndTruncated(np.ones((self._model_setting.K2 * self._model_setting.N, 1)), Xvec, 20)
+                gamma1vec = self._polya_gam_rnd_truncated(np.ones((self._model_setting.K2 * self._model_setting.N, 1)), Xvec, 20)
                 gamma1Train = gamma1vec.reshape(self._model_setting.K2, self._model_setting.N)
 
                 # (6). update W2
@@ -217,7 +217,7 @@ class DPFA(Basic_Model):
                     Hgam = H3train * gamma1Train[k, :]
                     invSigmaW = np.eye(self._model_setting.K3) + np.dot(Hgam, H3train.T)
                     MuW = np.dot(np.linalg.inv(invSigmaW), np.sum(H3train * (H2train[k, :] - 0.5 - c2[k] * gamma1Train[k, :]), 1))
-                    R = self.choll(invSigmaW)
+                    R = self._choll(invSigmaW)
                     W2[k, :] = MuW + np.dot(np.linalg.inv(R), np.random.randn(self._model_setting.K3, 1)).flatten()
 
                 # (7). update H3
@@ -247,10 +247,10 @@ class DPFA(Basic_Model):
                 ll = np.zeros(len(counts))
                 L_k = np.zeros((self._model_setting.K1, 1))
                 for k in range(self._model_setting.K1):
-                    L_k[k], ll[kk == k] = self.CRT(counts[kk == k], r_k[k])
+                    L_k[k], ll[kk == k] = self._crt(counts[kk == k], r_k[k])
                 sumbpi = np.sum(H1train * np.log(1-p_i_train+realmin*((1-p_i_train) < realmin)), 1)
                 p_prime_k = -sumbpi / (c0 - sumbpi)
-                gamma0 = self._sampler.gamma(e0 + self.CRT(L_k.flatten(), np.array([gamma0]))[0], 1 / (f0 - sum(np.log(1 - p_prime_k + realmin * ((1 - p_prime_k) < realmin)))))
+                gamma0 = self._sampler.gamma(e0 + self._crt(L_k.flatten(), np.array([gamma0]))[0], 1 / (f0 - sum(np.log(1 - p_prime_k + realmin * ((1 - p_prime_k) < realmin)))))
                 r_k = self._sampler.gamma(gamma0 + L_k.flatten(), 1 / (-sumbpi + c0))
 
                 # 5. Sample Theta
@@ -352,7 +352,7 @@ class DPFA(Basic_Model):
                 setattr(self, params, model[params])
 
 
-    def PolyaGamRndTruncated(self, a, c, KK, IsBiased=None):
+    def _polya_gam_rnd_truncated(self, a, c, KK, IsBiased=None):
         '''
         Generating Polya-Gamma random varaibles using approximation method
         '''
@@ -369,7 +369,7 @@ class DPFA(Basic_Model):
         return x
 
 
-    def choll(self, A):
+    def _choll(self, A):
         P = A.copy()
         q = np.linalg.cholesky(P)
         q = q.T
@@ -377,7 +377,7 @@ class DPFA(Basic_Model):
         return q
 
 
-    def CRT(self, x, r):
+    def _crt(self, x, r):
         xx = np.unique(x)
         jj = np.array([np.argwhere(xx == t) for t in x.flatten()]).flatten()
         L = np.zeros(len(x))

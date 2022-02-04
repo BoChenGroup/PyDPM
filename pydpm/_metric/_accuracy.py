@@ -32,8 +32,8 @@ class ACC(object):
 
         if model == 'SVM':
             self._svm()
-        # else:
-        #     print("Please input metric model correctly. Options: 'SVM'")
+        else:
+            print("Please input metric model correctly. Options: 'SVM'")
 
         print(f'The classification accuracy with {model} is: {self._accuracy:.4f}')
 

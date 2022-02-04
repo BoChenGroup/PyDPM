@@ -29,89 +29,54 @@ __global__ void _rand_gamma(float* shape, float* scale, float* output, size_t re
         size_t matrix_idx = idx / repeats; // idx%(nElm/1)=idx 如果repeat是其他整数，则重复选取nElm/repeat元素
         float sh = shape[matrix_idx]; //matrix_idx可能会超出shape的索引范围，尽管可以引用(nElm肯能大于matrix_scale(lyw_g L34)): the reason:可以对冗余的值进行采样，因为return时会截取
         float sc = scale[matrix_idx];
-        if (sh <= 0) {
+
+        float U, V, X, Y;
+        if (sh == 1.0) {
+            size_t state_idx = idx % nStatus;
+            U = curand_uniform(&status[state_idx]);
+            output[idx] = -logf(U) * sc;
+        } else if (sh <= 0) {
             output[idx] = 0.0;
             if (sh < 0) {
                 printf("Warning: shape %f <= 0 in threads idx: %zu [thread:(%d, %d),  block:(%d, %d)]\n", sh, idx, threadIdx.x, threadIdx.y, blockIdx.x, blockIdx.y);
             }
-        }
-        else if (sh > 1.0) {
-            float d = sh - one_third;
-            float c = one_third / sqrt(d);
-            size_t state_idx = idx % (nStatus / 2); // range(nElm) % (8192/4 * (4-2))  =  range(8192/2)   status->rand_status 8192 个　　？？？？？？？？？？？？
-            bool accept = false;
-            float result;
+        } else if (sh < 1.0) {
+            size_t state_idx = idx % (nStatus / 2);
 
-            float n = curand_normal(&status[state_idx]);//normal[idx]; // (sst->meta_working)[idx];
-            float u = curand_uniform(&status[state_idx + nStatus / 2]);//uniform[idx]; // (sst->special_reserve)[idx];
-            float ocn = 1 + c * n;
-            while (ocn <= 0.0) {
-                n = curand_normal(&status[state_idx + nStatus / 2]);//生成正态分布float   state_idx + 8192/2 = range(8192/2,8192)
-                ocn = 1 + c * n;
-            }
-            float ocn_pow3 = ocn * ocn * ocn;
-            if (u < 1.0 - 0.0331 * (n * n) * (n * n) || logf(u) < 0.5 * n * n + d * (1. - ocn_pow3 + logf(ocn_pow3))) {
-                result = d * ocn_pow3 * sc;
-                accept = true;
-            }
-
-            while (!accept) {
-                n = curand_normal(&status[state_idx]);
-                u = curand_uniform(&status[state_idx + nStatus / 2]);
-                ocn = 1 + c * n;
-                while (ocn <= 0.0) {
-                    n = curand_normal(&status[state_idx + nStatus / 2]);
-                    ocn = 1 + c * n;
-                }
-                ocn_pow3 = ocn * ocn * ocn;
-                if (u < 1.0 - 0.0331 * (n * n) * (n * n) || logf(u) < 0.5 * n * n + d * (1. - ocn_pow3 + logf(ocn_pow3))) {
-                    result = d * ocn_pow3 * sc;
-                    accept = true;
+            for (;;) {
+                U = curand_uniform(&status[state_idx]);
+                V = -logf(curand_uniform(&status[state_idx + nStatus / 2]));
+                if (U <= 1.0 - sh) {
+                    X = powf(U, 1. / sh);
+                    if (X <= V) {
+                        output[idx] = X * sc;
+                        return;
+                    }
+                } else {
+                    Y = -logf((1 - U) / sh);
+                    X = powf(1.0 - sh + sh * Y, 1. / sh);
+                    if (X <= (V + Y)) {
+                        output[idx] = X * sc;
+                        return;
+                    }
                 }
             }
-            output[idx] = result; //(sst->output)[idx] = result;
-        }
-        else if (sh < 1 && sh > 0) {
-            size_t state_idx = idx % (nStatus / 4); // idx% nStatus;  idx % (8192/4) = range(8192/4) ？？？？？？？？？？
-            float u = curand_uniform(&status[state_idx]); //*(uniform + idx); //same as  uniform[idx]//===============================
-            float e = -logf(u) * 1.0; //exponential 幂数？
-            u = curand_uniform(&status[state_idx + nStatus / 4]); //range(8192/4)   + nStatus / 4
-            float ret, tmp;
-            bool accept = false;
-
-            if (u <= 1.0 - sh) {
-                ret = powf(u, 1. / sh);
-                if (ret <= e)
-                    accept = true;
-            }
-            else {
-                tmp = -logf((1 - u) / sh);
-                ret = powf(1.0 - sh + sh * tmp, 1. / sh);
-                if (ret <= (e + tmp))
-                    accept = true;
-            }
-
-            while (!accept) {
-                u = curand_uniform(&status[state_idx + nStatus / 2]); // range(8192/4)+8192/2 = range(8192/2, 8192*3/4)   sh>1时，使用前部分curandStateXOROW_t；sh<1时，使用后半段
-                e = -logf(curand_uniform(&status[state_idx + nStatus / 4 * 3]));// range(8192/4)+8192*3/4 = range(8192*3/4, 8192)
-                if (u <= 1.0 - sh) {
-                    ret = powf(u, 1. / sh);
-                    if (ret <= e)
-                        accept = true;
-                }
-                else {
-                    tmp = -logf((1 - u) / sh);
-                    ret = powf(1.0 - sh + sh * tmp, 1. / sh);
-                    if (ret <= (e + tmp))
-                        accept = true;
+        } else {
+            size_t state_idx = idx % (nStatus / 2);
+            float b = sh - one_third;
+            float c = one_third / sqrt(b);
+            for (;;) {
+                do {
+                    X = curand_normal(&status[state_idx]);
+                    V = 1.0 + c*X;
+                } while (V <= 0.0);
+                V = V*V*V;
+                U = curand_uniform(&status[state_idx + nStatus / 2]);
+                if ((U < 1.0 - 0.0331*(X*X)*(X*X)) || (logf(U) < 0.5*X*X + b*(1. - V + logf(V)))) {
+                    output[idx] = b*V*sc;
+                    return;
                 }
             }
-            output[idx] = abs(ret * sc);
-        }
-        else if(sh == 1) {  // shape=1
-            size_t state_idx = idx % (nStatus);
-            float u = curand_uniform(&status[state_idx]); //*(uniform + idx);
-            output[idx] = -logf(u) * sc;
         }
     }
 }
@@ -145,12 +110,12 @@ __global__ void _rand_standard_gamma(float* shape, float* output, size_t repeats
     size_t idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx < nElems) {
         size_t matrix_idx = idx / repeats;
-        size_t state_idx = idx % nStatus;
         float sh = shape[matrix_idx];
         //        output[idx] = curand_normal(&status[state_idx]) * scale[matrix_idx] + loc[matrix_idx];
 
         float U, V, X, Y;
         if (sh == 1.0) {
+            size_t state_idx = idx % nStatus;
             U = curand_uniform(&status[state_idx]);
             output[idx] = -logf(U);
         } else if (sh <= 0) {
@@ -159,9 +124,11 @@ __global__ void _rand_standard_gamma(float* shape, float* output, size_t repeats
                 printf("Warning: shape %f <= 0 in threads idx: %zu [thread:(%d, %d),  block:(%d, %d)]\n", sh, idx, threadIdx.x, threadIdx.y, blockIdx.x, blockIdx.y);
             }
         } else if (sh < 1.0) {
+            size_t state_idx = idx % (nStatus / 2);
+
             for (;;) {
                 U = curand_uniform(&status[state_idx]);
-                V = -logf(U);
+                V = -logf(curand_uniform(&status[state_idx + nStatus / 2]));
                 if (U <= 1.0 - sh) {
                     X = powf(U, 1. / sh);
                     if (X <= V) {
@@ -178,6 +145,7 @@ __global__ void _rand_standard_gamma(float* shape, float* output, size_t repeats
                 }
             }
         } else {
+            size_t state_idx = idx % (nStatus / 2);
             float b = sh - one_third;
             float c = one_third / sqrt(b);
             for (;;) {
@@ -186,7 +154,7 @@ __global__ void _rand_standard_gamma(float* shape, float* output, size_t repeats
                     V = 1.0 + c*X;
                 } while (V <= 0.0);
                 V = V*V*V;
-                U = curand_uniform(&status[state_idx]);
+                U = curand_uniform(&status[state_idx + nStatus / 2]);
                 if ((U < 1.0 - 0.0331*(X*X)*(X*X)) || (logf(U) < 0.5*X*X + b*(1. - V + logf(V)))) {
                     output[idx] = b*V;
                     return;
@@ -218,8 +186,6 @@ extern "C" void _sample_standard_gamma(float* shape_host, float* output, size_t 
 __global__ void _rand_beta(float* a, float* b, float* output, size_t repeats, size_t nElems, curandStateXORWOW_t* status) {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < nElems) {
-        size_t state_idx = idx % (nStatus / 2);  // ================
-        size_t state_idx_normal = idx % (nStatus / 2) + nStatus / 2;
         size_t matrix_idx = idx / repeats;
         float sh1 = a[matrix_idx];
         float sh2 = b[matrix_idx];
@@ -228,8 +194,9 @@ __global__ void _rand_beta(float* a, float* b, float* output, size_t repeats, si
             double U, V, X, Y;
             /* Use Johnk's algorithm */
             while (1) {
-                U = curand_uniform( & status[state_idx]);
-                V = curand_uniform( & status[state_idx]);
+                size_t state_idx = idx % (nStatus / 2);
+                U = curand_uniform(&status[state_idx]);
+                V = curand_uniform(&status[state_idx + nStatus / 2]);
 
                 X = pow(U, 1.0 / sh1);
                 Y = pow(V, 1.0 / sh2);
@@ -256,6 +223,7 @@ __global__ void _rand_beta(float* a, float* b, float* output, size_t repeats, si
 
             // gamma 1
             if (sh1 == 1.0) {
+                size_t state_idx = idx % nStatus;
                 U = curand_uniform(&status[state_idx]);
                 gamma1 = -logf(U);
             } else if (sh1 <= 0) {
@@ -265,8 +233,9 @@ __global__ void _rand_beta(float* a, float* b, float* output, size_t repeats, si
 //                 }
             } else if (sh1 < 1.0) {
                 for (;;) {
+                    size_t state_idx = idx % (nStatus / 2);
                     U = curand_uniform(&status[state_idx]);
-                    V = -logf(U);
+                    V = -logf(curand_uniform(&status[state_idx + nStatus / 2]));
                     if (U <= 1.0 - sh1) {
                         X = powf(U, 1. / sh1);
                         if (X <= V) {
@@ -283,15 +252,16 @@ __global__ void _rand_beta(float* a, float* b, float* output, size_t repeats, si
                     }
                 }
             } else {
+                size_t state_idx = idx % (nStatus / 2);
                 float b = sh1 - one_third;
                 float c = one_third / sqrt(b);
                 for (;;) {
                     do {
-                        X = curand_normal(&status[state_idx_normal]);
+                        X = curand_normal(&status[state_idx]);
                         V = 1.0 + c*X;
                     } while (V <= 0.0);
                     V = V*V*V;
-                    U = curand_uniform(&status[state_idx]);
+                    U = curand_uniform(&status[state_idx + nStatus / 2]);
                     if ((U < 1.0 - 0.0331*(X*X)*(X*X)) || (logf(U) < 0.5*X*X + b*(1. - V + logf(V)))) {
                         gamma1 = b*V;
                         break;
@@ -301,6 +271,7 @@ __global__ void _rand_beta(float* a, float* b, float* output, size_t repeats, si
 
             // gamma2
             if (sh2 == 1.0) {
+                size_t state_idx = idx % nStatus;
                 U = curand_uniform(&status[state_idx]);
                 gamma2 = -logf(U);
             } else if (sh2 <= 0) {
@@ -310,8 +281,9 @@ __global__ void _rand_beta(float* a, float* b, float* output, size_t repeats, si
 //                 }
             } else if (sh2 < 1.0) {
                 for (;;) {
+                    size_t state_idx = idx % (nStatus / 2);
                     U = curand_uniform(&status[state_idx]);
-                    V = -logf(U);
+                    V = -logf(curand_uniform(&status[state_idx + nStatus / 2]));
                     if (U <= 1.0 - sh2) {
                         X = powf(U, 1. / sh2);
                         if (X <= V) {
@@ -328,15 +300,16 @@ __global__ void _rand_beta(float* a, float* b, float* output, size_t repeats, si
                     }
                 }
             } else {
+                size_t state_idx = idx % (nStatus / 2);
                 float b = sh2 - one_third;
                 float c = one_third / sqrt(b);
                 for (;;) {
                     do {
-                        X = curand_normal(&status[state_idx_normal]);
+                        X = curand_normal(&status[state_idx]);
                         V = 1.0 + c*X;
                     } while (V <= 0.0);
                     V = V*V*V;
-                    U = curand_uniform(&status[state_idx]);
+                    U = curand_uniform(&status[state_idx + nStatus / 2]);
                     if ((U < 1.0 - 0.0331*(X*X)*(X*X)) || (logf(U) < 0.5*X*X + b*(1. - V + logf(V)))) {
                         gamma2 = b*V;
                         break;

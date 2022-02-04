@@ -71,7 +71,6 @@ class WEDTM(Basic_Model):
 
         '''
         self._model_setting.V = data.shape[0]
-
         self.global_params.Phi = np.zeros((self._model_setting.K[0], self._model_setting.V)).astype(int)
 
 
@@ -137,7 +136,7 @@ class WEDTM(Basic_Model):
         WSZS = [[]] * self._model_setting.T
         paraGlobal = [{}] * self._model_setting.T
         # Initialise beta for t = 1
-        beta1, self.beta_para = self.init_beta(self._model_setting.K[0], self._model_setting.V, S, embeddings, beta0)
+        beta1, self.beta_para = self._init_beta(self._model_setting.K[0], self._model_setting.V, S, embeddings, beta0)
 
         for Tcurrent in range(self._model_setting.T):
             if Tcurrent == 0:  # layer 1, initial params.
@@ -152,7 +151,7 @@ class WEDTM(Basic_Model):
                 WSZS[Tcurrent] = self.global_params.Phi.T
                 Xt_to_t1[Tcurrent] = self.local_params.Theta
                 n_dot_k = np.sum(self.local_params.Theta, 1)  # count number of each theme in doc
-                p_j = self.Calculate_pj(c_j, Tcurrent)
+                p_j = self._calculate_pj(c_j, Tcurrent)
                 r_k = 1 / self._model_setting.K[Tcurrent] * np.ones(self._model_setting.K[Tcurrent])
                 gamma0 = 1
                 c0 = 1
@@ -163,7 +162,7 @@ class WEDTM(Basic_Model):
                 self.Phi[Tcurrent] = np.random.rand(self._model_setting.K[Tcurrent - 1], self._model_setting.K[Tcurrent])
                 self.Phi[Tcurrent] = self.Phi[Tcurrent] / np.maximum(realmin, np.sum(self.Phi[Tcurrent], 0))
                 self.Theta[Tcurrent] = np.ones((self._model_setting.K[Tcurrent], self._model_setting.N)) / self._model_setting.K[Tcurrent]
-                p_j = self.Calculate_pj(c_j, Tcurrent)
+                p_j = self._calculate_pj(c_j, Tcurrent)
                 r_k = 1 / self._model_setting.K[Tcurrent] * np.ones(self._model_setting.K[Tcurrent])
                 gamma0 = self._model_setting.K[Tcurrent] / self._model_setting.K[1]
                 c0 = 1
@@ -185,7 +184,7 @@ class WEDTM(Basic_Model):
                         beta1_sum = np.sum(beta1, 1)
                         # Modified from GNBP_mex_collapsed_deep.c in the GBN code,
                         # to support a full matrix of beta1
-                        [self.local_params.Theta, temp, n_dot_k, ZS] = self.collapsed_gibbs_topic_assignment_mex(
+                        [self.local_params.Theta, temp, n_dot_k, ZS] = self._collapsed_gibbs_topic_assignment_mex(
                             self.local_params.Theta, self.global_params.Phi, n_dot_k, ZS, WS, DS, shape, beta1, beta1_sum)
                         if is_train:
                             self.global_params.Phi = temp
@@ -194,15 +193,15 @@ class WEDTM(Basic_Model):
                         # Sample the variables related to sub-topics
                         beta1 = self.sample_beta(WSZS[t].T, embeddings, beta1)
                     else:
-                        [Xt_to_t1[t], WSZS[t]] = self._sampler.Multrnd_Matrix_GPU(Xt_to_t1[t-1], self.Phi[t], self.Theta[t])
+                        [Xt_to_t1[t], WSZS[t]] = self._sampler.multi_aug(Xt_to_t1[t-1], self.Phi[t], self.Theta[t])
 
                     if t > 0:
-                        self.Phi[t] = self.SamplePhi(WSZS[t], beta0)
+                        self.Phi[t] = self._sample_Phi(WSZS[t], beta0)
                         if np.count_nonzero(np.isnan(self.Phi[t])):
                             Warning('Phi Nan')
                             self.Phi[t][np.isnan(self.Phi[t])] = 0
-                Xt = self.CRT_sum_mex_matrix_v1(sparse.csc_matrix(Xt_to_t1[Tcurrent].T), r_k.reshape(1, -1).T).T
-                r_k, gamma0, c0 = self.Sample_rk(Xt, r_k, p_j[Tcurrent+1], gamma0, c0)
+                Xt = self._crt_sum_mex_matrix_v1(sparse.csc_matrix(Xt_to_t1[Tcurrent].T), r_k.reshape(1, -1).T).T
+                r_k, gamma0, c0 = self._sample_rk(Xt, r_k, p_j[Tcurrent+1], gamma0, c0)
 
                 if iter > 10:
                     if Tcurrent > 0:
@@ -216,7 +215,7 @@ class WEDTM(Basic_Model):
                             c_j[t] = self._sampler.gamma(np.sum(r_k)*np.ones((1, self._model_setting.N))+e0) / (np.sum(self.Theta[t-1], 0)+f0)
                         else:
                             c_j[t] = self._sampler.gamma(np.sum(self.Theta[t], 0)+e0) / (np.sum(self.Theta[t-1], 0)+f0)
-                    p_j_temp = self.Calculate_pj(c_j, Tcurrent)
+                    p_j_temp = self._calculate_pj(c_j, Tcurrent)
                     p_j[2:] = p_j_temp[2:]
 
                 for t in range(Tcurrent, -1, -1):
@@ -238,9 +237,9 @@ class WEDTM(Basic_Model):
 
             for t in range(Tcurrent + 1):
                 if t == 0:
-                    self.Phi[t] = self.SamplePhi(WSZS[t], beta1.T, True)
+                    self.Phi[t] = self._sample_Phi(WSZS[t], beta1.T, True)
                 else:
-                    self.Phi[t] = self.SamplePhi(WSZS[t], beta0, True)
+                    self.Phi[t] = self._sample_Phi(WSZS[t], beta0, True)
 
             paraGlobal[Tcurrent]['Phi'] = self.Phi
             paraGlobal[Tcurrent]['r_k'] = r_k
@@ -311,7 +310,7 @@ class WEDTM(Basic_Model):
                 setattr(self, params, model[params])
 
 
-    def init_beta(self, K, V, S, embeddings, beta):
+    def _init_beta(self, K, V, S, embeddings, beta):
         L = embeddings.shape[1]
         beta_para = [{}] * S
         for s in range(S):
@@ -329,7 +328,7 @@ class WEDTM(Basic_Model):
         return beta1, beta_para
 
 
-    def Calculate_pj(self, c_j, T):
+    def _calculate_pj(self, c_j, T):
         '''
         calculate p_j from layer 1 to T+1
         same as pfa
@@ -347,7 +346,7 @@ class WEDTM(Basic_Model):
         return p_j
 
 
-    def collapsed_gibbs_topic_assignment_mex(self, ZSDS, ZSWS, n_dot_k, ZS, WS, DS, shape, eta, eta_sum):
+    def _collapsed_gibbs_topic_assignment_mex(self, ZSDS, ZSWS, n_dot_k, ZS, WS, DS, shape, eta, eta_sum):
         '''
         same as DirBN
         '''
@@ -368,7 +367,7 @@ class WEDTM(Basic_Model):
                 cum_sum += (eta[k, v] + ZSWS[k, v]) / (eta_sum[k] + n_dot_k[k]) * (ZSDS[k, j] + shape[k, j])
                 prob_cumsum[k] = cum_sum
             probrnd = np.random.rand() * cum_sum
-            k = self.BinarySearch(probrnd, prob_cumsum, Ksize)
+            k = self._binary_search(probrnd, prob_cumsum, Ksize)
             ZS[i] = k
             ZSDS[k, j] += 1
             ZSWS[k, v] += 1
@@ -376,8 +375,7 @@ class WEDTM(Basic_Model):
 
         return ZSDS, ZSWS, n_dot_k, ZS
 
-
-    def BinarySearch(self, probrnd, prob_cumsum, Ksize):
+    def _binary_search(self, probrnd, prob_cumsum, Ksize):
         if probrnd <= prob_cumsum[0]:
             return 0
         else:
@@ -397,7 +395,7 @@ class WEDTM(Basic_Model):
         return k
 
 
-    def sample_beta(self, n_topic_word, F, beta1):
+    def _sample_beta(self, n_topic_word, F, beta1):
         a0 = 0.01
         b0 = 0.01
         e0 = 1
@@ -488,7 +486,7 @@ class WEDTM(Basic_Model):
             pi_pg_vec = pi_pg_vec.reshape(K * V, 1)
             temp = h_s + alpha_k  # reshape(h_s + alpha_k, K*V,1)
             temp = temp.reshape(K * V, 1)
-            omega_vec = self.PolyaGamRnd_Gam(temp, pi_pg_vec, 2)
+            omega_vec = self._polya_gam_rnd_gam(temp, pi_pg_vec, 2)
             omega_mat = omega_vec
             omega_mat = omega_mat.reshape(K, V)
 
@@ -505,7 +503,7 @@ class WEDTM(Basic_Model):
                     invSigmaW = np.diag(sigma_w[k, :]) + np.dot(Hgam, F)
                     MuW = np.dot(np.linalg.inv(invSigmaW), (
                         np.sum(F.T * (0.5 * h_s[k, :].reshape(1, -1) - 0.5 * alpha_k[k, :] - (log_log_inv_q[k]) * omega_mat[k, :]), 1)))
-                    R = self.choll(invSigmaW)
+                    R = self._choll(invSigmaW)
                     W[k, :] = MuW + np.dot(np.linalg.inv(R), np.random.rand(L, 1)).flatten()
                 else:
                     W[k, :] = 1e-10
@@ -537,7 +535,7 @@ class WEDTM(Basic_Model):
         return beta1
 
 
-    def PolyaGamRnd_Gam(self, a, c, KK, IsBiased=None):
+    def _polya_gam_rnd_gam(self, a, c, KK, IsBiased=None):
         '''
         Generating Polya-Gamma random varaibles using approximation method
         '''
@@ -555,8 +553,7 @@ class WEDTM(Basic_Model):
 
         return x
 
-
-    def choll(self, A):
+    def _choll(self, A):
         # same as dpfa
         P = A.copy()
         q = np.linalg.cholesky(P)
@@ -564,8 +561,7 @@ class WEDTM(Basic_Model):
 
         return q
 
-
-    def CRT_sum_mex_matrix_v1(self, X, r):
+    def _crt_sum_mex_matrix_v1(self, X, r):
         # same as DirBN sample_theta
         k, n = np.shape(X)
         if len(r) == 1:
@@ -597,8 +593,7 @@ class WEDTM(Basic_Model):
 
         return lsum
 
-
-    def Sample_rk(self,XTplusOne_sum=None, r_k=None, p_jTplusOne=None, gamma0=None, c0=None, IsNoSample=None, e0=None,
+    def _sample_rk(self,XTplusOne_sum=None, r_k=None, p_jTplusOne=None, gamma0=None, c0=None, IsNoSample=None, e0=None,
                   f0=None, a0=None, b0=None):
         '''
         get theta_para.r_k, theta_para.gamma0, theta_para.c0
@@ -632,8 +627,7 @@ class WEDTM(Basic_Model):
 
         return r_k, gamma0, c0
 
-
-    def CRT_sum_mex_v1(self, x, r):
+    def _crt_sum_mex_v1(self, x, r):
         # same to dpfa-CRT
         xx = np.unique(x)
         jj = np.array([np.argwhere(xx == t) for t in x.flatten()]).flatten()
@@ -648,8 +642,7 @@ class WEDTM(Basic_Model):
 
         return Lsum
 
-
-    def SamplePhi(self, WSZS, Eta, IsNoSample=False):
+    def _sample_Phi(self, WSZS, Eta, IsNoSample=False):
         if ~IsNoSample:
             Phi = self._sampler.gamma(Eta + WSZS)
             temp = np.sum(Phi, 0)

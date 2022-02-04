@@ -7,7 +7,7 @@ from ._pre_process import para_preprocess
 
 def find_in_path(name, path):
     "Find a file in a search path"
-    #adapted fom http://code.activestate.com/recipes/52224-find-a-file-given-a-search-path/
+    # adapted fom http://code.activestate.com/recipes/52224-find-a-file-given-a-search-path/
     for dir in path.split(os.pathsep):
         binpath = os.path.join(dir, name)
         if os.path.exists(binpath):
@@ -23,9 +23,9 @@ def get_nvcc_path():
         # otherwise, search the PATH for NVCC
         default_path = os.path.join(os.sep, 'usr', 'local', 'cuda', 'bin')
         nvcc = find_in_path('nvcc', os.environ['PATH'] + os.pathsep + default_path)
-        if nvcc is None:
-            raise EnvironmentError('The nvcc binary could not be '
-                                   'located in your $PATH. Either add it to your path, or set $CUDAHOME')
+        # if nvcc is None:
+        #     raise EnvironmentError('The nvcc binary could not be '
+        #                            'located in your $PATH. Either add it to your path, or set $CUDAHOME')
     return nvcc
 
 

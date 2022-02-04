@@ -1,11 +1,10 @@
-from pydpm._sampler import Basic_Sampler
-
 import numpy as np
-import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy.stats as stats
 from collections import Counter
+import matplotlib.pyplot as plt
 
+from pydpm._sampler import Basic_Sampler
 
 def debug_sampler_and_plot():
 
@@ -104,7 +103,7 @@ def debug_sampler_and_plot():
     output = sampler.multinomial(5, [0.8, 0.2], 1000)
     # output = sampler.multinomial([10]*4, [[0.8, 0.2]]*4, 3)
     plt.figure()
-    plt.hist(output[0], bins=10, density=True)
+    plt.hist(output[0], bins=15, density=True)
     plt.title('multinomial(5, [0.8, 0.2])')
     plt.show()
 
