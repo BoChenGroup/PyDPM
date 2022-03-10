@@ -203,7 +203,7 @@ class MPGBN(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, iter_all: int, data: np.ndarray):
+    def test(self, iter_all: int, data_1: np.ndarray, data_2: np.ndarray):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of gibbs sampling
@@ -213,7 +213,7 @@ class MPGBN(Basic_Model):
             local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        local_params = self.train(iter_all, data, is_train=False)
+        local_params = self.train(iter_all, data_1, data_2, is_train=False)
 
         return local_params
 

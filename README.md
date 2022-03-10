@@ -45,7 +45,6 @@ More probabilistic models will be further included in pydpm/_model/...
 
 Create a PGBN model:
 ```python
-from pydpm._metric import ACC
 from pydpm._model import PGBN
 
 # create the model and deploy it on gpu or cpu

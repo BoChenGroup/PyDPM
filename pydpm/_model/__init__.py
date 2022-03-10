@@ -11,4 +11,3 @@ from ._dirbn import DirBN
 from ._dpfa import DPFA
 from ._gpgbn import GPGBN
 from ._mpgbn import MPGBN
-from ._cpgds import CPGDS

@@ -41,7 +41,7 @@ class GPGBN(Basic_Model):
 
         """
         super(GPGBN, self).__init__()
-        setattr(self, '_model_name', 'PGBN')
+        setattr(self, '_model_name', 'GPGBN')
 
         self._model_setting.K = K
         self._model_setting.T = len(K)
@@ -75,6 +75,7 @@ class GPGBN(Basic_Model):
         self._model_setting.V = data.shape[0]
 
         self.global_params.Phi = []
+        self.global_params.U = []
         self._hyper_params.Phi_eta = []
         self._hyper_params.Theta_r_k = np.ones([self._model_setting.K[self._model_setting.T - 1], 1]) / self._model_setting.K[self._model_setting.T - 1]
         self._hyper_params.eta = np.ones(self._model_setting.T) * 0.01
@@ -90,9 +91,10 @@ class GPGBN(Basic_Model):
             else:
                 self.global_params.Phi.append(0.2 + 0.8 * np.random.rand(self._model_setting.K[t-1], self._model_setting.K[t]))
             self.global_params.Phi[t] = self.global_params.Phi[t] / np.maximum(realmin, self.global_params.Phi[t].sum(0))
+            self.global_params.U.append(self._sampler.gamma(1 * np.ones([self._model_setting.K[t], 1])) / (1 * np.ones([self._model_setting.K[t], 1])))
 
 
-    def train(self, iter_all: int, data:np.ndarray, is_train: bool = True):
+    def train(self, iter_all: int, data:np.ndarray, data_A:np.ndarray, is_train: bool = True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of gibbs sampling
@@ -127,17 +129,14 @@ class GPGBN(Basic_Model):
         self.local_params.c_j.append(np.ones([1, self._model_setting.N]))
         self.local_params.p_j = self._calculate_pj(self.local_params.c_j, self._model_setting.T)
 
-        self.local_params.train_graph = self._cosine_simlarity(data.T, data.T)  # todo 计算样本相似性
-
         Xt_to_t1 = []
         WSZS = []
-        self.global_params.U = []  # todo new here, graph related.
-        self.global_params.Sigma = []
+
+        self.local_params.Sigma = []
         for t in range(self._model_setting.T):
             Xt_to_t1.append(np.zeros(self.local_params.Theta[t].shape))
             WSZS.append(np.zeros(self.global_params.Phi[t].shape))
-            self.global_params.U.append(self._sampler.gamma(1 * np.ones([self._model_setting.K[t], 1])) / (1 * np.ones([self._model_setting.K[t], 1])))
-            self.global_params.Sigma.append(self._sampler.gamma(1 * np.ones([1, self._model_setting.N])) / (1 * np.ones([1, self._model_setting.N])))
+            self.local_params.Sigma.append(self._sampler.gamma(1 * np.ones([1, self._model_setting.N])) / (1 * np.ones([1, self._model_setting.N])))
 
         # gibbs sampling
         LH_list = []
@@ -162,14 +161,14 @@ class GPGBN(Basic_Model):
 
 
             # downward pass
-            M = np.reshape(self.local_params.train_graph, [self._model_setting.N * self._model_setting.N, 1])
+            M = np.reshape(data_A, [self._model_setting.N * self._model_setting.N, 1])
             M_rate_k = np.zeros([self._model_setting.N * self._model_setting.N, np.sum(np.array(self._model_setting.K))])
             Theta_inter_k = np.zeros([self._model_setting.N * self._model_setting.N, np.sum(np.array(self._model_setting.K))])
 
             for t in range(self._model_setting.T):
                 theta_t = self.local_params.Theta[t]  # K*N
                 u_t = self.global_params.U[t]
-                sigma_t = self.global_params.Sigma[t]
+                sigma_t = self.local_params.Sigma[t]
                 start_index = int(np.sum(self._model_setting.K[:t]))
                 for k in range(self._model_setting.K[t]):
                     theta_k = theta_t[k: k+1, :].copy()  # todo matmul 有没有加速？
@@ -228,9 +227,9 @@ class GPGBN(Basic_Model):
 
                 M_k = np.sum(M_kjt[t], axis=1) / 2  # K*1
                 theta_inter_k = np.sum(theta_inter_kjt, axis=0) / 2  # K*1
-                U[t][:, 0] = self._sampler.gamma(M_k + 1) / (1 + theta_inter_k)
+                self.global_params.U[t][:, 0] = self._sampler.gamma(M_k + 1) / (1 + theta_inter_k)
 
-                U_all[tmp_start: tmp_end, iter] = U[t][:, 0]
+                U_all[tmp_start: tmp_end, iter] = self.global_params.U[t][:, 0]
 
                 tmp_start = tmp_end
 
@@ -243,7 +242,7 @@ class GPGBN(Basic_Model):
                     shape = np.dot(self.global_params.Phi[t + 1], self.local_params.Theta[t + 1])
 
                 for j in range(self._model_setting.N):
-                    sigma_t = self.global_params.Sigma[t].copy()  # Note this copy here
+                    sigma_t = self.local_params.Sigma[t].copy()  # Note this copy here
                     theta_t = self.local_params.Theta[t].copy()  # Note this copy here
                     theta_t[:, j] = 0
                     theta_sigma_t = theta_t * sigma_t  # K*N
@@ -252,8 +251,8 @@ class GPGBN(Basic_Model):
                     self.local_params.Theta[t][:, j:j + 1] = self.local_params.Theta[t][:, j:j + 1] / (1 + self.local_params.c_j[t][:, j:j + 1] +
                                                                    sigma_t[:, j:j + 1] * self.global_params.U[t] * np.sum(theta_sigma_t, axis=1, keepdims=True))
 
-                    self.global_params.Sigma[t][:, j:j + 1] = self._sampler.gamma(np.sum(M_kjt[t][:, j:j + 1], keepdims=True) + 1, 1)
-                    self.global_params.Sigma[t][:, j:j + 1] = self.global_params.Sigma[t][:, j:j + 1] / (np.sum(self.local_params.Theta[t][:, j:j + 1] * self.local_params.U[t] * np.sum(theta_sigma_t, axis=1, keepdims=True)) + 1)
+                    self.local_params.Sigma[t][:, j:j + 1] = self._sampler.gamma(np.sum(M_kjt[t][:, j:j + 1], keepdims=True) + 1, 1)
+                    self.local_params.Sigma[t][:, j:j + 1] = self.local_params.Sigma[t][:, j:j + 1] / (np.sum(self.local_params.Theta[t][:, j:j + 1] * self.global_params.U[t] * np.sum(theta_sigma_t, axis=1, keepdims=True)) + 1)
 
             end_time = time.time()
 
@@ -261,15 +260,15 @@ class GPGBN(Basic_Model):
             print(f'{stages} Stage: ', f'epoch {iter:3d} takes {end_time - start_time:.2f} seconds')
 
             re = np.dot(self.global_params.Phi[0], self.local_params.Theta[0])
-            LH = np.sum(data * log_max(re) - re)  # - log_max(gamma(train_data+1)))
+            LH = np.sum(data * log_max(re) - re) #- log_max(gamma(data+1)))
             print("    Data Likelihood " + str(LH / self._model_setting.N))
             LH_list.append(LH / self._model_setting.N)
 
             re_graph = 0
             for t in range(self._model_setting.T):
-                re_graph += np.matmul(np.transpose(self.global_params.Sigma[t] * self.local_params.Theta[t] * self.global_params.U[t]), self.global_params.Sigma[t] * self.local_params.Theta[t])
+                re_graph += np.matmul(np.transpose(self.local_params.Sigma[t] * self.local_params.Theta[t] * self.global_params.U[t]), self.local_params.Sigma[t] * self.local_params.Theta[t])
             re_graph[np.arange(self._model_setting.N), np.arange(self._model_setting.N)] = 0
-            LH_graph = np.sum(self.local_params.train_graph * log_max(re_graph) - re_graph)  # - log_max(gamma(train_graph+1)))
+            LH_graph = np.sum(data_A * log_max(re_graph) - re_graph) #- log_max(gamma(data_A+1)))
             print("    Graph Likelihood " + str(LH_graph / self._model_setting.N))
             LH_graph_list.append(LH_graph / self._model_setting.N)
 
@@ -348,15 +347,19 @@ class GPGBN(Basic_Model):
 
         return p_j
 
-    def _cosine_simlarity(self, A, B):
-        # A: N*D, B: N*D
-        [N, D] = A.shape
-        inter_product = np.matmul(A, np.transpose(B))  # N*N
-        len_A = np.sqrt(np.sum(A * A, axis=1, keepdims=True))
-        len_B = np.sqrt(np.sum(B * B, axis=1, keepdims=True))
-        len_AB = np.matmul(len_A, np.transpose(len_B))
-        cos_AB = inter_product / (len_AB + realmin)
-        cos_AB[(np.arange(N), np.arange(N))] = 1
-        return cos_AB
+    def _update_Phi(self, WSZS_t, Eta_t):
+        '''
+        update Phi_t at layer t
+        Inputs:
+            WSZS_t  : [np.ndarray]  (K_t-1)*(K_t) count matrix appearing in the likelihood of Phi_t
+            Eta_t   : [np.ndarray]  scalar, the variables in the prior of Phi_t
+        Outputs:
+            Phi_t   : [np.ndarray]  (K_t-1)*(K_t), topic matrix at layer t
 
+        '''
+        Phi_t_shape = WSZS_t + Eta_t
+        Phi_t = self._sampler.gamma(Phi_t_shape, 1)
+        Phi_t = Phi_t / (Phi_t.sum(0) + realmin)
+
+        return Phi_t
 
