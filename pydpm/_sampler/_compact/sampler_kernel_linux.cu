@@ -44,7 +44,7 @@ __global__ void _rand_gamma(float* shape, float* scale, float* output, size_t re
             size_t state_idx = idx % (nStatus / 2);
 
             for (;;) {
-                U = curand_uniform(&status[state_idx]);
+                U = curand_uniform(&status[state_idx]);  // (0, 1]
                 V = -logf(curand_uniform(&status[state_idx + nStatus / 2]));
                 if (U <= 1.0 - sh) {
                     X = powf(U, 1. / sh);
@@ -53,7 +53,7 @@ __global__ void _rand_gamma(float* shape, float* scale, float* output, size_t re
                         return;
                     }
                 } else {
-                    Y = -logf((1 - U) / sh);
+                    Y = -logf((U) / sh);
                     X = powf(1.0 - sh + sh * Y, 1. / sh);
                     if (X <= (V + Y)) {
                         output[idx] = X * sc;
@@ -136,7 +136,7 @@ __global__ void _rand_standard_gamma(float* shape, float* output, size_t repeats
                         return;
                     }
                 } else {
-                    Y = -logf((1 - U) / sh);
+                    Y = -logf((U) / sh);
                     X = powf(1.0 - sh + sh * Y, 1. / sh);
                     if (X <= (V + Y)) {
                         output[idx] = X;
