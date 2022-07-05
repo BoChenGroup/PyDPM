@@ -1,32 +1,40 @@
+"""
+===========================================
+Model Sampler implemented on GPU
+===========================================
+
+"""
+
 import os
 import numpy as np
 import ctypes
+import subprocess
 
 from ._pre_process import para_preprocess
 
 
-def find_in_path(name, path):
-    "Find a file in a search path"
-    # adapted fom http://code.activestate.com/recipes/52224-find-a-file-given-a-search-path/
-    for dir in path.split(os.pathsep):
-        binpath = os.path.join(dir, name)
-        if os.path.exists(binpath):
-            return os.path.abspath(binpath)
-    return None
-
-def get_nvcc_path():
-    # get nvcc path
-    if 'CUDAHOME' in os.environ:
-        home = os.environ['CUDAHOME']
-        nvcc = os.path.join(home, 'bin', 'nvcc')
-    else:
-        # otherwise, search the PATH for NVCC
-        default_path = os.path.join(os.sep, 'usr', 'local', 'cuda', 'bin')
-        nvcc = find_in_path('nvcc', os.environ['PATH'] + os.pathsep + default_path)
-        # if nvcc is None:
-        #     raise EnvironmentError('The nvcc binary could not be '
-        #                            'located in your $PATH. Either add it to your path, or set $CUDAHOME')
-    return nvcc
+# def find_in_path(name, path):
+#     "Find a file in a search path"
+#     # adapted fom http://code.activestate.com/recipes/52224-find-a-file-given-a-search-path/
+#     for dir in path.split(os.pathsep):
+#         binpath = os.path.join(dir, name)
+#         if os.path.exists(binpath):
+#             return os.path.abspath(binpath)
+#     return None
+#
+# def get_nvcc_path():
+#     # get nvcc path
+#     if 'CUDAHOME' in os.environ:
+#         home = os.environ['CUDAHOME']
+#         nvcc = os.path.join(home, 'bin', 'nvcc')
+#     else:
+#         # otherwise, search the PATH for NVCC
+#         default_path = os.path.join(os.sep, 'usr', 'local', 'cuda', 'bin')
+#         nvcc = find_in_path('nvcc', os.environ['PATH'] + os.pathsep + default_path)
+#         # if nvcc is None:
+#         #     raise EnvironmentError('The nvcc binary could not be '
+#         #                            'located in your $PATH. Either add it to your path, or set $CUDAHOME')
+#     return nvcc
 
 
 class distribution_sampler_gpu(object):
@@ -46,20 +54,48 @@ class distribution_sampler_gpu(object):
             To compile CUDA C/C++ under Windows system, Visual Studio and CUDA should have been installed.
             This module has been tested under Visual Studio 2019(with MSVC v142 - VS 2019 C++ x64/x86 tools) and CUDA Toolkit 11.5.
             '''
-            compact_path = os.path.dirname(__file__) + "\_compact\sampler_kernel.dll"
+            compact_path = os.path.dirname(__file__) + "\_compact\distribution_sampler.dll"
             if not os.path.exists(compact_path):
-                nvcc_path = get_nvcc_path()
-                try:
-                    os.system(nvcc_path+' -o '+compact_path+' --shared '+compact_path[:-4]+'_win.cu')
-                except:
-                    os.system(r'nvcc -o '+'"'+compact_path+'"'+' --shared '+'"'+compact_path[:-4]+'_win.cu'+'"')
+
+                # subprocess.call == os.system
+                install_flag = subprocess.call('nvcc -o ' +'"'+ compact_path +'"'+  ' --shared ' +'"'+ compact_path[:-4] + '_win.cu' +'"', shell=True) # ""保证路径中的空格
+                if install_flag != 0: # not install success
+
+                    search_flag = os.system('where nvcc')
+                    if search_flag != 0: # not search success
+                        Warning('Could not locate the path of nvcc, please make sure nvcc can be located by the system command "where nvcc"')
+                    else: # search success
+                        path_results = subprocess.check_output('where nvcc', shell=True)
+                        path_results = str(path_results, encoding='utf-8')
+                        nvcc_path = path_results.split('\n')[0]
+                        nvcc_path = nvcc_path[: nvcc_path.find('nvcc.exe')] + 'nvcc.exe'
+                        install_flag = subprocess.call('"'+ nvcc_path +'"'+ ' -o ' +'"'+ compact_path +'"'+ ' --shared ' +'"'+ compact_path[:-4] + '_win.cu' +'"', shell=True)
+
+                if install_flag == 0:
+                    print("The distribution sampler has been installed successfully!")
+
             dll = ctypes.cdll.LoadLibrary(compact_path)
         
         elif system_type == 'Linux':
-            compact_path = os.path.dirname(__file__) + "/_compact/sampler_kernel.so"
+
+            compact_path = os.path.dirname(__file__) + "/_compact/distribution_sampler.so"
             if not os.path.exists(compact_path):
-                nvcc_path = get_nvcc_path()
-                os.system(nvcc_path+' -Xcompiler -fPIC -shared -o '+compact_path+' '+compact_path[:-3]+'_linux.cu')
+                install_flag = subprocess.call('nvcc -Xcompiler -fPIC -shared -o ' +'"'+ compact_path +'"'+ ' ' +'"'+ compact_path[:-3] + '_linux.cu' +'"', shell=True)
+                if install_flag != 0:  # not install success
+                    search_flag = os.system('which nvcc')
+
+                    if search_flag != 0:  # not search success
+                        Warning('Could not locate the path of nvcc, please make sure nvcc can be located by the system command "which nvcc"')
+                    else:  # search success
+                        path_results = subprocess.check_output('which nvcc', shell=True)
+                        path_results = str(path_results, encoding='utf8')
+                        nvcc_path = path_results.split('\n')[0]
+                        nvcc_path = nvcc_path[: nvcc_path.find('nvcc')] + 'nvcc'
+                        install_flag = subprocess.call('"'+ nvcc_path +'"'+ ' -Xcompiler -fPIC -shared -o ' +'"'+ compact_path +'"'+ ' ' +'"'+ compact_path[:-3] + '_linux.cu' +'"', shell=True)
+
+                if install_flag == 0:
+                    print("The distribution sampler has been installed successfully!")
+
             dll = ctypes.cdll.LoadLibrary(compact_path)
 
         # ------------------------------------------------substorage ------------------------------------------
@@ -161,7 +197,6 @@ class distribution_sampler_gpu(object):
 
         self._sample_weibull = dll._sample_weibull
         self._sample_weibull.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.c_int, ctypes.c_int, ctypes.c_void_p]
-
 
     def gamma(self, shape, scale=1.0, times=1):
         """

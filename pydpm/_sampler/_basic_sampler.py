@@ -46,7 +46,6 @@ class Basic_Sampler(object):
             else:
                 continue
 
-
         from ._model_sampler_cpu import model_sampler_cpu
         sampler = model_sampler_cpu(self.system_type)
         for distribution_name in dir(sampler):
