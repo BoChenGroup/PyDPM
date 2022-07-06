@@ -6,6 +6,8 @@ Pydpm
 A python library focuses on constructing deep probabilistic models on GPU.
 Pydpm provides efficient distribution sampling functions and has included lots of implemented probabilistic models.
 
+:fire:**Note: We have released a new version that does not depend on Pycuda.**
+
 
 ![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework.png)
 
