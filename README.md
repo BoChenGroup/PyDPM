@@ -10,6 +10,7 @@ Pydpm provides efficient distribution sampling functions and has included lots o
 
 :fire:**Note: We have released a new version that does not depend on Pycuda.**
 
+[Document](https://dustone-mu.github.io/)
 
 ![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework.png)
 
