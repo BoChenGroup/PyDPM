@@ -11,3 +11,5 @@ from ._dirbn import DirBN
 from ._dpfa import DPFA
 from ._gpgbn import GPGBN
 from ._mpgbn import MPGBN
+from ._GAN import GAN
+from ._VAE import VAE
