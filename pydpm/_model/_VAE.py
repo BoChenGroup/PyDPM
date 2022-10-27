@@ -98,7 +98,20 @@ class VAE(nn.Module):
         z = torch.randn(batch_size, self.z_dim).to(self.device)
         recon_x = self.decoder(z)
         return recon_x
-
+    def show(self):
+        """
+        Sample from generator
+        Inputs:
+            batch_size : [int] number of img which you want;
+        Outputs:
+            recon_x : [tensor] reconstruction of x
+        """
+        x, y = torch.meshgrid([torch.arange(-3, 3, 0.5), torch.arange(-3, 3, 0.5)])
+        z = torch.stack((x, y), 2).view(x.shape[0]**2, 2).to(self.device)
+        # z = torch.randn(batch_size, self.z_dim).to(self.device)
+        recon_x = self.decoder(z)
+        # print(recon_x.shape)
+        return recon_x
     def save(self, epoch, checkpoints):
         """
         save model

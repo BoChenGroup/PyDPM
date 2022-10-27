@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c05fedbe-05f1-4c43-a71c-d79b7bfff574" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/pydpm/_model/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/pydpm/_model/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pydpm/_model/_VAE.py" beforeDir="false" afterPath="$PROJECT_DIR$/pydpm/_model/_VAE.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pydpm/example/VAE_demo.py" beforeDir="false" afterPath="$PROJECT_DIR$/pydpm/example/VAE_demo.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,7 +37,7 @@
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
 }]]></component>
-  <component name="RunManager" selected="Python.GAN_demo">
+  <component name="RunManager" selected="Python.VAE_demo">
     <configuration name="DPGDS_Demo" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Pydpm" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -101,8 +103,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.GAN_demo" />
         <item itemvalue="Python.VAE_demo" />
+        <item itemvalue="Python.GAN_demo" />
         <item itemvalue="Python.DPGDS_Demo" />
       </list>
     </recent_temporary>

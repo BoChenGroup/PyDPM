@@ -15,11 +15,12 @@ from pydpm._model._VAE import VAE
 import argparse
 import os
 
+os.makedirs("images", exist_ok=True)
 parser = argparse.ArgumentParser()
 # GPU
 parser.add_argument('--gpu_id', type=int, default=0)
 parser.add_argument("--n_epochs", type=int, default=50, help="number of epochs of training")
-parser.add_argument("--batch_size", type=int, default=128, help="size of the batches")
+parser.add_argument("--batch_size", type=int, default=256, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
 parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
 parser.add_argument("--h_dim1", type=int, default=512, help="dimensionality of the latent space")
@@ -124,4 +125,7 @@ print('sample image,please wait!')
 with torch.no_grad():
     sample = vae.sample(64)
     save_image(sample.view(64,1,28, 28), './images/l_sample_' + '.png')
+    show_image = vae.show()
+    save_image(show_image.view(144, 1, 28, 28), './images/l_show_' + '.png',nrow = 12)
+
 print('complete!!!')
