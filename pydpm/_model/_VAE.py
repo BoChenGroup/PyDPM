@@ -100,9 +100,7 @@ class VAE(nn.Module):
         return recon_x
     def show(self):
         """
-        Sample from generator
-        Inputs:
-            batch_size : [int] number of img which you want;
+        Show the learned latent variables' effect
         Outputs:
             recon_x : [tensor] reconstruction of x
         """
