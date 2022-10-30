@@ -26,3 +26,7 @@ def cosine_simlarity(A, B):
     cos_AB[(np.arange(N), np.arange(N))] = 1
     return cos_AB
 
+def standardization(data):
+    mu = np.mean(data, axis=1, keepdims=True)
+    sigma = np.std(data, axis=1, keepdims=True)
+    return (data - mu) / (sigma + 2.2e-8)
