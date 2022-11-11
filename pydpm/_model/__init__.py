@@ -13,3 +13,4 @@ from ._gpgbn import GPGBN
 from ._mpgbn import MPGBN
 from ._GAN import GAN
 from ._VAE import VAE
+from ._RBM import RBM
