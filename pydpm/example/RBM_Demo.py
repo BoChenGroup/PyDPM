@@ -15,6 +15,7 @@ from torchvision import datasets, transforms
 from torchvision.utils import save_image
 from pydpm._model._RBM import RBM
 
+
 batch_size = 128
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('../data', train=True, download=True,

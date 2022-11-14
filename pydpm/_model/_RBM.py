@@ -104,7 +104,6 @@ class RBM(nn.Module):
             epoch     : [int] train epoch;
             checkpoints : [str] trained model path;
         """
-        '======>>saving'
         torch.save({'epoch': epoch ,
                     'state_dict': self.state_dict()},
                    checkpoints + '_epochs{}.pth'.format(epoch))
