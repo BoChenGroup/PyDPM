@@ -11,6 +11,12 @@ from ._dirbn import DirBN
 from ._dpfa import DPFA
 from ._gpgbn import GPGBN
 from ._mpgbn import MPGBN
+<<<<<<< HEAD
 from ._GAN import GAN
 from ._VAE import VAE
 from ._RBM import RBM
+=======
+from ._whai import WHAI
+from ._vae import VAE
+from ._gan import GAN
+>>>>>>> bc851a082849d7ea682a344f3e11762fb1020a8d

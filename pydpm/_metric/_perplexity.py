@@ -27,8 +27,8 @@ class Perplexity(object):
 
 	def _get(self):
 
-		self.x_hat = self.x_hat / (self.x_hat.sum(0) + realmin)
-		ppl = -1.0 * self.x * np.log(self.x_hat.T + realmin) / self.x.sum()
-		ppl = ppl.sum().exp()
+		self.x_hat = self.x_hat / (np.sum(self.x_hat, axis=0) + realmin)
+		ppl = -1.0 * self.x * np.log(self.x_hat + realmin) / np.sum(self.x)
+		ppl = np.exp(ppl.sum())
 
 		self._PPL = ppl
