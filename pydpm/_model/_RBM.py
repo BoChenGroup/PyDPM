@@ -14,7 +14,6 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 
-
 class RBM(nn.Module):
     def __init__(self, n_vis=784, n_hin=500, k=5):
         """

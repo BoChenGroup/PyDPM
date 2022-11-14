@@ -4,6 +4,7 @@
     <list default="true" id="c05fedbe-05f1-4c43-a71c-d79b7bfff574" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pydpm/_model/_RBM.py" beforeDir="false" afterPath="$PROJECT_DIR$/pydpm/_model/_RBM.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pydpm/_model/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/pydpm/_model/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pydpm/example/RBM_Demo.py" beforeDir="false" afterPath="$PROJECT_DIR$/pydpm/example/RBM_Demo.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
