@@ -52,7 +52,7 @@ More probabilistic models will be further included in pydpm/_model/...
 
 Create a PGBN model:
 ```python
-from pydpm._model import PGBN
+from pydpm.model import PGBN
 
 # create the model and deploy it on gpu or cpu
 model = PGBN([128, 64, 32], device='gpu')
