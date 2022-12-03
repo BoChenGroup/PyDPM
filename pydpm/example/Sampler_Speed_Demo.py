@@ -6,7 +6,7 @@ def getSamplerFun(sampler, distributions):
     """
     get distributions' function by class sampler.
     Inputs:
-        sampler       : sampler class, pydpm._sampler.Basic_Sampler;
+        sampler       : sampler class, pydpm.sampler.Basic_Sampler;
         distributions : [str] list of distributions;
     Outputs:
         funcs         : {str: fun}, dict of distributions' functions;
@@ -173,7 +173,7 @@ def plotComparision(distributions, title, types, *args):
 
 # -----------------test the accuracy --------------------
 if __name__ == "__main__":
-    from pydpm._sampler import Basic_Sampler
+    from pydpm.sampler import Basic_Sampler
     import matplotlib.pyplot as plt
     import time
 

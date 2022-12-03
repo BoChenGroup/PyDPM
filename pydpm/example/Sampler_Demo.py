@@ -4,7 +4,7 @@ import scipy.stats as stats
 from collections import Counter
 import matplotlib.pyplot as plt
 
-from pydpm._sampler import Basic_Sampler
+from pydpm.sampler import Basic_Sampler
 
 def debug_sampler_and_plot():
 
