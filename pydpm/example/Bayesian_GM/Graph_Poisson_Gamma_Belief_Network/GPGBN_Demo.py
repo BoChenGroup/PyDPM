@@ -15,11 +15,11 @@ import os
 import numpy as np
 import scipy.io as sio
 
-from pydpm.model import GPGBN
 from pydpm.metric import ACC
-from pydpm.utils import cosine_simlarity
+from pydpm.model import GPGBN
 from pydpm.dataloader.image_data import tensor_transforms
 from pydpm.dataloader.graph_data import graph_from_data, graph_from_edges
+from pydpm.utils import cosine_simlarity
 
 from torchvision import datasets, transforms
 from torch_geometric.datasets import Planetoid
@@ -43,9 +43,9 @@ test_dataset = datasets.MNIST(root='../../dataset/mnist/', train=False, download
 
 # transform dataset and reshape the dataset into [batch_size, feature_num]
 train_data = tensor_transforms(train_dataset.data, transform)
-train_data = train_data.permute(1, 0, 2).reshape(len(train_dataset), -1)# len(train_dataset, 28*28)
+train_data = train_data.permute([1, 2, 0]).reshape(len(train_dataset), -1)  # len(train_dataset, 28*28)
 test_data = tensor_transforms(test_dataset.data, transform)
-test_data = test_data.permute(1, 0, 2).reshape(len(test_dataset), -1)
+test_data = test_data.permute([1, 2, 0]).reshape(len(test_dataset), -1)
 train_label = train_dataset.train_labels
 test_label = test_dataset.test_labels
 
@@ -61,7 +61,7 @@ graph = graph_from_data(train_data.T, 0.5, binary=False)
 # create the model and deploy it on gpu or cpu
 model = GPGBN([128, 64, 32], device='gpu')
 model.initial(train_data)
-train_local_params = model.train(100, train_data, graph)
+train_local_params = model.train(train_data, graph, iter_all=100)
 
 # save the model after training
 model.save()
