@@ -5,7 +5,7 @@
 import copy
 import pickle
 import numpy as np
-
+from typing import Dict, Iterable, Optional, List
 from scipy.sparse import csr_matrix, isspmatrix
 from collections import Counter, OrderedDict
 
@@ -15,8 +15,43 @@ import torch.nn.utils.rnn as rnn
 import torchtext.datasets
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.dataset import random_split
+from torchtext.vocab import Vocab, vocab
 
 
+def build_vocab_from_iterator(iterator: Iterable, min_freq: int = 1, specials: Optional[List[str]] = None, special_first: bool = True, stop_words: Optional[List[str]] = None, max_tokens: Optional[int] = None) -> Vocab:
+    """
+    Build a Vocab from an iterator.
+
+    Args:
+        iterator: Iterator used to build Vocab. Must yield list or iterator of tokens.
+        min_freq: The minimum frequency needed to include a token in the vocabulary.
+        specials: Special symbols to add. The order of supplied tokens will be preserved.
+        special_first: Indicates whether to insert symbols at the beginning or at the end.
+        max_tokens: If provided, creates the vocab from the `max_tokens - len(specials)` most frequent tokens.
+
+    Returns:
+        torchtext.vocab.Vocab: A `Vocab` object
+    """
+
+    counter = Counter()
+    stop_words = stop_words or []
+    for tokens in iterator:
+        if tokens not in stop_words:
+            counter.update(tokens)
+
+    specials = specials or []
+
+    # First sort by descending frequency, then lexicographically
+    sorted_by_freq_tuples = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
+
+    if max_tokens is None:
+        ordered_dict = OrderedDict(sorted_by_freq_tuples)
+    else:
+        assert len(specials) < max_tokens, "len(specials) >= max_tokens, so the vocab will be entirely special tokens."
+        ordered_dict = OrderedDict(sorted_by_freq_tuples[:max_tokens - len(specials)])
+
+    word_vocab = vocab(ordered_dict, min_freq=min_freq, specials=specials, special_first=special_first)
+    return word_vocab
 
 class Text_Processer(object):
     def __init__(self, tokenizer=None, vocab=None):
@@ -36,34 +71,44 @@ class Text_Processer(object):
     def word2index(self, word):
         return self.vocab[word]
 
-    def file_from_iter(self, iter: list, tokenizer=None, stop_words=None):
+    def file_from_iter(self, iter: list, tokenizer=None):
         '''
-            Return: tokens
+        Inputs:
+            iter        : Iterator of dataset
+            tokenizer   : tokenizer
+        Outputs:
+            files       : [list] Files from iterator
+            file_labels : [list] Corresponding labels from iterator
         '''
         files = []
         file_labels = []
 
-        if stop_words:
-            for label, data in iter:
-                tokens = tokenizer(data)
-                file = []
-                for token in tokens:
-                    if token not in stop_words:
-                        file.append(token)
-                files.append(tokens)
-                file_labels.append(label)
-        else:
-            for label, data in iter:
-                tokens = tokenizer(data)
-                file = tokens
-                files.append(file)
-                file_labels.append(label)
+        for label, data in iter:
+            tokens = tokenizer(data)
+            file = []
+            for token in tokens:
+                if token not in self.vocab:
+                    file.append(token)
+            files.append(tokens)
+            file_labels.append(label)
 
         return files, file_labels
 
     def word_index_from_file(self, files: list, file_labels: list, min_tokens: int=0, to_sparse: bool=False):
         '''
-            Return
+        Inputs:
+            files       : [list] Files
+            file_labels : [list] Corresponding labels
+            min_tokens  : [int] Minimal number of tokens in each sample
+            to_sparse:  : [bool] Whether return the output in sparse form
+        Ouputs:
+            if to_sparse:
+                word_indices    : [list] Word-index of the total each sample
+                batch_labels    : [list] Corresponding labels of each sample
+            else:
+                [sparse_data, sparse_shape] : Sparse data and its shape
+                batch_labels                : [list] Corresponding labels of each sample
+
         '''
         if not to_sparse:
             word_indices = []
@@ -128,21 +173,24 @@ class Text_Processer(object):
 
     def bow_from_file(self, files: list, file_labels: list, min_tokens: int=0, to_sparse=False):
         '''
-            Input: tokens
+        Inputs:
+            files       : [list] Files
+            file_labels : [list] Corresponding labels
+            min_tokens  : [int] Minimal number of tokens in each sample
+            to_sparse:  : [bool] Whether return the output in sparse form
         '''
         if not to_sparse:
             batch_bows = []
             batch_labels = []
             for file, file_label in zip(files, file_labels):
-                token_index = self.vocab(file)
-                num_tokens = len(token_index)
+                num_tokens = len(np.unique(file))
                 if num_tokens < min_tokens:
                     continue
-
                 file_bow = np.zeros(len(self.vocab))
                 token_counts = Counter(file)
                 for token in token_counts.keys():
-                    file_bow[self.vocab[token]] = token_counts[token]
+                    if token in self.vocab:
+                        file_bow[self.vocab[token]] = token_counts[token]
 
                 batch_bows.append(file_bow)
                 batch_labels.append(file_label)
@@ -170,7 +218,7 @@ class Text_Processer(object):
             batch_bows.append(file_bow)
             batch_labels.append(file_label)
 
-        return torch.tensor(batch_bows, dtype=torch.long), torch.tensor(batch_labels, dtype=torch.long)
+        return torch.tensor(batch_data, dtype=torch.long), torch.tensor(batch_labels, dtype=torch.long)
 
     def collate_sequence_batch(self, batch_data: list):
         '''
@@ -186,7 +234,7 @@ class Text_Processer(object):
 
         batch_word_indices = rnn.pad_sequence(word_indices, padding_value=self.vocab['<pad>'], batch_first=True)
 
-        return batch_word_indices, torch.tensor(batch_labels, torch.long), torch.tensor(batch_lens, torch.long)
+        return batch_word_indices, batch_labels, batch_lens
 
 
 # ======================================== CustomDataset ======================================================== #
@@ -266,24 +314,40 @@ class CustomDataset(Dataset):
             elif mode == 'test':
                 self.data = data['test_bow'].T
                 self.label = data['test_label']
-        # try:
-        #     self.tfidf = tfidf(self.dataset)
-        # except:
-        #     self.dataset = self.dataset.toarray()
-        #     self.tfidf = tfidf(self.dataset)
+        try:
+            self.tfidf = self.tfidf(self.data)
+        except:
+            self.dataset = self.data.toarray()
+            self.tfidf = self.tfidf(self.dataset)
         if self.dataname == 'dp':
             self.tfidf = self.data
 
         elif self.dataname == 'rcv2':
             self.data = self.data.toarray()
-            self.tfidf = tfidf(self.data)
+            self.tfidf = self.tfidf(self.data)
 
         else:
             try:
-                self.tfidf = tfidf(self.data)
+                self.tfidf = self.tfidf(self.data)
             except:
                 self.data = self.data.toarray()
-                self.tfidf = tfidf(self.data)
+                self.tfidf = self.tfidf(self.data)
+
+    def tfidf(self, bow):
+        if isspmatrix(bow):
+            bow = bow.todense()
+
+        def tf(bow):
+            # tf_{j,v} = n_{j,v} / n_{j,.}
+            return bow / (np.sum(bow, axis=1, keepdims=True) + 1e-10)  ### n,v
+
+        def idf(bow):
+            # idf_{v} = log(N / n_{v})
+            N = bow.shape[0]
+            bow_binary = np.array(bow, dtype=np.bool) * 1.0
+            return np.log(1.0 * N / (np.sum(bow_binary, axis=0, keepdims=True) + 1e-10) + 1e-10)  ### v,1
+
+        return tf(1.0 * bow) * idf(1.0 * bow)  # n,v
 
     def __getitem__(self, index):
         if self.dataname == 'dp':
