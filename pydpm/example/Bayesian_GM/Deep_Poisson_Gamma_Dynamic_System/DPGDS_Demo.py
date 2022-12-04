@@ -28,9 +28,9 @@ test_dataset = datasets.MNIST(root='../../dataset/mnist/', train=False, download
 
 # transform dataset and reshape the dataset into [batch_size, feature_num]
 train_data = tensor_transforms(train_dataset.data, transform)
-train_data = train_data.permute(1, 0, 2).reshape(len(train_dataset), -1)# len(train_dataset, 28*28)
+train_data = train_data.permute(1, 2, 0).reshape(len(train_dataset), -1)# len(train_dataset, 28*28)
 test_data = tensor_transforms(test_dataset.data, transform)
-test_data = test_data.permute(1, 0, 2).reshape(len(test_dataset), -1)
+test_data = test_data.permute(1, 2, 0).reshape(len(test_dataset), -1)
 train_label = train_dataset.train_labels
 test_label = test_dataset.test_labels
 
@@ -41,11 +41,11 @@ train_label = train_label.numpy()[:999]
 test_label = test_label.numpy()[:999]
 
 # create the model and deploy it on gpu or cpu
-model = DPGDS([200, 100, 50], 'gpu')
-model.initial(train_data)
-train_local_params = model.train(200, train_data)
-train_local_params = model.test(200, train_data)
-test_local_params = model.test(200, test_data)
+model = DPGDS([200, 100, 50], 'gpu')  # topics of each layers
+model.initial(train_data)  # use the shape of train_data to initialize the params of model
+train_local_params = model.train(train_data, iter_all=200)
+train_local_params = model.test(train_data, iter_all=200)
+test_local_params = model.test(test_data, iter_all=200)
 
 # evaluate the model with classification accuracy
 # the demo accuracy can achieve 0.8519
