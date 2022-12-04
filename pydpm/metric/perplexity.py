@@ -16,8 +16,8 @@ class Perplexity(object):
 	def __init__(self, x, x_hat):
 		'''
 		Inputs:
-			x: [float] np.ndarray, V*N_test matrix, the observations for test_data
-			x_hat: [float] np.ndarray, V*N_reconstruct matrix
+			x: [float] np.ndarray, N*V test matrix, the observations for test_data
+			x_hat: [float] np.ndarray, N*V reconstruct matrix
 		Outputs:
 			PPL: [float], the perplexity score
 		'''
@@ -31,7 +31,7 @@ class Perplexity(object):
 
 	def _get(self):
 
-		self.x_hat = self.x_hat / (np.sum(self.x_hat, axis=0) + realmin)
+		self.x_hat = self.x_hat / (np.sum(self.x_hat, axis=1, keepdims=True) + realmin)
 		ppl = -1.0 * self.x * np.log(self.x_hat + realmin) / np.sum(self.x)
 		ppl = np.exp(ppl.sum())
 
