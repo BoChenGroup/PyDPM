@@ -18,11 +18,10 @@ import _pickle as cPickle
 
 from pydpm.metric import ACC
 from pydpm.model import CPFA
-from pydpm.dataloader.text_data import Text_Processer
+from pydpm.dataloader.text_data import Text_Processer, build_vocab_from_iterator
 
 from torch.utils.data import Dataset, DataLoader
 from torchtext.data.utils import get_tokenizer
-from torchtext.vocab import build_vocab_from_iterator, GloVe
 from torchtext.datasets import AG_NEWS
 
 
@@ -36,8 +35,8 @@ vocab.set_default_index(vocab['<unk>'])
 text_processer = Text_Processer(tokenizer=tokenizer, vocab=vocab)
 
 # Get train/test label and data_file(tokens) from data_iter and convert them into clean file
-train_files, train_labels = text_processer.file_from_iter(train_iter, tokenizer=tokenizer, stop_words=None)
-test_files, test_labels = text_processer.file_from_iter(test_iter, tokenizer=tokenizer, stop_words=None)
+train_files, train_labels = text_processer.file_from_iter(train_iter, tokenizer=tokenizer)
+test_files, test_labels = text_processer.file_from_iter(test_iter, tokenizer=tokenizer)
 
 # Take part of dataset for convenience
 train_idxs = np.arange(3000)
@@ -67,7 +66,7 @@ test_local_params = model.test(test_sparse_batch, is_sparse=True, iter_all=100)
 train_theta = np.sum(np.sum(train_local_params.W_nk, axis=3), axis=2).T
 test_theta = np.sum(np.sum(test_local_params.W_nk, axis=3), axis=2).T
 
-# Score of test dataset's Theta: 0.682
+# Score of test dataset's Theta: 0.628
 results = ACC(train_theta, test_theta, train_labels, test_labels, 'SVM')
 model.save()
 
@@ -87,54 +86,6 @@ model.save()
 # data_test_label = np.array(DATA['Test_Label'])
 # data_test_split = DATA['Test_Word_Split']
 # data_test_list_index = DATA['Test_Word2Index']
-# data_value = 25
-#
-# batch_len_tr, batch_rows_tr, batch_cols_tr, batch_file_index_tr, batch_value_tr, batch_label_tr = process_sparse_data(data_train_list_index, data_train_label)
-# batch_len_te, batch_rows_te, batch_cols_te, batch_file_index_te, batch_value_te, batch_label_te = process_sparse_data(data_test_list_index, data_test_label)
-#
-# # create the model and deploy it on gpu or cpu
-# model = CPFA(200, 'gpu')
-# # mode 1, dense input
-# model.initial([batch_file_index_tr, batch_rows_tr, batch_cols_tr, batch_value_tr], [len(data_train_list) - delete_count, DATA['Vab_Size'], np.max(batch_len_tr)])  # use the shape of train_data to initialize the params of model
-# train_local_params = model.train(500, [batch_file_index_tr, batch_rows_tr, batch_cols_tr, batch_value_tr], [len(data_train_list) - delete_count, DATA['Vab_Size'], np.max(batch_len_tr)])
-# train_local_params = model.test(500, [batch_file_index_tr, batch_rows_tr, batch_cols_tr, batch_value_tr], [len(data_train_list) - delete_count, DATA['Vab_Size'], np.max(batch_len_tr)])
-# test_local_params = model.test(500, [batch_file_index_te, batch_rows_te, batch_cols_te, batch_value_te], [len(data_test_list) - delete_count, DATA['Vab_Size'], np.max(batch_len_te)])
-#
-# train_theta = np.sum(np.sum(train_local_params.W_nk, axis=3), axis=2).T
-# test_theta = np.sum(np.sum(test_local_params.W_nk, axis=3), axis=2).T
-#
-# train_theta[np.where(np.isinf((train_theta)))] = 0
-#
-# # Score of test dataset's Theta: 0.682
-# results = ACC(train_theta, test_theta, batch_label_tr, batch_label_te, 'SVM')
-# model.save()
 
-
-
-# mode 2, sparse input
-# X_file_index, X_rows, X_cols = np.where(train_data)
-# X_value = train_data[X_file_index, X_rows, X_cols]
-# N, V, L = train_data.shape
-# model = CPFA(kernel=100)
-# model.initial([[X_file_index, X_rows, X_cols, X_value], [N, V, L]], dtype='sparse')
-# model.train(iter_all=100)
-
-# #pgcn demo
-# train_data = sio.loadmat("./mnist_gray.mat")
-# dataset = np.array(np.ceil(train_data['train_mnist'] * 5), order='C')[:,:999]  # 0-1
-# dataset=np.transpose(dataset)
-# dataset = np.reshape(dataset, [dataset.shape[0], 28, 28])
-# #GPU only
-#
-# #dense input
-# model=CPFA(kernel=100)
-# model.initial(dataset)
-# model.train(iter_all=100)
-#
-# #sparse input
-# X_file_index, X_rows, X_cols = np.where(dataset)
-# X_value = dataset[X_file_index, X_rows, X_cols]
-# N,V,L = dataset.shape
-# model = CPFA(kernel=100)
-# model.initial([[X_file_index, X_rows, X_cols, X_value], [N,V,L]], dtype='sparse')
-# model.train(iter_all=100)
+# train_sparse_batch, train_labels = text_processer.word_index_from_file(data_train_list_index, data_train_label, to_sparse=True)
+# test_sparse_batch, test_labels = text_processer.word_index_from_file(data_test_list_index, data_test_label, to_sparse=True)
