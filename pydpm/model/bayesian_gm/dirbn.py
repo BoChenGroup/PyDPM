@@ -77,7 +77,7 @@ class DirBN(Basic_Model):
 
         self._hyper_params.Phi_eta = 0.05
 
-    def train(self, iter_all: int, data: np.ndarray, is_train: bool = True):
+    def train(self, data: np.ndarray, iter_all: int, is_train: bool = True, is_initial_local: bool=True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of sampling
@@ -103,32 +103,33 @@ class DirBN(Basic_Model):
         self._model_setting.Iteration = iter_all
 
         # initial local parameters
-        self.local_params.Theta = np.zeros((self._model_setting.K[0], self._model_setting.N)).astype(int)
+        if is_initial_local or not hasattr(self.local_params, 'Theta'):
+            self.local_params.Theta = np.zeros((self._model_setting.K[0], self._model_setting.N)).astype(int)
 
-        # initial _hyper_params
-        self._hyper_params.DirBN_para = self._init_DirBN(self._model_setting.K, self._model_setting.V, self._hyper_params.Phi_eta)
-        self._hyper_params.theta_para = self._init_theta(self._model_setting.K[0], self._model_setting.N)
+            # initial _hyper_params
+            self._hyper_params.DirBN_para = self._init_DirBN(self._model_setting.K, self._model_setting.V, self._hyper_params.Phi_eta)
+            self._hyper_params.theta_para = self._init_theta(self._model_setting.K[0], self._model_setting.N)
 
-        self.data = dict()
-        self.data['train_ws'] = []
-        self.data['train_ds'] = []
-        for n in range(self._model_setting.N):
-            for v in range(self._model_setting.V):
-                self.data['train_ws'].extend([v] * int(data[v, n]))
-                self.data['train_ds'].extend([n] * int(data[v, n]))
-        self.data['train_ws'] = np.array(self.data['train_ws'])
-        self.data['train_ds'] = np.array(self.data['train_ds'])
+            self.data = dict()
+            self.data['train_ws'] = []
+            self.data['train_ds'] = []
+            for n in range(self._model_setting.N):
+                for v in range(self._model_setting.V):
+                    self.data['train_ws'].extend([v] * int(data[v, n]))
+                    self.data['train_ds'].extend([n] * int(data[v, n]))
+            self.data['train_ws'] = np.array(self.data['train_ws'])
+            self.data['train_ds'] = np.array(self.data['train_ds'])
 
-        self.zs = np.random.randint(self._model_setting.K[0], size=int(np.sum(data)))  # theme of words
-        # self.zs_ds, self.local_params.Theta, theme frequency of docs
-        if is_train:
-            self.global_params.Phi = np.zeros((self._model_setting.K[0], self._model_setting.V)).astype(int)  # phi: distribution of words
-        for i in range(len(self.zs)):
-            self.local_params.Theta[self.zs[i], self.data['train_ds'][i]] += 1
-            if is_train:  # when train
-                self.global_params.Phi[self.zs[i], self.data['train_ws'][i]] += 1  # word frequency, not distribution
+            self.zs = np.random.randint(self._model_setting.K[0], size=int(np.sum(data)))  # theme of words
+            # self.zs_ds, self.local_params.Theta, theme frequency of docs
+            if is_train:
+                self.global_params.Phi = np.zeros((self._model_setting.K[0], self._model_setting.V)).astype(int)  # phi: distribution of words
+            for i in range(len(self.zs)):
+                self.local_params.Theta[self.zs[i], self.data['train_ds'][i]] += 1
+                if is_train:  # when train
+                    self.global_params.Phi[self.zs[i], self.data['train_ws'][i]] += 1  # word frequency, not distribution
 
-        self.n_dot_k = np.sum(self.local_params.Theta, 1)  # K, frequency of themes
+            self.n_dot_k = np.sum(self.local_params.Theta, 1)  # K, frequency of themes
 
         for iter in range(self._model_setting.Iteration):
             start_time = time.time()
@@ -153,7 +154,7 @@ class DirBN(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, iter_all: int, data: np.ndarray):
+    def test(self, data: np.ndarray, iter_all: int, is_initial_local: bool=True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of gibbs sampling
@@ -163,7 +164,7 @@ class DirBN(Basic_Model):
             local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        local_params = self.train(iter_all, data, is_train=False)
+        local_params = self.train(data, iter_all=iter_all, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 

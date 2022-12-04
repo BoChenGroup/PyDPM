@@ -91,7 +91,7 @@ class PGBN(Basic_Model):
             self.global_params.Phi[t] = self.global_params.Phi[t] / np.maximum(realmin, self.global_params.Phi[t].sum(0))
 
 
-    def train(self, iter_all: int, data:np.ndarray, is_train: bool = True):
+    def train(self, data:np.ndarray, iter_all: int=1, is_train: bool = True, is_initial_local: bool=True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of gibbs sampling
@@ -117,13 +117,14 @@ class PGBN(Basic_Model):
         self._model_setting.Iteration = iter_all
 
         # initial local params
-        self.local_params.Theta = []
-        self.local_params.c_j = []
-        for t in range(self._model_setting.T):  # from layer 1 to T
-            self.local_params.Theta.append(np.ones([self._model_setting.K[t], self._model_setting.N]) / self._model_setting.K[t])
+        if is_initial_local or not hasattr(self.local_params, 'Theta') or not hasattr(self.local_params, 'c_j') or not hasattr(self.local_params, 'p_j'):
+            self.local_params.Theta = []
+            self.local_params.c_j = []
+            for t in range(self._model_setting.T):  # from layer 1 to T
+                self.local_params.Theta.append(np.ones([self._model_setting.K[t], self._model_setting.N]) / self._model_setting.K[t])
+                self.local_params.c_j.append(np.ones([1, self._model_setting.N]))
             self.local_params.c_j.append(np.ones([1, self._model_setting.N]))
-        self.local_params.c_j.append(np.ones([1, self._model_setting.N]))
-        self.local_params.p_j = self._calculate_pj(self.local_params.c_j, self._model_setting.T)
+            self.local_params.p_j = self._calculate_pj(self.local_params.c_j, self._model_setting.T)
 
         Xt_to_t1 = []
         WSZS = []
@@ -178,7 +179,7 @@ class PGBN(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, iter_all: int, data: np.ndarray):
+    def test(self, data: np.ndarray, iter_all: int=1, is_initial_local=True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of gibbs sampling
@@ -188,7 +189,7 @@ class PGBN(Basic_Model):
             local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        local_params = self.train(iter_all, data, is_train=False)
+        local_params = self.train(data, iter_all=iter_all, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 

@@ -80,7 +80,7 @@ class LDA(Basic_Model):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of gibbs sampling
-            dataset       : [np.ndarray] V*N matrix, N bag-of-words vectors with a vocabulary of length V
+            dataset    : [np.ndarray] V*N matrix, N bag-of-words vectors with a vocabulary of length V
             is_train   : [bool] True or False, whether to update the global params in the probabilistic model
 
         Attributes:
@@ -108,9 +108,11 @@ class LDA(Basic_Model):
             start_time = time.time()
 
             ZSDS, WSZS = self._sampler.multi_aug(data, self.global_params.Phi, self.local_params.Theta)
+
             # update local params
-            if iter <= 50:
-                self.local_params.Theta = self._sampler.gamma(ZSDS + np.repeat(self._hyper_params.Theta_r_k, self._model_setting.N, axis=1), 0.5)
+            if self._model_setting.device == 'cpu':
+                for i in range(ZSDS.shape[1]):
+                    self.local_params.Theta[:, i] = np.transpose(self._sampler.dirichlet(np.transpose(ZSDS[:, i] + 50 / self._model_setting.K)))
             else:
                 self.local_params.Theta = np.transpose(self._sampler.dirichlet(np.transpose(ZSDS + 50 / self._model_setting.K)))
 

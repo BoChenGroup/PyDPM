@@ -87,7 +87,7 @@ class PGDS(Basic_Model):
         self._hyper_params.eta0 = 0.1
         self._hyper_params.epilson0 = 0.1
 
-    def train(self, iter_all: int, data: np.ndarray, is_train: bool = True):
+    def train(self, data: np.ndarray, iter_all: int=1, is_train: bool = True, is_initial_local: bool=True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of gibbs sampling
@@ -110,10 +110,10 @@ class PGDS(Basic_Model):
         assert type(data) is np.ndarray, 'Data type error: the input dataset should be a 2-D np.ndarray'
 
         self._model_setting.T = data.shape[1]
-
-        self.local_params.Theta = np.ones((self._model_setting.K, self._model_setting.T)) / self._model_setting.K
-        self.local_params.Zeta = np.zeros((self._model_setting.T + 1, 1))
-        self.local_params.delta = np.ones((self._model_setting.T, 1))
+        if is_initial_local or not hasattr(self.local_params, 'Theta') or not hasattr(self.local_params, 'Zeta') or not hasattr(self.local_params, 'delta'):
+            self.local_params.Theta = np.ones((self._model_setting.K, self._model_setting.T)) / self._model_setting.K
+            self.local_params.Zeta = np.zeros((self._model_setting.T + 1, 1))
+            self.local_params.delta = np.ones((self._model_setting.T, 1))
 
 
         A_VK = np.zeros((self._model_setting.V, self._model_setting.K))
@@ -215,7 +215,7 @@ class PGDS(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, iter_all: int, data: np.ndarray):
+    def test(self, data: np.ndarray, iter_all: int=1, is_initial_local: bool=True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of sampling
@@ -225,7 +225,7 @@ class PGDS(Basic_Model):
             local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        local_params = self.train(iter_all, data, is_train=False)
+        local_params = self.train(data, iter_all=iter_all, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 

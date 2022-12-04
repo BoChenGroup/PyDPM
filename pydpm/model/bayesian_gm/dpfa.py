@@ -73,7 +73,7 @@ class DPFA(Basic_Model):
         self.global_params.Phi = self.global_params.Phi / np.sum(self.global_params.Phi, 0)
 
 
-    def train(self, burnin: int, collection: int, data: np.ndarray, is_train: bool = True):
+    def train(self, data: np.ndarray, burnin: int, collection: int, is_train: bool = True, is_initial_local: bool=True):
         '''
         Inputs:
             burnin     : [int] the iterations of burnin stage
@@ -100,7 +100,8 @@ class DPFA(Basic_Model):
         self._model_setting.collection = collection
 
         # initial local parameters
-        self.local_params.Theta = 1 / self._model_setting.K1 * np.ones((self._model_setting.K1, self._model_setting.N))
+        if is_initial_local or not hasattr(self.local_params, 'Theta'):
+            self.local_params.Theta = 1 / self._model_setting.K1 * np.ones((self._model_setting.K1, self._model_setting.N))
 
         H1train = np.ones((self._model_setting.K1, self._model_setting.N))
 
@@ -301,7 +302,7 @@ class DPFA(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, burnin: int, collection: int, data: np.ndarray):
+    def test(self, data: np.ndarray, burnin: int, collection: int, is_initial_local: bool=True):
         '''
         Inputs:
             burnin     : [int] the iterations of burnin stage
@@ -312,7 +313,7 @@ class DPFA(Basic_Model):
             local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        local_params = self.train(burnin, collection, data, is_train=False)
+        local_params = self.train(data,  burnin=burnin, collection=collection, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 

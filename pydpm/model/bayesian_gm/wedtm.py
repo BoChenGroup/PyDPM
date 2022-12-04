@@ -74,7 +74,7 @@ class WEDTM(Basic_Model):
         self.global_params.Phi = np.zeros((self._model_setting.K[0], self._model_setting.V)).astype(int)
 
 
-    def train(self, embeddings: np.ndarray, S: int, iter_all: int, data: np.ndarray, is_train: bool = True):
+    def train(self, embeddings: np.ndarray, data: np.ndarray, S: int, iter_all: int=1, is_train: bool = True, is_initial_local: bool=True):
         '''
         Inputs:
             embeddings     : [np.ndarray] V*D, word embedding of training words
@@ -102,7 +102,8 @@ class WEDTM(Basic_Model):
         self._model_setting.N = data.shape[1]
 
         # initial local paramters
-        self.local_params.Theta = np.zeros((self._model_setting.K[0], self._model_setting.N)).astype(int)
+        if is_initial_local or not hasattr(self.local_params, 'Theta'):
+            self.local_params.Theta = np.zeros((self._model_setting.K[0], self._model_setting.N)).astype(int)
 
         # WS the trained words' word index
         # DS the trained words' doc index
@@ -135,6 +136,7 @@ class WEDTM(Basic_Model):
         Xt_to_t1 = [[]] * self._model_setting.T
         WSZS = [[]] * self._model_setting.T
         paraGlobal = [{}] * self._model_setting.T
+
         # Initialise beta for t = 1
         beta1, self.beta_para = self._init_beta(self._model_setting.K[0], self._model_setting.V, S, embeddings, beta0)
 
@@ -258,7 +260,7 @@ class WEDTM(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, embeddings: np.ndarray, S: int, iter_all: list, data: np.ndarray):
+    def test(self, embeddings: np.ndarray, data: np.ndarray, S: int, iter_all: int=1, is_initial_local: bool=True):
         '''
         Inputs:
             embeddings     : [np.ndarray] V*D, word embedding of training words
@@ -270,7 +272,7 @@ class WEDTM(Basic_Model):
                 local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        local_params = self.train(embeddings, S, iter_all, data, is_train=False)
+        local_params = self.train(embeddings, data, S, iter_all=iter_all, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 

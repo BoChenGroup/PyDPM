@@ -108,7 +108,7 @@ class DPGDS(Basic_Model):
         self._hyper_params.eta0 = 0.1
         self._hyper_params.epilson0 = 0.1
 
-    def train(self, iter_all: int, data: np.ndarray, is_train: bool = True):
+    def train(self, data: np.ndarray, iter_all: int=1, is_train: bool = True, is_initial_local: bool=True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of sampling
@@ -132,14 +132,15 @@ class DPGDS(Basic_Model):
         self._model_setting.T = data.shape[1]
 
         # local params
-        self.local_params.Theta = [0] * self._model_setting.L
-        self.local_params.delta = [0] * self._model_setting.L
-        self.local_params.Zeta = [0] * self._model_setting.L
+        if is_initial_local or not hasattr(self.local_params, 'Theta') or not hasattr(self.local_params, 'delta')or not hasattr(self.local_params, 'Zeta'):
+            self.local_params.Theta = [0] * self._model_setting.L
+            self.local_params.delta = [0] * self._model_setting.L
+            self.local_params.Zeta = [0] * self._model_setting.L
 
-        for l in range(self._model_setting.L):
-            self.local_params.Theta[l] = np.ones((self._model_setting.K[l], self._model_setting.T)) / self._model_setting.K[l]
-            self.local_params.Zeta[l] = np.zeros((self._model_setting.T + 1, 1))
-            self.local_params.delta[l] = np.ones((self._model_setting.T, 1))
+            for l in range(self._model_setting.L):
+                self.local_params.Theta[l] = np.ones((self._model_setting.K[l], self._model_setting.T)) / self._model_setting.K[l]
+                self.local_params.Zeta[l] = np.zeros((self._model_setting.T + 1, 1))
+                self.local_params.delta[l] = np.ones((self._model_setting.T, 1))
 
         # temporary params
         A_KT = [0] * self._model_setting.L
@@ -321,7 +322,7 @@ class DPGDS(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, iter_all: int, data: np.ndarray):
+    def test(self, data: np.ndarray, iter_all: int=1, is_initial_local :bool=True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of sampling
@@ -331,7 +332,7 @@ class DPGDS(Basic_Model):
             local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        local_params = self.train(iter_all, data, is_train=False)
+        local_params = self.train(data, iter_all=iter_all, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 

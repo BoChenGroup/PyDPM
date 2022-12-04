@@ -54,7 +54,7 @@ class CPGBN(Basic_Model):
         self._sampler = Basic_Sampler(self._model_setting.device)
 
 
-    def initial(self, *args):
+    def initial(self, data:list, is_sparse: bool=False):
         '''
         Inintial the parameters of CPGBN with the input documents
         Inputs:
@@ -83,12 +83,19 @@ class CPGBN(Basic_Model):
                 _hyper_params.c_j_e0    : [float] scalar, parameter in the prior of c_j
                 _hyper_params.c_j_f0    : [float] scalar, parameter in the prior of c_j
         '''
-        assert len(args) <= 2, 'Data type error: the input dataset should be a 3-D np.ndarray or two lists to store the input dataset under ' \
-                              'the sparse representation'
-        if len(args) == 1:
-            _, self._model_setting.V, self._model_setting.L = args[0].shape
-        elif len(args) == 2:
-            _, self._model_setting.V, self._model_setting.L = args[1]
+        # assert len(args) <= 2, 'Data type error: the input dataset should be a 3-D np.ndarray or two lists to store the input dataset under ' \
+        #                       'the sparse representation'
+        # if len(args) == 1:
+        #     _, self._model_setting.V, self._model_setting.L = args[0].shape
+        # elif len(args) == 2:
+        #     _, self._model_setting.V, self._model_setting.L = args[1]
+
+        if not is_sparse:
+            assert len(data) == 1, Warning('The length of dense data list should be 1')
+            _, self._model_setting.V, self._model_setting.L = data[0].shape
+        else:
+            assert len(data) == 2, Warning('The length of sparse data list should be 2')
+            _, self._model_setting.V, self._model_setting.L = data[1]
 
         self._model_setting._structure = Params()
         _structure = self._model_setting._structure
@@ -126,7 +133,7 @@ class CPGBN(Basic_Model):
             self.global_params.Phi[t_phi] = self.global_params.Phi[t_phi] / np.maximum(realmin, self.global_params.Phi[t_phi].sum(0))
 
 
-    def train(self, iter_all: int, *args, **kwargs):
+    def train(self, data:list, is_sparse: bool=False, iter_all: int=1, is_train: bool=True, is_initial_local: bool=True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of gibbs sampling
@@ -155,45 +162,56 @@ class CPGBN(Basic_Model):
                 local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        assert len(args) <= 2, 'Data type error: the input dataset should be a 3-D np.ndarray or two lists to store the input dataset under ' \
-                              'the sparse representation'
-        if len(args) == 1:
-            self._model_setting.N, self._model_setting.V, self._model_setting.L = args[0].shape
-            batch_file_indices, batch_rows, batch_cols = np.where(args[0])
-            batch_values = args[0][batch_file_indices, batch_rows, batch_cols]
-        elif len(args) == 2:
-            self._model_setting.N, self._model_setting.V, self._model_setting.L = args[1]
-            batch_file_indices, batch_rows, batch_cols, batch_values = args[0]
-        if 'is_train' in kwargs:
-            is_train = kwargs['is_train']
+        # assert len(args) <= 2, 'Data type error: the input dataset should be a 3-D np.ndarray or two lists to store the input dataset under ' \
+        #                       'the sparse representation'
+        # if len(args) == 1:
+        #     self._model_setting.N, self._model_setting.V, self._model_setting.L = args[0].shape
+        #     batch_file_indices, batch_rows, batch_cols = np.where(args[0])
+        #     batch_values = args[0][batch_file_indices, batch_rows, batch_cols]
+        # elif len(args) == 2:
+        #     self._model_setting.N, self._model_setting.V, self._model_setting.L = args[1]
+        #     batch_file_indices, batch_rows, batch_cols, batch_values = args[0]
+        # if 'is_train' in kwargs:
+        #     is_train = kwargs['is_train']
+        # else:
+        #     is_train = True
+
+        if not is_sparse:
+            assert len(data) == 1, Warning('The length of dense data list should be 1')
+            self._model_setting.N, self._model_setting.V, self._model_setting.L = data[0].shape
+            batch_file_indices, batch_rows, batch_cols = np.where(data[0])
+            batch_values = data[0][batch_file_indices, batch_rows, batch_cols]
         else:
-            is_train = True
+            assert len(data) == 2, Warning('The length of sparse data list should be 2')
+            batch_rows, batch_cols, batch_file_indices, batch_values = data[0]
+            self._model_setting.N, self._model_setting.V, self._model_setting.L = data[1]
+
         self._model_setting.Iteration = iter_all
+        _structure = self._model_setting._structure
 
         # initial local parameters in convolutional layers
-        _structure = self._model_setting._structure
-        self.local_params.W_nk = np.random.rand(self._model_setting.N, self._model_setting.K[0], _structure.K_S1, _structure.K_S2)
+        if is_initial_local or not hasattr(self.local_params, 'W_nk') or hasattr(self.local_params, 'c_n') or hasattr(self.local_params, 'p_n'):
+            self.local_params.W_nk = np.random.rand(self._model_setting.N, self._model_setting.K[0], _structure.K_S1, _structure.K_S2)
+            self.local_params.c_n = 1 * np.ones([self._model_setting.N])
+            self.local_params.p_n = 1 / (1 + self.local_params.c_n)
 
-        self.local_params.c_n = 1 * np.ones([self._model_setting.N])
-        self.local_params.p_n = 1 / (1 + self.local_params.c_n)
+            # initial local parameters in fully-connected layers
+            self.local_params.Theta = []
+            self.local_params.c_j = []
+            self.local_params.p_j = []
 
-        # initial local parameters in fully-connected layers
-        self.local_params.Theta = []
-        self.local_params.c_j = []
-        self.local_params.p_j = []
-
-        for t_phi in range(self._model_setting.T - 1):
-            self.local_params.Theta.append(np.ones([self._model_setting.K[t_phi+1], self._model_setting.N]) / self._model_setting.K[t_phi+1])
-            self.local_params.c_j.append(1 * np.ones([self._model_setting.N]))
-            if t_phi == 0:
-                tmp = -log_max(1 - self.local_params.p_n)
-            else:
-                tmp = -log_max(1 - self.local_params.p_j[t_phi-1])
-            self.local_params.p_j.append(tmp / (tmp + self.local_params.c_j[t_phi]))
+            for t_phi in range(self._model_setting.T - 1):
+                self.local_params.Theta.append(np.ones([self._model_setting.K[t_phi+1], self._model_setting.N]) / self._model_setting.K[t_phi+1])
+                self.local_params.c_j.append(1 * np.ones([self._model_setting.N]))
+                if t_phi == 0:
+                    tmp = -log_max(1 - self.local_params.p_n)
+                else:
+                    tmp = -log_max(1 - self.local_params.p_j[t_phi-1])
+                self.local_params.p_j.append(tmp / (tmp + self.local_params.c_j[t_phi]))
 
         # gibbs sampling
-        Xt_to_t1 = [0 for i in range(self._model_setting.T - 1)]
-        WSZS = [0 for i in range(self._model_setting.T - 1)]
+        Xt_to_t1 = [0] * (self._model_setting.T - 1) #[0 for i in range(self._model_setting.T - 1)]
+        WSZS = [0] * (self._model_setting.T - 1) #[0 for i in range(self._model_setting.T - 1)]
 
         for iter in range(self._model_setting.Iteration):
             start_time = time.time()
@@ -221,6 +239,7 @@ class CPGBN(Basic_Model):
             self.local_params.c_n = self._sampler.gamma(self._hyper_params.c_n_e0 + np.sum(self._hyper_params.W_nk_gamma))
             self.local_params.c_n = self.local_params.c_n / (self._hyper_params.c_n_f0 + np.sum(np.sum(np.sum(W_nk_aug, axis=3), axis=2), axis=1) + realmin)
             self.local_params.p_n = 1 / (self.local_params.c_n + 1)
+            self.local_params.W_nk = self._sampler.gamma(W_nk_aug + self._hyper_params.W_nk_gamma) / (1 + self.local_params.c_n)[:, np.newaxis, np.newaxis, np.newaxis]
 
             for t_phi in range(self._model_setting.T - 1):
                 if t_phi == self._model_setting.T - 2:
@@ -247,8 +266,6 @@ class CPGBN(Basic_Model):
                 else:
                     self.local_params.Theta[t_phi] = Theta / (-log_max(1 - self.local_params.p_j[t_phi - 1]) + self.local_params.c_j[t_phi])
 
-            self.local_params.W_nk = self._sampler.gamma(W_nk_aug + self._hyper_params.W_nk_gamma) / (1 + self.local_params.c_n)[:, np.newaxis, np.newaxis, np.newaxis]
-
             end_time = time.time()
             stages = 'Training' if is_train else 'Testing'
             print(f'{stages} Stage: ',
@@ -257,7 +274,7 @@ class CPGBN(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, iter_all: int, *args):
+    def test(self, data: list, is_sparse: bool=False, iter_all: int=1, is_initial_local: bool=True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of gibbs sampling
@@ -269,7 +286,7 @@ class CPGBN(Basic_Model):
                 args[1] : [list] the shape of the input document matrix, N*V*L
 
         '''
-        local_params = self.train(iter_all, *args, is_train=False)
+        local_params = self.train(data, is_sparse=is_sparse, iter_all=iter_all, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 
