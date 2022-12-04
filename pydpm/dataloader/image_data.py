@@ -63,17 +63,9 @@ class CustomDataset(Dataset):
         return len(self.image_names)
 
 
-def image_dataloader(divide_into_classes=None, root='../dataset/mnist', data_name='MNIST', mode='train', transform=None, target_transform=None, download=True,
+def image_dataloader(root='../dataset/mnist', transform=None, target_transform=None,
                batch_size=500, shuffle=True, drop_last=True, num_workers=4):
-    if divide_into_classes is None:
-        func = eval('datasets.' + data_name)
-        is_train = True if mode == 'train' else False
-        dataset = func(root=root, train=is_train, transform=transform, target_transform=target_transform, download=download)
-    elif divide_into_classes is True:
-        dataset = datasets.ImageFolder(root=root, transform=transform, target_transform=target_transform)
-    else:
-        dataset = CustomDataset(root, transform=transform, target_transform=target_transform)
+    dataset = CustomDataset(root, transform=transform, target_transform=target_transform)
 
-    print('Dataset of {} has been processed!'.format(data_name))
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, drop_last=drop_last), dataset.classes
 
