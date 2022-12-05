@@ -20,7 +20,7 @@ from tqdm import tqdm
 import os
 
 class GAN(nn.Module):
-    def __init__(self, img_shape, g_z_dim: int=100, g_hid_dims: list=[100, 200, 400, 800], d_hid_dims: list=[200, 100], device='cuda:0'):
+    def __init__(self, img_shape, g_latent_dim=100, z_dim=128, d_latent_dim=512, device='cuda:0'):
         """
         The basic model for GAN
         Inputs:
@@ -33,11 +33,10 @@ class GAN(nn.Module):
         super(GAN, self).__init__()
         setattr(self, '_model_name', 'GAN')
         self.img_shape = img_shape
-        self.g_z_dim = g_z_dim
-        self.g_hid_dims = g_hid_dims
-        self.d_hid_dims = d_hid_dims
-        self.generator = Generator(img_shape=self.img_shape, z_dim=self.g_z_dim, hid_dims=self.g_hid_dims).to(device)
-        self.discriminator = Discriminator(img_shape=self.img_shape, hid_dims=self.d_hid_dims).to(device)
+        self.g_latent_dim = g_latent_dim
+        self.d_latent_dim = d_latent_dim
+        self.generator = Generator(latent_dim = g_latent_dim, z_dim = z_dim, img_shape = self.img_shape).to(device)
+        self.discriminator = Discriminator(latent_dim = d_latent_dim, img_shape = self.img_shape).to(device)
         self.adversarial_loss = torch.nn.BCELoss().to(device)
         self.device = device
         self.Tensor = torch.FloatTensor if self.device == 'cpu' else torch.cuda.FloatTensor
@@ -83,7 +82,7 @@ class GAN(nn.Module):
 
             # Train Generator
             # Sample noise as generator input
-            z = Variable(self.Tensor(np.random.normal(0, 1, (imgs.shape[0], self.g_z_dim))))
+            z = Variable(self.Tensor(np.random.normal(0, 1, (imgs.shape[0], self.g_latent_dim))))
             # Generate a batch of images
             gen_imgs = self.generator(z)
             if (i % g_loss_interval == 0):
@@ -131,7 +130,7 @@ class GAN(nn.Module):
 
 
 class Generator(nn.Module):
-    def __init__(self, img_shape, z_dim: int=100, hid_dims: list=[100, 200, 400, 800]):
+    def __init__(self, img_shape, latent_dim = 100, z_dim = 128):
         """
         The basic model for generator
         Inputs:
@@ -140,10 +139,9 @@ class Generator(nn.Module):
             z_dim : [int] the noise dimension
         """
         super(Generator, self).__init__()
-        self.img_shape = img_shape
+        self.latent_dim = latent_dim
         self.z_dim = z_dim
-        self.hid_dims = hid_dims
-        self.num_layers = len(self.hid_dims)
+        self.img_shape = img_shape
         def block(in_feat, out_feat, normalize=True):
             layers = [nn.Linear(in_feat, out_feat)]
             if normalize:
@@ -151,21 +149,14 @@ class Generator(nn.Module):
             layers.append(nn.LeakyReLU(0.2, inplace=True))
             return layers
 
-        self.Block = nn.ModuleList()
-        for layer_index in range(self.num_layers):
-            if layer_index == 0:
-                latent_layers = block(self.z_dim, self.hid_dims[layer_index], normalize=False)
-            else:
-                latent_layers = block(self.hid_dims[layer_index - 1], self.hid_dims[layer_index])
-            for i in range(len(latent_layers)):
-                self.Block.append(latent_layers[i])
-
         self.model = nn.Sequential(
-            *self.Block,
-            nn.Linear(self.hid_dims[-1], int(np.prod(self.img_shape))),
-            nn.Tanh(),
+            *block(self.latent_dim, self.z_dim, normalize=False),
+            *block(self.z_dim, self.z_dim*2),
+            *block(self.z_dim*2, self.z_dim*4),
+            *block(self.z_dim*4, self.z_dim*8),
+            nn.Linear(self.z_dim*8, int(np.prod(self.img_shape))),
+            nn.Tanh()
         )
-
 
     def forward(self, z):
         """
@@ -182,7 +173,7 @@ class Generator(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, img_shape, hid_dims: list=[512, 256]):
+    def __init__(self, img_shape, latent_dim = 256):
         """
         The basic model for discriminator
         Inputs:
@@ -190,22 +181,14 @@ class Discriminator(nn.Module):
             latent_dim : [int] discriminator latent dimension;
         """
         super(Discriminator, self).__init__()
+        self.latent_dim = latent_dim
         self.img_shape = img_shape
-        self.hid_dims = hid_dims
-        self.num_layers = len(self.hid_dims)
-        self.Block = nn.ModuleList()
-
-        for layer_index in range(self.num_layers):
-            if layer_index == 0:
-                self.Block.append(nn.Linear(int(np.prod(self.img_shape)), self.hid_dims[layer_index]))
-            else:
-                self.Block.append(nn.Linear(self.hid_dims[layer_index - 1], self.hid_dims[layer_index]))
-            self.Block.append(nn.LeakyReLU(0.2, inplace=True))
-
-        self.Block.append(nn.Linear(self.hid_dims[-1], 1))
-
         self.model = nn.Sequential(
-            *self.Block,
+            nn.Linear(int(np.prod(self.img_shape)), self.latent_dim*2),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(self.latent_dim*2, self.latent_dim ),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(self.latent_dim, 1),
             nn.Sigmoid(),
         )
 
