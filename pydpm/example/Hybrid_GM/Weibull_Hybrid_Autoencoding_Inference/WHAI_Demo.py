@@ -35,7 +35,7 @@ parser.add_argument("--gpu_id", type=int, default=0, help="the id of gpu to depl
 
 # dataset
 parser.add_argument("--dataset", type=str, default='AG_NEWS', help="the name of dataset")
-parser.add_argument("--dataset_path", type=str, default='../../dataset', help="the file path of dataset")
+parser.add_argument("--dataset_path", type=str, default='../../../dataset', help="the file path of dataset")
 
 # network settings
 parser.add_argument("--voc_size", type=int, default=20000, help="the length of vocabulary")
@@ -54,7 +54,7 @@ args = parser.parse_args()
 args.device = 'cpu' if not torch.cuda.is_available() else f'cuda:{args.gpu_id}'
 
 # Load dataset (AG_NEWS from torchtext)
-train_iter, test_iter = AG_NEWS('../../../dataset/', split=('train', 'test'))
+train_iter, test_iter = AG_NEWS(args.dataset_path, split=('train', 'test'))
 tokenizer = get_tokenizer("basic_english")
 
 # build vocabulary

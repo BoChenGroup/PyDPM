@@ -1,170 +1,136 @@
 # Author: Xinyang Liu <lxy771258012@163.com>
 # License: BSD-3-Clause
 
+import os
+import copy
+import warnings
 import numpy as np
+import pickle
+from tqdm import tqdm
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
+from torch.utils.data import DataLoader
+from torch.optim import Optimizer
 from torch_geometric.nn import GATConv
 from torch_sparse import SparseTensor
 
-import pickle
-import os
-import copy
-from tqdm import tqdm
+from ...dataloader.graph_data import Graph_Processer
 from ..basic_model import Basic_Model
 from ...sampler import Basic_Sampler
 from ...utils import *
-from ...utils._graph_utils.subgraph import *
+
 import warnings
+
 warnings.filterwarnings("ignore")
 
 class WGAAE(Basic_Model, nn.Module):
-    def __init__(self, K:list, H:list, V, head_num:int, out_dim:int, device='gpu'):
+    def __init__(self, in_dim: int, out_dim: int, z_dims: list, hid_dims: list, num_heads: int, device='gpu'):
+        '''
+        '''
         super(WGAAE, self).__init__()
         setattr(self, '_model_name', 'WGAAE')
 
-        self._model_setting.K = K
-        self._model_setting.H = H
-        self._model_setting.T = len(K)
-        self._model_setting.V = V
-        self.H_dim = [self._model_setting.V] + self._model_setting.H
-        self.head_num = head_num
-        self.out_dim = out_dim
-        self.device = device
-        self._model_setting.device = 'cpu' if device == 'cpu' else 'gpu'
-        self._real_min = torch.tensor(2.2e-10, dtype=torch.float, device=device)
-        self._gamma_prior = torch.tensor(1.0, dtype=torch.float, device=device)
+        self._model_setting.in_dim = in_dim
+        self._model_setting.out_dim = out_dim
+        self._model_setting.z_dims = z_dims
+        self._model_setting.hid_dims = hid_dims
+        self._model_setting.num_layers = len(self._model_setting.z_dims)
+        self._model_setting.num_heads = num_heads
+        self._model_setting.device = device
 
-        assert self._model_setting.device in ['cpu', 'gpu'], 'Device Type Error: the device should be ''cpu'' or ''gpu'''
-        self._sampler = Basic_Sampler(self._model_setting.device)
+        self.real_min = torch.tensor(2.2e-10, device=self._model_setting.device)
 
-        self.wgaae_encoder = WGAAE_Encoder(K, H, V, head_num, out_dim, device)
-        self.wgaae_decoder = WGAAE_Decoder(len(K), self._sampler)
+        self.initial()
 
-    def initial(self, data, cls, task, batch_size=128, n_epochs=100, MBratio=100):
-        self._model_setting.n_epochs = n_epochs
-        self._model_setting.batch_size = batch_size
-        self.cls = cls
-        self.MBratio = MBratio
-        self._real_min_phi = 1e-30
-        self.task = task
-        self.pred_layer = nn.Linear(self.H_dim[-1] + self._model_setting.K[-1], self.cls).to(self.device) # prediction layer: batch_szie * cls_num
+    def initial(self):
 
-        # Prepare for graph
-        self.adj_nodes = data.x.shape[0]
-        self.n_sample_nodes = batch_size
-        self.sp_adj, self.adj = graph_from_edges(edge_index=data.edge_index, n_nodes=self.adj_nodes)
-        self.adj_coo = self.sp_adj.to_scipy(layout='coo')
-        self.adj_sum = self.adj.sum()
-        self.alpha = 2.0
-        self.measure = 'degree'
-        self.prob = get_distribution(self.adj, self.alpha, self.measure)
+        self.graph_processer = Graph_Processer()
+
+        _model_setting = self._model_setting
+        self.wgaae_encoder = WGAAE_Encoder(_model_setting.in_dim, _model_setting.out_dim, _model_setting.z_dims, _model_setting.hid_dims, _model_setting.num_heads, _model_setting.device)
+        self.wgaae_decoder = WGAAE_Decoder(_model_setting.in_dim, _model_setting.z_dims, _model_setting.device)
+        self.global_params = self.whai_decoder.global_params
+        self._hyper_params = self.whai_decoder._hyper_params
 
         self.u = []
-        for layer in range(self._model_setting.T):
-            self.u.append(torch.nn.Parameter(self.weight_init([1, 1])).to(self.device))
-        # Prepare for updating Phi
-        self.global_params.Phi = self.init_phi()
-
-        self.wgaae_encoder.inital(self.global_params.Phi, batch_size)
-        self.wgaae_decoder.inital(self.global_params.Phi, n_epochs, MBratio)
-        self.dropout = torch.nn.Dropout(p=0.4)
+        for layer_index in range(self._model_setting.num_layers):
+            self.u.append(torch.nn.Parameter(torch.empty([1, 1])).to(self.device))
+            nn.init.trunc_normal_(self.u[layer_index].data)
 
 
-    def log_max(self, x):
+    def log_max(self, x: torch.Tensor):
         '''
         return log(x+eps)
         '''
-        return torch.log(torch.max(x, self._real_min.to(self.device)))
+        return torch.log(torch.max(x, self.real_min))
 
+    def bern_possion_link(self, x):
+        return 1.0 - torch.exp(-x)
 
-    def KL_GamWei(self, gam_shape, gam_scale, wei_shape, wei_scale):
-        '''
-        Calculate the KL divergence between Gamma distribution and Weibull distribution
-        '''
-        euler_mascheroni_c = torch.tensor(0.5772, dtype=torch.float32, device=self.device)
-        t1 = torch.log(wei_shape) + torch.lgamma(gam_shape)
-        t2 = - gam_shape * torch.log(wei_scale * gam_scale)
-        t3 = euler_mascheroni_c * (gam_shape / wei_shape - 1) - 1
-        t4 = gam_scale * wei_scale * torch.exp(torch.lgamma(1 + 1 / wei_shape))
-        return (t1 + t2 + t3 + t4).sum(1).mean()
-
-    def init_phi(self):
-        '''
-        Initialize the Phi randomly
-        '''
-        Phi = []
-        for t in range(self._model_setting.T):  # 0:T-1
-            # self.Eta.append((np.ones(self._model_setting.T) * 0.1)[t])
-            if t == 0:
-                Phi.append(0.2 + 0.8 * np.float32(np.random.rand(self._model_setting.V, self._model_setting.K[t])))
-            else:
-                Phi.append(0.2 + 0.8 * np.float32(np.random.rand(self._model_setting.K[t - 1], self._model_setting.K[t])))
-            Phi[t] = Phi[t] / np.maximum(self._real_min.item(), Phi[t].sum(0))  # maximum every elements
-        return Phi
-
-
-    def InnerProductDecoder(self, x, dropout):
+    def inner_product(self, x, dropout=0):
         # default dropout = 0
-        x = F.dropout(x, dropout)
+        x = F.dropout(x, dropout, training=self.training)
         x_t = x.permute(1, 0)
         x = x @ x_t
         # out = x.reshape(-1)
         return x
 
-    def bern_possion_link(self, x):
-        return 1.0 - torch.exp(-x)
+    def KL_GamWei(self, Gam_shape: torch.Tensor, Gam_scale: torch.Tensor, Wei_shape: torch.Tensor, Wei_scale: torch.Tensor):
+        '''
+        Calculate the KL divergence between Gamma distribution and Weibull distribution
+        '''
+        eulergamma = torch.tensor(0.5772, dtype=torch.float32, device=self._model_setting.device)
+        part1 = eulergamma * (1 - 1 / Wei_shape) + self.log_max(Wei_scale / Wei_shape) + 1 + Gam_shape * torch.log(Gam_scale)
+        part2 = -torch.lgamma(Gam_shape) + (Gam_shape - 1) * (self.log_max(Wei_scale) - eulergamma / Wei_shape)
+        part3 = -Gam_scale * Wei_scale * torch.exp(torch.lgamma(1 + 1 / Wei_shape))
+        KL = part1 + part2 + part3
 
-    def weight_init(self, shape):
-        w = torch.empty(shape)
-        return nn.init.trunc_normal_(w, mean=0, std=0.01, a=-0.02, b=0.02)
+        return KL
 
-    def bias_init(self, shape):
-        return nn.init.trunc_normal_(shape, std=0.01)
-
-    def compute_loss(self, data, pred, theta, k, l, is_sample=False, task='prediction'):
+    def loss(self, data, pred, phi, theta, k, l, is_sample=False, task='prediction'):
         # TODO mean or sum on reson_llh and graph_llh
         x = data.x
         theta_concat = None
-        for layer in range(self._model_setting.T):
-            if layer == 0:
-                theta_concat = self.u[layer] * theta[layer]
+        for layer_index in range(self._model_setting.num_layers):
+            if layer_index == 0:
+                theta_concat = self.u[layer_index] * theta[layer_index]
             else:
-                theta_concat = torch.cat([theta_concat, self.u[layer] * theta[layer]], 0)
+                theta_concat = torch.cat([theta_concat, self.u[layer_index] * theta[layer_index]], dim=0)
 
         # Reconstruction likelihood
         x_T = x.permute(1, 0)
-        recon_llh = -1.0 * torch.sum(x_T * self.log_max(torch.matmul(torch.tensor(self.global_params.Phi[0], dtype=torch.float32, device=self.device), theta[0]))\
-                        - torch.matmul(torch.tensor(self.global_params.Phi[0], dtype=torch.float32, device=self.device), theta[0])\
-                        - torch.lgamma(x_T + 1.0))
+        re_x = torch.matmul(torch.tensor(phi[0], dtype=torch.float32, device=self._model_setting.device), theta[0])
+        recon_llh = -1.0 * torch.sum(x_T * self.log_max(re_x) - re_x - torch.lgamma(x_T + 1.0))
 
         # Graph likelihood
         norm = torch.tensor(self.adj_nodes * self.adj_nodes / ((self.adj_nodes * self.adj_nodes - self.adj_sum) * 2)).to(self.device)
         if is_sample:
-            prob = self.prob
-            sample_nodes = np.random.choice(self.adj_nodes, size=self.n_sample_nodes, replace=False, p=prob)
-            sample_adj = sample_subgraph(self.adj_coo, sample_nodes).to(self.device)
-            num_sampled = self.n_sample_nodes
-            sum_sampled = sample_adj.sum() + self._real_min
-            pos_weight = torch.tensor((num_sampled * num_sampled - sum_sampled) / sum_sampled).to(self.device)
-            sub_theta_concat = theta_concat.T[sample_nodes, :]
-            inner_product = self.InnerProductDecoder(sub_theta_concat, dropout=0.).to(self.device)
-            recon_graph = self.bern_possion_link(inner_product).to(self.device)
-            graph_llh = 0.01 * norm * F.binary_cross_entropy_with_logits(recon_graph, sample_adj, pos_weight=pos_weight, reduction='sum')
+            pass
+            # TODO
+            # prob = self.prob
+            # sample_nodes = np.random.choice(self.adj_nodes, size=self.n_sample_nodes, replace=False, p=prob)
+            # sample_adj = self.graph_processer.sample_subgraph(self.adj_coo, sample_nodes).to(self.device)
+            # num_sampled = self.n_sample_nodes
+            # sum_sampled = sample_adj.sum() + self.real_min
+            # pos_weight = torch.tensor((num_sampled * num_sampled - sum_sampled) / sum_sampled).to(self.device)
+            # sub_theta_concat = theta_concat.T[sample_nodes, :]
+            # inner_product = self.InnerProductDecoder(sub_theta_concat, dropout=0.).to(self.device)
+            # recon_graph = self.bern_possion_link(inner_product).to(self.device)
+            # graph_llh = 0.01 * norm * F.binary_cross_entropy_with_logits(recon_graph, sample_adj, pos_weight=pos_weight, reduction='sum')
         else:
             pos_weight = torch.tensor((self.adj_nodes * self.adj_nodes - self.adj_sum) / self.adj_sum).to(self.device)
-            innner_product = self.InnerProductDecoder(theta_concat.T, dropout=0.).to(self.device)
+            innner_product = self.inner_product(theta_concat.T, dropout=0.).to(self.device)
             recon_graph = self.bern_possion_link(innner_product).to(self.device)
             graph_llh = 0.002 * norm * F.binary_cross_entropy_with_logits(recon_graph, self.adj, pos_weight=pos_weight, reduction='sum')
 
         # KL divergence
         # TODO: grad problem
-        # kl_loss = -1.0 * self.KL_GamWei(self._gamma_prior, self._gamma_prior, k[-1], l[-1]).reshape(-1).mean()
+        # kl_loss = -1.0 * self.z_dimsL_GamWei(self._gamma_prior, self._gamma_prior, k[-1], l[-1]).reshape(-1).mean()
         # for layer in range(self._model_setting.T - 1):
-        #     kl_loss += -1.0 * self.KL_GamWei(torch.tensor(self.global_params.Phi[layer + 1], dtype=torch.float32).to(self.device) @ theta[layer + 1], self._gamma_prior, k[layer], l[layer]).reshape(-1).mean()
-
+        #     kl_loss += -1.0 * self.z_dimsL_GamWei(torch.tensor(self.global_params.Phi[layer + 1], dtype=torch.float32).to(self.device) @ theta[layer + 1], self._gamma_prior, k[layer], l[layer]).reshape(-1).mean()
 
         Loss = recon_llh + graph_llh #+ 0 * kl_loss
 
@@ -176,157 +142,158 @@ class WGAAE(Basic_Model, nn.Module):
         return [Loss, recon_llh, graph_llh]
 
 
-    def forward(self, x, edge_index, is_train=False):
-        theta, k, l = self.wgaae_encoder(x, edge_index, is_train)
-        # pred = self.pred_layer(torch.cat([h[-1], theta[-1].permute(1, 0)], 1))
-        pred = theta[-1].permute(1, 0)
+    def train_one_epoch(self, data, optim: Optimizer, epoch_index, args=None, is_train=True, is_subgraph=False):
 
-        return [pred, theta, k, l]
+        if epoch_index == 0:
+            self.num_classes = data.class_num # load from dataset
+            self.pred_layer = nn.Linear(self.in_hid_dims[-1] + self._model_setting.z_dims[-1], self.num_classes).to(self.device)  # prediction layer: batch_szie * cls_num
 
-    def train_full_graph(self, model_opt, data, is_sample, update_phi):
-        self.train()
+            # Prepare for graph
+            self.adj_nodes = data.x.shape[0]
+            self.sp_adj, self.adj = self.graph_processer.graph_from_edges(edge_index=data.edge_index, n_nodes=self.adj_nodes)
+            self.adj_coo = self.sp_adj.to_scipy(layout='coo')
+            self.adj_sum = self.adj.sum()
+            self.alpha = 2.0
+            self.measure = 'degree'
+            self.prob = self.graph_processer.distribution_from_graph(self.adj, self.alpha, self.measure)
 
-        model_opt.zero_grad()
-        [pred, theta, k, l] = self.forward(data.x, data.edge_index, is_train=True)
+        if is_subgraph:
+            pass
+        else:
+            self.train_full_graph(data, optim, epoch_index, args, is_train=is_train)
+
+    def train_full_graph(self, data, optim: Optimizer, epoch_index, args=None, is_train=True):
+        if is_train:
+            self.train()
+        else:
+            self.eval()
+
+        theta, k, l = self.wgaae_encoder(data.x, data.edge_index, is_train=True)
+        pred = theta[-1].permute(1, 0),
         # pred: [N, cls], theta: [K, N]
-        Loss = self.compute_loss(data, pred, theta, k, l, is_sample, task=self.task)
-        [loss, recon_llh, graph_llh] = Loss
+        loss, recon_llh, graph_llh = self.loss(data, pred, theta, k, l, args.is_sample, task=args.task)
 
-        if update_phi:
-            self.global_params.Phi = self.wgaae_decoder(data.x, theta)
-            self.wgaae_encoder.phi = self.global_params.Phi
+        if is_train:
+            self.global_params.Phi = self.wgaae_decoder.update_phi(data.x, theta)
 
+        optim.zero_grad()
         loss.backward()
-        model_opt.step()
+        optim.step()
 
-        for layer in range(self._model_setting.T):
-            theta[layer] = tensor(theta[layer], dtype=torch.float, device=self.device)
+        for layer_index in range(self._model_setting.num_layers):
+            theta[layer_index] = torch.tensor(theta[layer_index], dtype=torch.float, device=self.device)
 
         return [pred, theta], [loss, recon_llh, graph_llh]
 
-    def train_sub_graph(self, model_opt, dataloader):
-        # TODO
-        pass
-
-
-    def test_full_graph(self, data):
-        self.eval()
-        with torch.no_grad():
-            [pred, theta, _, _] = self.forward(data.x, data.edge_index, is_train=False)
-
-        return [pred, theta]
-
-    def test_sub_grpah(self, dataloader):
-        # TODO
-        pass
-
-    def load(self, checkpoint_path: str, directory_path: str):
-        '''
-        Load the model parameters from the checkpoint and the specified directory.
-        Inputs:
-            model_path : [str] the path to load the model.
-
-        '''
-        assert os.path.exists(checkpoint_path), 'Path Error: can not find the path to load the checkpoint'
-        assert os.path.exists(directory_path), 'Path Error: can not find the path to load the directory'
-
-        # load parameters of neural network
-        checkpoint = torch.load(checkpoint_path)
-        self.load_state_dict(checkpoint['state_dict'])
-
-        # load parameters of basic model
-        model = np.load(directory_path, allow_pickle=True).item()
-        for params in ['global_params', 'local_params', '_model_setting', '_hyper_params']:
-            if params in model:
-                setattr(self, params, model[params])
-
-    def save(self, model_path: str = '../save_models'):
-        '''
-        Save the model to the checkpoint the specified directory.
-        Inputs:
-            model_path : [str] the path to save the model, default '../save_models/WGAAE.npy' and '../save_models/WGAAE.pth'
-        '''
-        # create the trained model path
-        if not os.path.isdir(model_path):
-            os.mkdir(model_path)
-
-        # save parameters of neural network
-        torch.save({'state_dict': self.state_dict()}, model_path + '/' + self._model_name + '.pth')
-        print('parameters of neural network have been saved by ' + model_path + '/' + self._model_name + '.pth')
-
-        # save parameters of basic model
-        model = {}
-        for params in ['global_params', 'local_params', '_model_setting', '_hyper_params']:
-            if params in dir(self):
-                model[params] = getattr(self, params)
-
-        np.save(model_path + '/' + self._model_name + '.npy', model)
-        print('parameters of basic model have been saved by ' + model_path + '/' + self._model_name + '.npy')
+    # def train_sub_graph(self, model_opt, dataloader):
+    #     # TODO
+    #     pass
+    #
+    # def test_full_graph(self, data):
+    #     self.eval()
+    #     with torch.no_grad():
+    #         [pred, theta, _, _] = self.forward(data.x, data.edge_index, is_train=False)
+    #
+    #     return [pred, theta]
+    #
+    # def test_sub_grpah(self, dataloader):
+    #     # TODO
+    #     pass
+    #
+    # def load(self, checkpoint_path: str, directory_path: str):
+    #     '''
+    #     Load the model parameters from the checkpoint and the specified directory.
+    #     Inputs:
+    #         model_path : [str] the path to load the model.
+    #
+    #     '''
+    #     assert os.path.exists(checkpoint_path), 'Path Error: can not find the path to load the checkpoint'
+    #     assert os.path.exists(directory_path), 'Path Error: can not find the path to load the directory'
+    #
+    #     # load parameters of neural network
+    #     checkpoint = torch.load(checkpoint_path)
+    #     self.load_state_dict(checkpoint['state_dict'])
+    #
+    #     # load parameters of basic model
+    #     model = np.load(directory_path, allow_pickle=True).item()
+    #     for params in ['global_params', 'local_params', '_model_setting', '_hyper_params']:
+    #         if params in model:
+    #             setattr(self, params, model[params])
+    #
+    # def save(self, model_path: str = '../save_models'):
+    #     '''
+    #     Save the model to the checkpoint the specified directory.
+    #     Inputs:
+    #         model_path : [str] the path to save the model, default '../save_models/WGAAE.npy' and '../save_models/WGAAE.pth'
+    #     '''
+    #     # create the trained model path
+    #     if not os.path.isdir(model_path):
+    #         os.mkdir(model_path)
+    #
+    #     # save parameters of neural network
+    #     torch.save({'state_dict': self.state_dict()}, model_path + '/' + self._model_name + '.pth')
+    #     print('parameters of neural network have been saved by ' + model_path + '/' + self._model_name + '.pth')
+    #
+    #     # save parameters of basic model
+    #     model = {}
+    #     for params in ['global_params', 'local_params', '_model_setting', '_hyper_params']:
+    #         if params in dir(self):
+    #             model[params] = getattr(self, params)
+    #
+    #     np.save(model_path + '/' + self._model_name + '.npy', model)
+    #     print('parameters of basic model have been saved by ' + model_path + '/' + self._model_name + '.npy')
 
 class WGAAE_Encoder(nn.Module):
-    def __init__(self, K, H, V, head_num, out_dim, device):
+    def __init__(self, in_dim: int, out_dim: int, z_dims: list, hid_dims: list, num_heads: int, device='gpu'):
         super(WGAAE_Encoder, self).__init__()
 
-        self.K = K
-        self.H = H
-        self.T = len(K)
-        self.V = V
-        self.H_dim = [self.V] + self.H
-        self.head_num = head_num
+        self.in_dim = in_dim
         self.out_dim = out_dim
+        self.z_dims = z_dims
+        self.hid_dims = hid_dims
+        self.num_layers = len(hid_dims)
+        self.num_heads = num_heads
         self.device = device
 
-        self._real_min = torch.tensor(2.2e-10, dtype=torch.float, device=device)
-        self._theta_max = torch.tensor(1000.0, dtype=torch.float, device=device)
-        self._wei_shape_min = torch.tensor(1e-1, dtype=torch.float, device=device)
-        self._wei_shape_max = torch.tensor(1000.0, dtype=torch.float, device=device)
+        self.real_min = torch.tensor(2.2e-10, dtype=torch.float, device=self.device)
+        self.theta_max = torch.tensor(1000.0, dtype=torch.float, device=self.device)
+        self.wei_shape_min = torch.tensor(1e-1, dtype=torch.float, device=self.device)
+        self.wei_shape_max = torch.tensor(1000.0, dtype=torch.float, device=self.device)
 
         # Network for WGAAE_encoder
-        self.h_encoder = nn.ModuleList()
-        self.skips = nn.ModuleList()
-        self.norms = nn.ModuleList()
-        self.shape_encoder = nn.ModuleList()
-        self.scale_encoder = nn.ModuleList()
-        self.Mlp = nn.ModuleList()
+        self.fc_layers = nn.ModuleList()
+        self.skip_layers = nn.ModuleList()
+        self.norm_layers = nn.ModuleList()
 
-        for layer in range(self.T):
-            if layer == self.T - 1:
-                if layer == 0:
-                    self.h_encoder.append(GATConv(self.H_dim[layer], (self.H_dim[layer] + self.H_dim[layer + 1]) // 2, self.head_num, dropout=0.6))
-                    self.h_encoder.append(GATConv((self.H_dim[layer] + self.H_dim[layer + 1]) // 2 * self.head_num, self.H_dim[layer + 1], heads=1, concat=False, dropout=0.6))
-                else:
-                    self.h_encoder.append(GATConv(self.H_dim[layer], self.H_dim[layer + 1] // self.head_num, heads=self.head_num, dropout=0.6))
-                self.skips.append(nn.Linear(self.H_dim[layer + 1], self.H_dim[layer + 1]))
-                self.norms.append(nn.BatchNorm1d(self.H_dim[layer + 1]))
-                self.Mlp.append(nn.Linear(self.H_dim[layer + 1], self.K[layer]).to(self.device))
-                self.shape_encoder.append(nn.Linear(self.K[layer], self.K[layer]).to(self.device))
-                self.scale_encoder.append(nn.Linear(self.K[layer], self.K[layer]).to(self.device))
-            elif layer == 0:
-                self.h_encoder.append(GATConv(self.H_dim[layer], self.H_dim[layer + 1] // self.head_num, heads=self.head_num, dropout=0.6))
-                self.skips.append(nn.Linear(self.H_dim[layer + 1], self.H_dim[layer + 1]))
-                self.norms.append(nn.BatchNorm1d(self.H_dim[layer + 1]))
-                self.Mlp.append(nn.Linear(self.H_dim[layer + 1], self.K[layer]).to(self.device))
-                self.shape_encoder.append((nn.Linear(self.K[layer], self.K[layer])).to(self.device))
-                self.scale_encoder.append((nn.Linear(self.K[layer], self.K[layer])).to(self.device))
-            else:
-                self.h_encoder.append(GATConv(self.H_dim[layer], self.H_dim[layer + 1] // self.head_num, heads=self.head_num, dropout=0.6))
-                self.skips.append(nn.Linear(self.H_dim[layer + 1], self.H_dim[layer + 1]))
-                self.norms.append(nn.BatchNorm1d(self.H_dim[layer + 1]))
-                self.Mlp.append(nn.Linear(self.H_dim[layer + 1], self.K[layer]).to(self.device))
-                self.shape_encoder.append((nn.Linear(self.K[layer], self.K[layer])).to(self.device))
-                self.scale_encoder.append((nn.Linear(self.K[layer], self.K[layer])).to(self.device))
+        self.h_encoders = nn.ModuleList()
+        self.shape_encoders = nn.ModuleList()
+        self.scale_encoders = nn.ModuleList()
 
-    def inital(self, phi, batch_size):
-        self.batch_szie = batch_size
-        self.phi = phi
+        self.in_hid_dims = [self.in_dim] + self.hid_dims
+        for layer in range(self.num_layers):
+            # why?
+            # if layer == self.num_layers - 1:
+            #     if layer == 0:
+            #         self.h_encoders.append(GATConv(self.in_hid_dims[layer], (self.in_hid_dims[layer] + self.in_hid_dims[layer + 1]) // 2, self.num_heads, dropout=0.6))
+            #         self.h_encoders.append(GATConv((self.in_hid_dims[layer] + self.in_hid_dims[layer + 1]) // 2 * self.num_heads, self.in_hid_dims[layer + 1], heads=1, concat=False, dropout=0.6))
+            #     else:
+            #         self.h_encoders.append(GATConv(self.in_hid_dims[layer], self.in_hid_dims[layer + 1] // self.num_heads, heads=self.num_heads, dropout=0.6))
 
-    def log_max(self, x):
+            self.h_encoders.append(GATConv(self.in_hid_dims[layer], self.in_hid_dims[layer + 1] // self.num_heads, heads=self.num_heads, dropout=0.6).to(self.device))
+            self.shape_encoders.append((nn.Linear(self.z_dims[layer], self.z_dims[layer])).to(self.device))
+            self.scale_encoders.append((nn.Linear(self.z_dims[layer], self.z_dims[layer])).to(self.device))
+
+            self.skip_layers.append(nn.Linear(self.in_hid_dims[layer + 1], self.in_hid_dims[layer + 1]).to(self.device))
+            self.norm_layers.append(nn.BatchNorm1d(self.in_hid_dims[layer + 1]).to(self.device))
+            self.fc_layers.append(nn.Linear(self.in_hid_dims[layer + 1], self.z_dims[layer]).to(self.device))
+
+    def log_max(self, x: torch.Tensor):
         '''
         return log(x+eps)
         '''
-        return torch.log(torch.max(x, self._real_min.to(self.device)))
+        return torch.log(torch.max(x, self.real_min))
 
-    def encoder_gat(self, x, edge_index, num_layer):
+    def encoder_left(self, x: torch.Tensor, edge_index: torch.Tensor, layer_index: int):
         '''
         Encoder for hidden layers
         Inputs:
@@ -338,20 +305,13 @@ class WGAAE_Encoder(nn.Module):
             The x produced by the encoder
         '''
         x = F.dropout(x, p=0.6, training=self.training)
-        # if num_layer == self._model_setting.T - 1:
-        x = self.h_encoder[num_layer](x, edge_index)
-        if self.T == 1:
-            x = F.dropout(x, p=0.6, training=self.training)
-            x = self.h_encoder[num_layer + 1](x, edge_index)
+        x = self.h_encoders[layer_index](x, edge_index)
+        x = x + self.skip_layers[layer_index](x)
+        x = self.norm_layers[layer_index](x)
 
-        x = x + self.skips[num_layer](x)
-        x = self.norms[num_layer](x)# self.norms[num_layer](x)
-
-        # else:
-        #     x = F.elu(self.h_encoder[num_layer](x, edge_index))
         return x
 
-    def encoder_right(self, x, num_layer, phi, theta):
+    def encoder_right(self, x: torch.tensor, layer_index: int, phi: torch.Tensor, theta: torch.Tensor):
         '''
         Encoder for parameters of Weibull distribution
         Inputs:
@@ -361,12 +321,13 @@ class WGAAE_Encoder(nn.Module):
         Outputs:
             k, l : The parameters of Weibull distribution produced by the encoder
         '''
-        k = F.softplus(self.shape_encoder[num_layer](x))
-        l = F.softplus(self.scale_encoder[num_layer](x))
+        k = F.softplus(self.shape_encoders[layer_index](x))
+        l = F.softplus(self.scale_encoders[layer_index](x))
 
         return k.permute(1, 0), l.permute(1, 0)
 
-    def reparameterize(self, Wei_shape, Wei_scale, batch_size, num_layer):
+
+    def reparameterize(self, Wei_shape: torch.Tensor, Wei_scale: torch.Tensor, layer_index, num_samples=10):
         '''
         Reparameterization trick for Weibull distribution
         Inputs:
@@ -377,119 +338,132 @@ class WGAAE_Encoder(nn.Module):
         Outputs:
             theta : The latent matrix (The variables obey Weibull distribution with reparameterization trick)
         '''
-        sample_num = 10
-        eps = torch.FloatTensor(sample_num, self.K[num_layer], batch_size).uniform_(0.0, 1.0).to(self.device)
-        Wei_shape = Wei_shape.unsqueeze(0).repeat(sample_num, 1, 1)
-        Wei_scale = Wei_scale.unsqueeze(0).repeat(sample_num, 1, 1)
+        eps = torch.FloatTensor(num_samples, self.z_dims[layer_index], Wei_shape.shape[1]).uniform_(0.0, 1.0).to(self.device)
+        Wei_shape = Wei_shape.unsqueeze(0).repeat(num_samples, 1, 1)
+        Wei_scale = Wei_scale.unsqueeze(0).repeat(num_samples, 1, 1)
         theta = Wei_scale * torch.pow(- self.log_max(1 - eps), 1 / Wei_shape)
-        theta = torch.clamp(theta.mean(0), self._real_min.item(), self._theta_max.item())
+        theta = torch.clamp(theta.mean(0), self.real_min.item(), self.theta_max.item())
 
         return theta  ## v*n
 
-    def forward(self, x, edge_index, is_train=True):
-        theta = [0] * self.T
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor, is_train=True):
+        '''
+
+        '''
         h = []
-        for i in range(self.T):
-            if i == 0:
-                h.append(self.encoder_gat(x, edge_index, i))
+        for layer_index in range(self.num_layers):
+            if layer_index == 0:
+                h_ = self.encoder_left(x, edge_index, layer_index)
+                h.append(F.softplus(self.fc_layers[layer_index](h_)))
             else:
-                h.append(self.encoder_gat(h[-1], edge_index, i))
+                h.append(self.encoder_left(h_, edge_index, layer_index))
 
-        for i in range(self.T):
-            h[i] = F.softplus(self.Mlp[i](h[i]))
 
-        k = [[] for _ in range(self.T)]
-        l = [[] for _ in range(self.T)]
-        for i in range(self.T - 1, -1, -1):
-            k[i], l[i] = self.encoder_right(h[i], i, self.phi, theta)
-            k[i] = torch.clamp(k[i], self._wei_shape_min.item(), self._wei_shape_max.item()) # max = 1 / 2.2e-10
-            l[i] = torch.clamp(l[i], self._real_min.item())
+        k = [[] for _ in range(self.num_layers)]
+        l = [[] for _ in range(self.num_layers)]
+        theta = [[] for _ in range(self.num_layers)]
+        for layer_index in range(self.num_layers - 1, -1, -1):
+            k[layer_index], l[layer_index] = self.encoder_right(h[layer_index], layer_index, self.phi, theta)
+            # no need to use .item()
+            k[layer_index] = torch.clamp(k[layer_index], self.wei_shape_min, self.wei_shape_max) # max = 1 / 2.2e-10
+            l[layer_index] = torch.clamp(l[layer_index], self.real_min)
 
             if is_train:
-                l[i] = l[i] / torch.exp(torch.lgamma(1.0 + 1.0 / k[i]))
-                theta[i] = self.reparameterize(k[i], l[i], x.shape[0], i)
-            else:
-                l[i] = l[i] / torch.exp(torch.lgamma(1.0 + 1.0 / k[i]))
-                theta[i] = self.reparameterize(k[i], l[i], x.shape[0], i)
-                # theta[i] = torch.min(l[i], self._theta_max)
+                l[layer_index] = l[layer_index] / torch.exp(torch.lgamma(1.0 + 1.0 / k[layer_index]))
+                theta[layer_index] = self.reparameterize(k[layer_index], l[layer_index], layer_index)
+            # why?
+            # else:
+            #     l[i] = l[i] / torch.exp(torch.lgamma(1.0 + 1.0 / k[i]))
+            #     theta[i] = self.reparameterize(k[i], l[i], x.shape[0], i)
+            #     theta[i] = torch.min(l[i], self._theta_max)
 
         return theta, k, l
 
-class WGAAE_Decoder(nn.Module):
-    def __init__(self, T, sampler):
+class WGAAE_Decoder(Basic_Model):
+    def __init__(self, in_dim: int, z_dims: list, device: str='gpu'):
         super(WGAAE_Decoder, self).__init__()
 
-        self._real_min = torch.tensor(1e-30)
-        self._real_min_phi = 1e-30
-        self.T = T
-        self._sampler = sampler
+        self._model_setting.V = in_dim
+        self._model_setting.K = z_dims
+        self._model_setting.T = len(self._model_setting.K)
+        self._model_setting.device = 'cpu' if device == 'cpu' else 'gpu'
 
-        self.NDot = [0] * T
-        self.Xt_to_t1 = [0] * T
-        self.WSZS = [0] * T
-        self.EWSZS = [0] * T
-        self.Eta = []
-        self.train_num = 0
+        self.real_min = 2.2e-10
 
-        self.phi = []
+        assert self._model_setting.device in ['cpu', 'gpu'], 'Device Type Error: the device should be ''cpu'' or ''gpu'''
+        self._sampler = Basic_Sampler(self._model_setting.device)
+
+        self.initial()
 
 
-    def inital(self, phi, n_epochs, MBratio):
-        self.phi = phi
-        self.MBratio = MBratio
-        n_updates = MBratio * n_epochs
-        epsit = np.power((20 + np.linspace(1, n_updates,n_updates)), -0.7)
-        self._epsit = 1 * epsit / epsit[0]
-        self._ForgetRate = np.power((0 + np.linspace(1, n_updates, n_updates)), -0.9)
+    def inital(self):
 
-    def reset_para(self, n_updates, MBratio):
-        """
-        Reset private parameters about updating Phi
-        inputs:
-            n_updates   : [int] Total counts for updating Phi
-            batch_size  : [int] The batch_size for updating Phi
-            MBratio     : [int] Length of dataloader for updating Phi in training stage
-        """
-        self.train_num = 0
-        epsit = np.power((20 + np.linspace(1, n_updates, n_updates)), -0.7)
-        self._epsit = 1 * epsit / epsit[0]
-        self._ForgetRate = np.power((0 + np.linspace(1, n_updates, n_updates)), -0.9)
-        self.MBratio = MBratio
+        self.MBObserved = 0
+        self.NDot = [0] * self._model_setting.T
+        self.Xt_to_t1 = [0] * self._model_setting.T
+        self.WSZS = [0] * self._model_setting.T
+        self.EWSZS = [0] * self._model_setting.T
 
-    def ProjSimplexSpecial(self, Phi_tmp, Phi_old, epsilon):
+        # global parameters
+        self.global_params.Phi = []
+        for t in range(self._model_setting.T):
+            if t == 0:
+                self.global_params.Phi.append(0.2 + 0.8 * np.random.rand(self._model_setting.V, self._model_setting.K[t]))
+            else:
+                self.global_params.Phi.append(0.2 + 0.8 * np.random.rand(self._model_setting.K[t-1], self._model_setting.K[t]))
+            self.global_params.Phi[t] = self.global_params.Phi[t] / np.maximum(self.real_min, self.global_params.Phi[t].sum(0))
+
+    def ProjSimplexSpecial(self, Phi_tmp: np.ndarray, Phi_old: np.ndarray, epsilon):
         Phinew = Phi_tmp - (Phi_tmp.sum(0) - 1) * Phi_old
-        if np.where(Phinew[:, :] <= 0)[0].size > 0:
-            Phinew = np.maximum(epsilon, Phinew)
-            Phinew = Phinew / np.maximum(realmin, Phinew.sum(0))
+        # if np.where(Phinew[:, :] <= 0)[0].size > 0:
+        #     Phinew = np.maximum(epsilon, Phinew)
+        #     Phinew = Phinew / np.maximum(realmin, Phinew.sum(0))
+        Phinew = np.maximum(epsilon, Phinew)
         Phinew = Phinew / np.maximum(realmin, Phinew.sum(0))
         return Phinew
 
-    def updatePhi(self, Xt, Theta, MBratio, MBObserved):
+    def update_phi(self, x_t: np.ndarray, theta: list, args):
         '''
         TLASGR-MCMC for updating Phi
         '''
-        Xt = np.array(np.transpose(Xt.cpu().detach().numpy()), order='C').astype('double')
-        for t in range(self.T):
-            self.phi[t] = np.array(self.phi[t], order='C').astype('float64')
-            Theta[t] = np.array(Theta[t].cpu().detach().numpy(), order='C').astype('float64')
+        '''
+        TLASGR-MCMC for updating Phi
+        Inputs:
+            x_t     : [ndarray] (batch_szie)*(V) input of data
+            theta   : [Tensor] (K_t)*(batch_szie) factor score matrices at different layers
+            args    : Hyper-parameters
+        '''
+
+        if self.MBObserved == 0:
+            num_updates = args.MBratio * args.num_epochs
+            self.ForgetRate = np.power((0 + np.linspace(1, num_updates, num_updates)), -0.9)
+            epsit = np.power((20 + np.linspace(1, num_updates, num_updates)), -0.7)
+            self.epsit = 1 * epsit / epsit[0]
+
+        x_t = np.array(x_t, order='C').astype('float64')
+        for t in range(self._model_setting.T):
+            phi_t = np.array(self.global_params.Phi[t], order='C').astype('float64')
+            theta_t = np.array(theta[t].detach().cpu().numpy(), order='C').astype('float64')
             if t == 0:
-                self.Xt_to_t1[t], self.WSZS[t] = self._sampler.multi_aug(Xt, self.phi[t], Theta[t])
+                self.Xt_to_t1[t], self.WSZS[t] = self._sampler.multi_aug(x_t, phi_t, theta_t)
             else:
-                self.Xt_to_t1[t], self.WSZS[t] = self._sampler.crt_multi_aug(self.Xt_to_t1[t - 1], self.phi[t],
-                                                                                  Theta[t])
-            self.EWSZS[t] = MBratio * self.WSZS[t]
-            if (MBObserved == 0):
+                self.Xt_to_t1[t], self.WSZS[t] = self._sampler.crt_multi_aug(self.Xt_to_t1[t - 1], phi_t, theta_t)
+
+            self.EWSZS[t] = args.MBratio * self.WSZS[t]
+            if (self.MBObserved == 0):
                 self.NDot[t] = self.EWSZS[t].sum(0)
             else:
-                self.NDot[t] = (1 - self._ForgetRate[MBObserved]) * self.NDot[t] + self._ForgetRate[MBObserved] * \
-                               self.EWSZS[t].sum(0)
+                self.NDot[t] = (1 - self.ForgetRate[self.MBObserved]) * self.NDot[t] + self.ForgetRate[self.MBObserved] * self.EWSZS[t].sum(0)
             tmp = self.EWSZS[t] + 0.1
-            tmp = (1 / np.maximum(self.NDot[t], self._real_min_phi)) * (tmp - tmp.sum(0) * self.phi[t])
-            tmp1 = (2 / np.maximum(self.NDot[t], self._real_min_phi)) * self.phi[t]
+            tmp = (1 / np.maximum(self.NDot[t], self.real_min)) * (tmp - tmp.sum(0) * phi_t)
+            tmp1 = (2 / np.maximum(self.NDot[t], self.real_min)) * phi_t
 
-            tmp = self.phi[t] + self._epsit[MBObserved] * tmp + np.sqrt(self._epsit[MBObserved] * tmp1) * np.random.randn(
-                self.phi[t].shape[0], self.phi[t].shape[1])
-            self.phi[t] = self.ProjSimplexSpecial(tmp, self.phi[t], 0)
+            tmp = phi_t + self.epsit[self.MBObserved] * tmp + np.sqrt(self.epsit[self.MBObserved] * tmp1) * np.random.randn(phi_t.shape[0], phi_t.shape[1])
+            self.global_params.Phi[t] = self.ProjSimplexSpecial(tmp, phi_t, self.real_min)
+
+        self.MBObserved += 1
+
+        return self.global_params.Phi
 
     # def Sample_Phi(self, WSZS_t, Eta_t):  # (array, scalar)
     #     Kt = WSZS_t.shape[0]
@@ -517,8 +491,3 @@ class WGAAE_Decoder(nn.Module):
     #                 self.Phi[t],
     #                 self.Theta[t])
     #         self.global_params.Phi[t][:, :] = self.Sample_Phi(self.WSZS[t], self.Eta[t])
-
-    def forward(self, x, theta):
-        self.updatePhi(x, theta, self.MBratio, self.train_num)
-        self.train_num += 1
-        return self.phi

@@ -7,15 +7,15 @@ Metric
 
 # Author: Chaojie Wang <xd_silly@163.com>; Jiawen Wu; Xinyang Liu <lxy771258012@163.com>
 # License: BSD-3-Clause
-
-import numpy as np
 import os
 import random
+import numpy as np
+
 import torch
 
 realmin = 2.2e-10
 
-
+# randomness
 def seed_everything(seed_value):
     random.seed(seed_value)
     np.random.seed(seed_value)
@@ -28,7 +28,7 @@ def seed_everything(seed_value):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = True
 
-
+# math
 def log_max(x):
     return np.log(np.maximum(x, realmin))
 
