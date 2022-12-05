@@ -60,7 +60,6 @@ class WGAAE(Basic_Model, nn.Module):
             self.u.append(torch.nn.Parameter(torch.empty([1, 1])).to(self.device))
             nn.init.trunc_normal_(self.u[layer_index].data)
 
-
     def log_max(self, x: torch.Tensor):
         '''
         return log(x+eps)
