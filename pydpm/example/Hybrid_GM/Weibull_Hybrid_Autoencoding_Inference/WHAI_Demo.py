@@ -53,7 +53,7 @@ args = parser.parse_args()
 args.device = 'cpu' if not torch.cuda.is_available() else f'cuda:{args.gpu_id}'
 
 # Load dataset (AG_NEWS from torchtext)
-train_iter, test_iter = AG_NEWS('../../dataset/', split=('train', 'test'))
+train_iter, test_iter = AG_NEWS('../../../dataset/', split=('train', 'test'))
 tokenizer = get_tokenizer("basic_english")
 
 # build vocabulary

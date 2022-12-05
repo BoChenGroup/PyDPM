@@ -145,7 +145,6 @@ class WHAI(Basic_Model, nn.Module):
 
             if is_train:
                 args.MBratio = len(dataloader)
-                args.MBObserved = args.MBratio * epoch_index + i
                 self.global_params.Phi = self.whai_decoder.update_phi(np.transpose(train_data), theta, args)
 
             loss, likelihood, elbo = self.loss(torch.tensor(train_data, dtype=torch.float, device=self._model_setting.device), self.global_params.Phi, theta, k, l)
@@ -203,7 +202,6 @@ class WHAI(Basic_Model, nn.Module):
                 loss_t += loss.item()
                 likelihood_t += likelihood.item()
                 elbo_t += elbo.item()
-
 
                 if not hasattr(self.local_params, 'Theta') or not hasattr(self.local_params, 'data') or not hasattr(self.local_params, 'label'):
                     self.local_params.Theta = [0 for _ in range(self._model_setting.num_layers)]
@@ -477,11 +475,11 @@ class WHAI_Decoder(Basic_Model):
             global_params.Phi           : [list] T (K_t-1)*(K_t) factor loading matrices at different layers
         '''
         # hyper parameters
+        self.MBObserved = 0
         self.NDot = [0] * self._model_setting.T
         self.Xt_to_t1 = [0] * self._model_setting.T
         self.WSZS = [0] * self._model_setting.T
         self.EWSZS = [0] * self._model_setting.T
-
 
         # global parameters
         self.global_params.Phi = []
@@ -491,8 +489,6 @@ class WHAI_Decoder(Basic_Model):
             else:
                 self.global_params.Phi.append(0.2 + 0.8 * np.random.rand(self._model_setting.K[t-1], self._model_setting.K[t]))
             self.global_params.Phi[t] = self.global_params.Phi[t] / np.maximum(self.real_min, self.global_params.Phi[t].sum(0))
-
-
 
     def ProjSimplexSpecial(self, Phi_tmp: np.ndarray, Phi_old: np.ndarray, epsilon):
         Phinew = Phi_tmp - (Phi_tmp.sum(0) - 1) * Phi_old
@@ -512,10 +508,11 @@ class WHAI_Decoder(Basic_Model):
             args    : Hyper-parameters
         '''
 
-        num_updates = args.MBratio * args.num_epochs
-        ForgetRate = np.power((0 + np.linspace(1, num_updates, num_updates)), -0.9)
-        epsit = np.power((20 + np.linspace(1, num_updates, num_updates)), -0.7)
-        epsit = 1 * epsit / epsit[0]
+        if self.MBObserved == 0:
+            num_updates = args.MBratio * args.num_epochs
+            self.ForgetRate = np.power((0 + np.linspace(1, num_updates, num_updates)), -0.9)
+            epsit = np.power((20 + np.linspace(1, num_updates, num_updates)), -0.7)
+            self.epsit = 1 * epsit / epsit[0]
 
         x_t = np.array(x_t, order='C').astype('float64')
         for t in range(self._model_setting.T):
@@ -527,15 +524,17 @@ class WHAI_Decoder(Basic_Model):
                 self.Xt_to_t1[t], self.WSZS[t] = self._sampler.crt_multi_aug(self.Xt_to_t1[t - 1], phi_t, theta_t)
 
             self.EWSZS[t] = args.MBratio * self.WSZS[t]
-            if (args.MBObserved == 0):
+            if (self.MBObserved == 0):
                 self.NDot[t] = self.EWSZS[t].sum(0)
             else:
-                self.NDot[t] = (1 - ForgetRate[args.MBObserved]) * self.NDot[t] + ForgetRate[args.MBObserved] * self.EWSZS[t].sum(0)
+                self.NDot[t] = (1 - self.ForgetRate[self.MBObserved]) * self.NDot[t] + self.ForgetRate[self.MBObserved] * self.EWSZS[t].sum(0)
             tmp = self.EWSZS[t] + 0.1
             tmp = (1 / np.maximum(self.NDot[t], self.real_min)) * (tmp - tmp.sum(0) * phi_t)
             tmp1 = (2 / np.maximum(self.NDot[t], self.real_min)) * phi_t
 
-            tmp = phi_t + epsit[args.MBObserved] * tmp + np.sqrt(epsit[args.MBObserved] * tmp1) * np.random.randn(phi_t.shape[0], phi_t.shape[1])
+            tmp = phi_t + self.epsit[self.MBObserved] * tmp + np.sqrt(self.epsit[self.MBObserved] * tmp1) * np.random.randn(phi_t.shape[0], phi_t.shape[1])
             self.global_params.Phi[t] = self.ProjSimplexSpecial(tmp, phi_t, self.real_min)
+
+        self.MBObserved += 1
 
         return self.global_params.Phi
