@@ -57,9 +57,9 @@ from pydpm.model import PGBN
 # create the model and deploy it on gpu or cpu
 model = PGBN([128, 64, 32], device='gpu')
 model.initial(train_data)
-train_local_params = model.train(100, train_data)
-train_local_params = model.test(100, train_data)
-test_local_params = model.test(100, test_data)
+train_local_params = model.train(train_data, iter_all=100)
+train_local_params = model.test(train_data, iter_all=100)
+test_local_params = model.test(test_data, iter_all=100)
 
 # evaluate the model with classification accuracy
 # the demo accuracy can achieve 0.8549
