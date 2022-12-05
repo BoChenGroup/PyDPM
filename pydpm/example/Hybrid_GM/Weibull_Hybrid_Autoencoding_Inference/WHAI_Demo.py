@@ -11,16 +11,17 @@ Published as a conference paper at ICLR 2018
 # Author: Xinyang Liu <lxy771258012@163.com>
 # License: BSD-3-Clause
 
-import numpy as np
 import argparse
+import numpy as np
 import scipy.io as sio
 from sklearn.cluster import k_means
 from nltk.corpus import stopwords
+
 from pydpm.model import WHAI
 from pydpm.utils import *
 from pydpm.metric import *
 from pydpm.dataloader.text_data import Text_Processer, build_vocab_from_iterator
-from sklearn.metrics.cluster import normalized_mutual_info_score
+
 import torch
 from torch.utils.data import DataLoader
 
