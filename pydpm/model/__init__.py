@@ -11,7 +11,8 @@ from .bayesian_gm.dirbn import DirBN
 from .bayesian_gm.dpfa import DPFA
 from .bayesian_gm.gpgbn import GPGBN
 from .bayesian_gm.mpgbn import MPGBN
-from .deeplearning_gm.vae import VAE
-from .deeplearning_gm.gan import GAN
+from .deep_learning_gm.vae import VAE
+from .deep_learning_gm.gan import GAN
+from .deep_learning_gm.rbm import RBM
 from .hybrid_gm.whai import WHAI
 from .hybrid_gm.wgaae import WGAAE
