@@ -55,5 +55,5 @@ for epoch in range(epochs):
     train(epoch, final_epoch=9)
 
 
-rbm.save(epoch=epochs, checkpoints='save_models/')
-rbm.load(epochs, 'save_models/')
+rbm.save(epoch=epochs, checkpoints='../save_models/')
+rbm.load(epochs, '../save_models/')
