@@ -130,11 +130,11 @@ class WHAI(Basic_Model, nn.Module):
         '''
         loss_t, likelihood_t, elbo_t = 0.0, 0.0, 0.0
 
-        if is_train:
-            self.train()
-        else:
-            self.eval()
-
+        # if is_train:
+        #     self.train()
+        # else:
+        #     self.eval()
+        self.train()
         if hasattr(self.local_params, 'Theta'):
             delattr(self.local_params, 'Theta')
 
