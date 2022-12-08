@@ -27,8 +27,8 @@ parser.add_argument('--dataset', type=str, default='cora', help='Dataset string'
 parser.add_argument('--dataset_path', type=str, default='../../../dataset/Planetoid', help="the file path of dataset")
 
 # network settings
-parser.add_argument('--z_dims', type=list, default=[32, 32, 32], help='Output dimension list')
-parser.add_argument('--hid_dims', type=list, default=[64, 64, 64], help='Hidden dimension list')
+parser.add_argument('--z_dims', type=list, default=[64, 64, 64], help='Output dimension list')
+parser.add_argument('--hid_dims', type=list, default=[128, 128, 128], help='Hidden dimension list')
 parser.add_argument('--out_dim', type=int, default=32, help='Dimension of output')
 parser.add_argument('--num_heads', type=int, default=4, help='Number of heads in GAT')
 
@@ -38,14 +38,19 @@ parser.add_argument("--lr", type=float, default=0.001, help="Adam: learning rate
 # training
 parser.add_argument('--task', type=str, default='prediction', help='Prediction, clustering or classification')
 parser.add_argument("--num_epochs", type=int, default=30000, help="Number of epochs of training")
-parser.add_argument('--is_sample', type=bool, default=False, help='Whether to sample subgraph or not')
-parser.add_argument("--batch_size", type=int, default=1000, help="Size of the batches")
+parser.add_argument('--is_subgraph', type=bool, default=False, help='Whether subgraph')
+parser.add_argument('--is_sample', type=bool, default=True, help='Whether sample nodes')
+parser.add_argument('--num_sample', type=int, default=1500, help='Number of sampling nodes')
+# parser.add_argument("--batch_size", type=int, default=1000, help="Size of the batches")
+parser.add_argument("--MBratio", type=int, default=100, help="number of epochs of training")
 parser.add_argument('--graph_lh', type=str, default='Laplacian', help='Graph likelihood')
 parser.add_argument('--lambda', type=float, default=1.0, help='lamda')
 parser.add_argument('--theta_norm', type=bool, default=False, help='Whether theta norm')
 
 args = parser.parse_args()
 args.device = 'cpu' if not torch.cuda.is_available() else f'cuda:{args.gpu_id}'
+
+
 seed_everything(args.seed)
 
 # Prepare for dataset
@@ -54,12 +59,12 @@ data = dataset[0].to(args.device)
 data.edge_index = data.edge_index[[1, 0]]
 graph_processer = Graph_Processer()
 
-adj_csc = graph_processer.graph_from_edges(data.edge_index, data.num_nodes, to_sparsetesor=False)[0].tocsc()
+adj_csc = graph_processer.graph_from_edges(data.edge_index, data.num_nodes).tocsc()
 adj_train, train_edges, val_edges, val_edges_false, test_edges, test_edges_false = graph_processer.edges_split_from_graph(adj_csc)
 
 # For encoder input and graph likelihood
 adj_train = adj_train + sp.eye(adj_train.shape[0])
-data.edge_index = graph_processer.sp_adj_to_edges(adj_train.tocoo(), args.device)
+data.edge_index = graph_processer.edges_from_graph(adj_train.tocoo(), args.device)
 
 model = WGAAE(in_dim=dataset.num_features, out_dim=args.out_dim, z_dims=args.z_dims, hid_dims=args.hid_dims, num_heads=args.num_heads, device=args.device)
 optim = torch.optim.Adam(model.parameters())
@@ -67,25 +72,26 @@ optim = torch.optim.Adam(model.parameters())
 # Training
 best_AUC = best_AP = 0
 for epoch_index in range(args.num_epochs):
-    if epoch_index <= 100:
+    if epoch_index <= 200:
         for i in range(20):
-            _, _ = model.train_one_epoch(data=data, optim=optim, epoch_index=epoch_index, is_sample=args.is_sample, is_subgraph=args.is_subgraph)
+            _, _ = model.train_one_epoch(data=data, optim=optim, epoch_index=epoch_index, is_sample=args.is_sample, is_subgraph=args.is_subgraph, args=args, is_train=False)
     else:
         for i in range(5):
-            _, _ = model.train_one_epoch(data=data, optim=optim, epoch_index=epoch_index, is_sample=args.is_sample, is_subgraph=args.is_subgraph)
-    train_local_params, Loss = model.train_one_epoch(data=data, optim=optim, epoch_index=epoch_index, is_sample=args.is_sample, is_subgraph=args.is_subgraph)
+            _, _ = model.train_one_epoch(data=data, optim=optim, epoch_index=epoch_index, is_sample=args.is_sample, is_subgraph=args.is_subgraph, args=args, is_train=False)
+    train_local_params, Loss = model.train_one_epoch(data=data, optim=optim, epoch_index=epoch_index, is_sample=args.is_sample, is_subgraph=args.is_subgraph, args=args)
 
     if args.task == 'classification':
-        [loss, loss_cls, recon_llh, graph_llh] = Loss
+        [train_loss, train_loss_cls, train_recon_llh, train_graph_llh] = Loss
     else:
-        [loss, recon_llh, graph_llh] = Loss
+        [train_loss, train_recon_llh, train_graph_llh] = Loss
 
-    # On classification task
     if epoch_index % 1 == 0:
-        test_local_params = model.test_full_graph(data)
-        # pred = test_local_params[0]
-        # pred = pred.argmax(dim=-1)
+        test_local_params, Loss = model.test_one_epoch(data, is_sample=args.is_sample, is_subgraph=args.is_subgraph, args=args)
 
+        # if args.task == 'classification':
+        #     [test_loss, test_loss_cls, test_recon_llh, test_graph_llh] = Loss
+        # else:
+        #     [test_loss, test_recon_llh, test_graph_llh] = Loss
         # On classification task
         # accs = []
         # for mask in [dataset.train_mask, dataset.val_mask, dataset.test_mask]:
@@ -97,7 +103,7 @@ for epoch_index in range(args.num_epochs):
         theta = test_local_params[1]
         # Construct theta_concat for prediction
         theta_concat = None
-        for layer in range(model._model_setting.T):
+        for layer in range(model._model_setting.num_layers):
             if layer == 0:
                 theta_concat = model.u[layer] * theta[layer]
             else:
@@ -108,7 +114,8 @@ for epoch_index in range(args.num_epochs):
         best_AUC = np.maximum(best_AUC, metric._AUC)
         best_AP = np.maximum(best_AP, metric._AP)
 
-        print(f'best_AUC:{best_AUC}, best_AP: {best_AP}')
+        print(f'Epoch[{epoch_index}|{args.num_epochs}]: loss:{train_loss}, graph_lh:{train_graph_llh}, recon_lh:{train_recon_llh}.'
+              f' best_AUC:{best_AUC}, best_AP: {best_AP}')
 
 
 
