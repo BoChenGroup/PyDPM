@@ -28,8 +28,24 @@ warnings.filterwarnings("ignore")
 
 class WGAAE(Basic_Model, nn.Module):
     def __init__(self, in_dim: int, out_dim: int, z_dims: list, hid_dims: list, num_heads: int, device='gpu'):
-        '''
-        '''
+        """
+        The basic model for WHAI
+        Inputs:
+            in_dims     : [int] Length of the vocabulary for graph nerual network layers in WGAAE;
+            out_dims    : [int] Size of output dimension in WGAAE-Encoder
+            z_dims      : [list] Number of topics at different layers in WGAAE;
+            hid_dims    : [list] Size of dimension at different hidden layers in WGAAE;
+            num_heads   : [int] Number of head in attention block
+            device      : [str] 'cpu' or 'gpu';
+
+        Attributes:
+            @private:
+                _model_setting              : [Params] the model settings of the probabilistic model
+                _hyper_params               : [Params] the hyper parameters of the probabilistic model
+                _model_setting.num_layers   : [int] the network depth
+                _real_min                   : [Tensor] the parameter to prevent overflow
+
+        """
         super(WGAAE, self).__init__()
         setattr(self, '_model_name', 'WGAAE')
 
@@ -46,19 +62,32 @@ class WGAAE(Basic_Model, nn.Module):
         self.initial()
 
     def initial(self):
+        '''
+        Attributes:
+            @public:
+                global_params   : [Params] the global parameters of the probabilistic model
+                local_params    : [Params] the local parameters of the probabilistic model
+                wgaae_encoder   : [Modulelist] the encoder of WGAAE
+                wgaae_decoder   : [Modulelist] the decoder of WGAAE
+                graph_processer : [Class] the processer about graph
+                u               : [Tensor] scale coefficient of Theta
+            @private:
+                _hyper_params   : [Params] the hyper parameters of the probabilistic model
 
+
+        '''
         self.graph_processer = Graph_Processer()
 
         _model_setting = self._model_setting
         self.wgaae_encoder = WGAAE_Encoder(_model_setting.in_dim, _model_setting.out_dim, _model_setting.z_dims, _model_setting.hid_dims, _model_setting.num_heads, _model_setting.device)
         self.wgaae_decoder = WGAAE_Decoder(_model_setting.in_dim, _model_setting.z_dims, _model_setting.device)
-        self.global_params = self.whai_decoder.global_params
-        self._hyper_params = self.whai_decoder._hyper_params
+        self.global_params = self.wgaae_decoder.global_params
+        self._hyper_params = self.wgaae_decoder._hyper_params
 
         self.u = []
         for layer_index in range(self._model_setting.num_layers):
-            self.u.append(torch.nn.Parameter(torch.empty([1, 1])).to(self.device))
-            nn.init.trunc_normal_(self.u[layer_index].data)
+            self.u.append(torch.nn.Parameter(torch.empty([1, 1])).to(self._model_setting.device))
+            nn.init.trunc_normal_(self.u[layer_index].data, std=0.01)
 
     def log_max(self, x: torch.Tensor):
         '''
@@ -69,7 +98,10 @@ class WGAAE(Basic_Model, nn.Module):
     def bern_possion_link(self, x):
         return 1.0 - torch.exp(-x)
 
-    def inner_product(self, x, dropout=0):
+    def inner_product(self, x, dropout=0.):
+        '''
+        return inner product between x and x_T
+        '''
         # default dropout = 0
         x = F.dropout(x, dropout, training=self.training)
         x_t = x.permute(1, 0)
@@ -90,7 +122,10 @@ class WGAAE(Basic_Model, nn.Module):
         return KL
 
     def loss(self, data, pred, phi, theta, k, l, is_sample=False, task='prediction'):
-        # TODO mean or sum on reson_llh and graph_llh
+        '''
+        Compute loss with data likelihood, graph likelihood and KL divergence.
+        if task is classification, add the classification loss into the total loss.
+        '''
         x = data.x
         theta_concat = None
         for layer_index in range(self._model_setting.num_layers):
@@ -105,26 +140,27 @@ class WGAAE(Basic_Model, nn.Module):
         recon_llh = -1.0 * torch.sum(x_T * self.log_max(re_x) - re_x - torch.lgamma(x_T + 1.0))
 
         # Graph likelihood
-        norm = torch.tensor(self.adj_nodes * self.adj_nodes / ((self.adj_nodes * self.adj_nodes - self.adj_sum) * 2)).to(self.device)
+        norm = torch.tensor(self.adj_nodes * self.adj_nodes / ((self.adj_nodes * self.adj_nodes - self.adj_sum) * 2)).to(self._model_setting.device)
         if is_sample:
             pass
             # TODO
-            # prob = self.prob
-            # sample_nodes = np.random.choice(self.adj_nodes, size=self.n_sample_nodes, replace=False, p=prob)
-            # sample_adj = self.graph_processer.sample_subgraph(self.adj_coo, sample_nodes).to(self.device)
-            # num_sampled = self.n_sample_nodes
-            # sum_sampled = sample_adj.sum() + self.real_min
-            # pos_weight = torch.tensor((num_sampled * num_sampled - sum_sampled) / sum_sampled).to(self.device)
-            # sub_theta_concat = theta_concat.T[sample_nodes, :]
-            # inner_product = self.InnerProductDecoder(sub_theta_concat, dropout=0.).to(self.device)
-            # recon_graph = self.bern_possion_link(inner_product).to(self.device)
-            # graph_llh = 0.01 * norm * F.binary_cross_entropy_with_logits(recon_graph, sample_adj, pos_weight=pos_weight, reduction='sum')
+            prob = self.prob
+            self.sample_nodes = np.random.choice(self.adj_nodes, size=self.num_sample, replace=False, p=prob)
+            sample_adj = self.graph_processer.subgraph_from_graph(self.adj_coo, self.sample_nodes).to(self._model_setting.device)
+            num_sampled = self.num_sample
+            sum_sampled = sample_adj.sum()
+            pos_weight = torch.tensor((num_sampled * num_sampled - sum_sampled) / (sum_sampled + self.real_min)).to(self._model_setting.device)
+            sub_theta_concat = theta_concat.T[self.sample_nodes, :]
+            inner_product = self.inner_product(sub_theta_concat, dropout=0.).to(self._model_setting.device)
+            recon_graph = self.bern_possion_link(inner_product).to(self._model_setting.device)
+            graph_llh = - 0.1 * norm * torch.sum(
+                sample_adj * self.log_max(recon_graph) * pos_weight + (1 - sample_adj) * self.log_max(1 - recon_graph))
         else:
-            pos_weight = torch.tensor((self.adj_nodes * self.adj_nodes - self.adj_sum) / self.adj_sum).to(self.device)
-            innner_product = self.inner_product(theta_concat.T, dropout=0.).to(self.device)
-            recon_graph = self.bern_possion_link(innner_product).to(self.device)
-            graph_llh = 0.002 * norm * F.binary_cross_entropy_with_logits(recon_graph, self.adj, pos_weight=pos_weight, reduction='sum')
-
+            pos_weight = torch.tensor((self.adj_nodes * self.adj_nodes - self.adj_sum) / (self.adj_sum + self.real_min)).to(self._model_setting.device)
+            innner_product = self.inner_product(theta_concat.T, dropout=0.).to(self._model_setting.device)
+            recon_graph = self.bern_possion_link(innner_product).to(self._model_setting.device)
+            graph_llh = - 0.01 * norm * torch.sum(
+                self.adj * self.log_max(recon_graph) * pos_weight + (1 - self.adj) * self.log_max(1 - recon_graph))
         # KL divergence
         # TODO: grad problem
         # kl_loss = -1.0 * self.z_dimsL_GamWei(self._gamma_prior, self._gamma_prior, k[-1], l[-1]).reshape(-1).mean()
@@ -141,46 +177,97 @@ class WGAAE(Basic_Model, nn.Module):
         return [Loss, recon_llh, graph_llh]
 
 
-    def train_one_epoch(self, data, optim: Optimizer, epoch_index, args=None, is_train=True, is_subgraph=False):
+    def train_one_epoch(self, data, optim: Optimizer, epoch_index, is_sample=False, is_subgraph=False, args=None, is_train=True):
+        '''
+        Train for one epoch
+        Inputs:
+            dataloader  : Train dataset with form of dataloader
+            optim       : Optimizer for model
+            epoch_index : [int] Current epoch on training stage
+            is_sample   : [bool] Whether sample nodes to compute subgraph likelihood
+            is_subgraph : [bool] Whether sample nodes to update nodes embedding with subgraph
+            args        : Hyper-parameters
+            is_train    : [bool] True or False, whether to update the global params in the probabilistic model
+
+        Attributes:
+            adj_nodes   : Number of nodes in adjacent matrix
+            adj_sum     : Number of non-zero element in adjacent matrix
+
+        '''
 
         if epoch_index == 0:
-            self.num_classes = data.class_num # load from dataset
-            self.pred_layer = nn.Linear(self.in_hid_dims[-1] + self._model_setting.z_dims[-1], self.num_classes).to(self.device)  # prediction layer: batch_szie * cls_num
+            self.num_classes = len(np.unique(data.y.cpu()))  # load from dataset
+            self.pred_layer = nn.Linear(self._model_setting.hid_dims[-1] + self._model_setting.z_dims[-1], self.num_classes).to(self._model_setting.device)  # prediction layer: batch_szie * cls_num
 
             # Prepare for graph
             self.adj_nodes = data.x.shape[0]
-            self.sp_adj, self.adj = self.graph_processer.graph_from_edges(edge_index=data.edge_index, n_nodes=self.adj_nodes)
-            self.adj_coo = self.sp_adj.to_scipy(layout='coo')
-            self.adj_sum = self.adj.sum()
-            self.alpha = 2.0
-            self.measure = 'degree'
-            self.prob = self.graph_processer.distribution_from_graph(self.adj, self.alpha, self.measure)
+            self.adj_sum = data.edge_index.shape[1]
+            if is_sample:
+                self.adj_coo = self.graph_processer.graph_from_edges(edge_index=data.edge_index, n_nodes=self.adj_nodes).tocoo()
+                self.num_sample = args.num_sample
+                self.alpha = 2.0
+                self.measure = 'degree'
+                self.prob = self.graph_processer.distribution_from_graph(torch.tensor(self.adj_coo.todense(), dtype=torch.float32), self.alpha, self.measure)
+            else:
+                self.adj = self.graph_processer.graph_from_edges(edge_index=data.edge_index, n_nodes=self.adj_nodes, to_tensor=True, to_sparse=False)
 
         if is_subgraph:
+            # TODO
             pass
         else:
-            self.train_full_graph(data, optim, epoch_index, args, is_train=is_train)
+            return self.train_full_graph(data, optim, epoch_index, is_sample=is_sample, args=args, is_train=is_train)
 
-    def train_full_graph(self, data, optim: Optimizer, epoch_index, args=None, is_train=True):
-        if is_train:
-            self.train()
-        else:
-            self.eval()
-
-        theta, k, l = self.wgaae_encoder(data.x, data.edge_index, is_train=True)
-        pred = theta[-1].permute(1, 0),
+    def train_full_graph(self, data, optim: Optimizer, epoch_index, is_sample=False, args=None, is_train=True):
+        '''
+        Training with full graph
+        if is_train is True, update global parameter
+        '''
+        # if is_train:
+        #     self.eval()
+        # else:
+        #     self.train()
+        self.train()
+        theta, k, l = self.wgaae_encoder(data.x, data.edge_index, phi=self.global_params.Phi, is_train=True)
+        pred = theta[-1].permute(1, 0)
         # pred: [N, cls], theta: [K, N]
-        loss, recon_llh, graph_llh = self.loss(data, pred, theta, k, l, args.is_sample, task=args.task)
+        loss, recon_llh, graph_llh = self.loss(data, pred, self.global_params.Phi, theta, k, l, is_sample, task=args.task)
 
         if is_train:
-            self.global_params.Phi = self.wgaae_decoder.update_phi(data.x, theta)
+            if is_sample:
+                theta_t = []
+                for i in range(self._model_setting.num_layers):
+                    theta_t.append(theta[i][:, self.sample_nodes])
+                x_t = data.x[self.sample_nodes]
+                self.global_params.Phi = self.wgaae_decoder.update_phi(np.transpose(x_t.cpu()), theta_t, args)
+            else:
+                self.global_params.Phi = self.wgaae_decoder.update_phi(np.transpose(data.x.cpu()), theta, args)
+            # self.global_params.Phi = self.wgaae_decoder.update_phi(np.transpose(data.x.cpu()), theta, args)
 
         optim.zero_grad()
         loss.backward()
         optim.step()
 
-        for layer_index in range(self._model_setting.num_layers):
-            theta[layer_index] = torch.tensor(theta[layer_index], dtype=torch.float, device=self.device)
+        return [pred, theta], [loss, recon_llh, graph_llh]
+
+    def test_one_epoch(self, data, is_sample=False, is_subgraph=False, args=None):
+        '''
+        Test for one epoch
+        '''
+        if is_subgraph:
+            # TODO
+            pass
+        else:
+            return self.test_full_graph(data, is_sample=is_sample, args=args)
+
+    def test_full_graph(self, data, is_sample=False, args=None):
+        '''
+        Test with full graph
+        '''
+        self.eval()
+        with torch.no_grad():
+            theta, k, l = self.wgaae_encoder(data.x, data.edge_index, phi=self.global_params.Phi, is_train=False)
+            pred = theta[-1].permute(1, 0)
+            loss, recon_llh, graph_llh = self.loss(data, pred, self.global_params.Phi, theta, k, l, is_sample, task=args.task)
 
         return [pred, theta], [loss, recon_llh, graph_llh]
 
@@ -188,62 +275,73 @@ class WGAAE(Basic_Model, nn.Module):
     #     # TODO
     #     pass
     #
-    # def test_full_graph(self, data):
-    #     self.eval()
-    #     with torch.no_grad():
-    #         [pred, theta, _, _] = self.forward(data.x, data.edge_index, is_train=False)
-    #
-    #     return [pred, theta]
     #
     # def test_sub_grpah(self, dataloader):
     #     # TODO
     #     pass
     #
-    # def load(self, checkpoint_path: str, directory_path: str):
-    #     '''
-    #     Load the model parameters from the checkpoint and the specified directory.
-    #     Inputs:
-    #         model_path : [str] the path to load the model.
-    #
-    #     '''
-    #     assert os.path.exists(checkpoint_path), 'Path Error: can not find the path to load the checkpoint'
-    #     assert os.path.exists(directory_path), 'Path Error: can not find the path to load the directory'
-    #
-    #     # load parameters of neural network
-    #     checkpoint = torch.load(checkpoint_path)
-    #     self.load_state_dict(checkpoint['state_dict'])
-    #
-    #     # load parameters of basic model
-    #     model = np.load(directory_path, allow_pickle=True).item()
-    #     for params in ['global_params', 'local_params', '_model_setting', '_hyper_params']:
-    #         if params in model:
-    #             setattr(self, params, model[params])
-    #
-    # def save(self, model_path: str = '../save_models'):
-    #     '''
-    #     Save the model to the checkpoint the specified directory.
-    #     Inputs:
-    #         model_path : [str] the path to save the model, default '../save_models/WGAAE.npy' and '../save_models/WGAAE.pth'
-    #     '''
-    #     # create the trained model path
-    #     if not os.path.isdir(model_path):
-    #         os.mkdir(model_path)
-    #
-    #     # save parameters of neural network
-    #     torch.save({'state_dict': self.state_dict()}, model_path + '/' + self._model_name + '.pth')
-    #     print('parameters of neural network have been saved by ' + model_path + '/' + self._model_name + '.pth')
-    #
-    #     # save parameters of basic model
-    #     model = {}
-    #     for params in ['global_params', 'local_params', '_model_setting', '_hyper_params']:
-    #         if params in dir(self):
-    #             model[params] = getattr(self, params)
-    #
-    #     np.save(model_path + '/' + self._model_name + '.npy', model)
-    #     print('parameters of basic model have been saved by ' + model_path + '/' + self._model_name + '.npy')
+    def load(self, checkpoint_path: str, directory_path: str):
+        '''
+        Load the model parameters from the checkpoint and the specified directory.
+        Inputs:
+            model_path : [str] the path to load the model.
+
+        '''
+        assert os.path.exists(checkpoint_path), 'Path Error: can not find the path to load the checkpoint'
+        assert os.path.exists(directory_path), 'Path Error: can not find the path to load the directory'
+
+        # load parameters of neural network
+        checkpoint = torch.load(checkpoint_path)
+        self.load_state_dict(checkpoint['state_dict'])
+
+        # load parameters of basic model
+        model = np.load(directory_path, allow_pickle=True).item()
+        for params in ['global_params', 'local_params', '_model_setting', '_hyper_params']:
+            if params in model:
+                setattr(self, params, model[params])
+
+    def save(self, model_path: str = '../save_models'):
+        '''
+        Save the model to the checkpoint the specified directory.
+        Inputs:
+            model_path : [str] the path to save the model, default '../save_models/WGAAE.npy' and '../save_models/WGAAE.pth'
+        '''
+        # create the trained model path
+        if not os.path.isdir(model_path):
+            os.mkdir(model_path)
+
+        # save parameters of neural network
+        torch.save({'state_dict': self.state_dict()}, model_path + '/' + self._model_name + '.pth')
+        print('parameters of neural network have been saved by ' + model_path + '/' + self._model_name + '.pth')
+
+        # save parameters of basic model
+        model = {}
+        for params in ['global_params', 'local_params', '_model_setting', '_hyper_params']:
+            if params in dir(self):
+                model[params] = getattr(self, params)
+        model['_model_setting'].device = self._model_setting.device
+
+        np.save(model_path + '/' + self._model_name + '.npy', model)
+        print('parameters of basic model have been saved by ' + model_path + '/' + self._model_name + '.npy')
 
 class WGAAE_Encoder(nn.Module):
     def __init__(self, in_dim: int, out_dim: int, z_dims: list, hid_dims: list, num_heads: int, device='gpu'):
+        '''
+        Inputs:
+            in_dims     : [int] Length of the vocabulary for convolutional layers in WHAI;
+            z_dims      : [list] Number of topics at different layers in WHAI;
+            h_dims      : [list] Size of dimension at different hidden layers in WHAI;
+            device      : [str] 'cpu' or 'gpu';
+
+        Attributes:
+            h_encoder       : [Modulelist] the graph nerual network layers for latent representation for WGAAE
+            shaep_encoder   : [Modulelist] the linear layers for shape-parameters in Weibull distribution
+            scale_encoder   : [Modulelist] the linear layers for scale-parameters in Weibull distribution
+
+            fc_layers       : [Modulelist] the linear layers for WGAAE_encoder
+            skip_layers     : [Modulelist] the skip layers for WGAAE_encoder
+            norm_layers     : [Modulelist] the batch normalization layers for WGAAE_encoder
+        '''
         super(WGAAE_Encoder, self).__init__()
 
         self.in_dim = in_dim
@@ -270,19 +368,11 @@ class WGAAE_Encoder(nn.Module):
 
         self.in_hid_dims = [self.in_dim] + self.hid_dims
         for layer in range(self.num_layers):
-            # why?
-            # if layer == self.num_layers - 1:
-            #     if layer == 0:
-            #         self.h_encoders.append(GATConv(self.in_hid_dims[layer], (self.in_hid_dims[layer] + self.in_hid_dims[layer + 1]) // 2, self.num_heads, dropout=0.6))
-            #         self.h_encoders.append(GATConv((self.in_hid_dims[layer] + self.in_hid_dims[layer + 1]) // 2 * self.num_heads, self.in_hid_dims[layer + 1], heads=1, concat=False, dropout=0.6))
-            #     else:
-            #         self.h_encoders.append(GATConv(self.in_hid_dims[layer], self.in_hid_dims[layer + 1] // self.num_heads, heads=self.num_heads, dropout=0.6))
-
             self.h_encoders.append(GATConv(self.in_hid_dims[layer], self.in_hid_dims[layer + 1] // self.num_heads, heads=self.num_heads, dropout=0.6).to(self.device))
             self.shape_encoders.append((nn.Linear(self.z_dims[layer], self.z_dims[layer])).to(self.device))
             self.scale_encoders.append((nn.Linear(self.z_dims[layer], self.z_dims[layer])).to(self.device))
 
-            self.skip_layers.append(nn.Linear(self.in_hid_dims[layer + 1], self.in_hid_dims[layer + 1]).to(self.device))
+            self.skip_layers.append(nn.Linear(self.in_hid_dims[layer], self.in_hid_dims[layer + 1]).to(self.device))
             self.norm_layers.append(nn.BatchNorm1d(self.in_hid_dims[layer + 1]).to(self.device))
             self.fc_layers.append(nn.Linear(self.in_hid_dims[layer + 1], self.z_dims[layer]).to(self.device))
 
@@ -303,12 +393,12 @@ class WGAAE_Encoder(nn.Module):
         Outputs:
             The x produced by the encoder
         '''
-        x = F.dropout(x, p=0.6, training=self.training)
-        x = self.h_encoders[layer_index](x, edge_index)
-        x = x + self.skip_layers[layer_index](x)
-        x = self.norm_layers[layer_index](x)
+        h = F.dropout(x, p=0.6, training=self.training)
+        h = self.h_encoders[layer_index](h, edge_index)
+        # h = h + self.skip_layers[layer_index](x)
+        # h = self.norm_layers[layer_index](h)
 
-        return x
+        return h
 
     def encoder_right(self, x: torch.tensor, layer_index: int, phi: torch.Tensor, theta: torch.Tensor):
         '''
@@ -345,41 +435,58 @@ class WGAAE_Encoder(nn.Module):
 
         return theta  ## v*n
 
-    def forward(self, x: torch.Tensor, edge_index: torch.Tensor, is_train=True):
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor, phi: list, is_train=True):
         '''
-
+        Inputs:
+            x           : [Tensor] Input
+            edge_index  : [Tensor] edge index of adjacent matrix
+            phi         : [list] T (K_t-1)*(K_t) factor loading matrices at different layers
+            is_train    : [bool] True or False, whether to train or test
+        Outputs:
         '''
         h = []
         for layer_index in range(self.num_layers):
             if layer_index == 0:
                 h_ = self.encoder_left(x, edge_index, layer_index)
-                h.append(F.softplus(self.fc_layers[layer_index](h_)))
             else:
-                h.append(self.encoder_left(h_, edge_index, layer_index))
+                h_ = self.encoder_left(h_, edge_index, layer_index)
+            h.append(F.softplus(self.fc_layers[layer_index](h_)))
 
 
         k = [[] for _ in range(self.num_layers)]
         l = [[] for _ in range(self.num_layers)]
         theta = [[] for _ in range(self.num_layers)]
         for layer_index in range(self.num_layers - 1, -1, -1):
-            k[layer_index], l[layer_index] = self.encoder_right(h[layer_index], layer_index, self.phi, theta)
-            # no need to use .item()
-            k[layer_index] = torch.clamp(k[layer_index], self.wei_shape_min, self.wei_shape_max) # max = 1 / 2.2e-10
+            if layer_index == self.num_layers - 1:
+                k[layer_index], l[layer_index] = self.encoder_right(h[layer_index], layer_index, 0, 0)
+            else:
+                k[layer_index], l[layer_index] = self.encoder_right(h[layer_index], layer_index, phi[layer_index+1], theta[layer_index+1])
+
+            k[layer_index] = torch.clamp(k[layer_index], self.wei_shape_min, self.wei_shape_max)  # max = 1 / 2.2e-10
             l[layer_index] = torch.clamp(l[layer_index], self.real_min)
 
             if is_train:
                 l[layer_index] = l[layer_index] / torch.exp(torch.lgamma(1.0 + 1.0 / k[layer_index]))
-                theta[layer_index] = self.reparameterize(k[layer_index], l[layer_index], layer_index)
-            # why?
-            # else:
-            #     l[i] = l[i] / torch.exp(torch.lgamma(1.0 + 1.0 / k[i]))
-            #     theta[i] = self.reparameterize(k[i], l[i], x.shape[0], i)
-            #     theta[i] = torch.min(l[i], self._theta_max)
+                theta[layer_index] = self.reparameterize(k[layer_index], l[layer_index], layer_index, num_samples=10)
+            else:
+                l[layer_index] = l[layer_index] / torch.exp(torch.lgamma(1.0 + 1.0 / k[layer_index]))
+                theta[layer_index] = self.reparameterize(k[layer_index], l[layer_index], layer_index, num_samples=10)
+                # theta[layer_index] = torch.min(l[layer_index], self.theta_max)
 
         return theta, k, l
 
 class WGAAE_Decoder(Basic_Model):
     def __init__(self, in_dim: int, z_dims: list, device: str='gpu'):
+        '''
+        Inputs:
+            in_dims     : [int] Length of the vocabulary for convolutional layers in WHAI;
+            z_dims      : [list] Number of topics at different layers in WHAI;
+            device      : [str] 'cpu' or 'gpu';
+        Attributes:
+            _sampler    : Sampler used for updating phi
+            real_min    : [float] scalar, the parameter to prevent overflow in updating Phi
+        '''
+
         super(WGAAE_Decoder, self).__init__()
 
         self._model_setting.V = in_dim
@@ -395,8 +502,12 @@ class WGAAE_Decoder(Basic_Model):
         self.initial()
 
 
-    def inital(self):
-
+    def initial(self):
+        '''
+        Attributes:
+            Ndot, xt_to_t1, WSZS, EWSZS : Intermediate variables parameters in updating Phi
+            global_params.Phi           : [list] T (K_t-1)*(K_t) factor loading matrices at different layers
+        '''
         self.MBObserved = 0
         self.NDot = [0] * self._model_setting.T
         self.Xt_to_t1 = [0] * self._model_setting.T

@@ -323,9 +323,9 @@ class WHAI_Encoder(nn.Module):
             device      : [str] 'cpu' or 'gpu';
 
         Attributes:
-            whai_encoder     : [Modulelist] the convolutional layers for latent representation for WHAI
-            whai_decoder : [Modulelist] the convolutional layers for shape-parameters in Weibull distribution
-            scale_encoder : [Modulelist] the convolutional layers for scale-parameters in Weibull distribution
+            h_encoder     : [Modulelist] the convolutional layers for latent representation for WHAI
+            shaep_encoder    : [Modulelist] the convolutional layers for shape-parameters in Weibull distribution
+            scale_encoder    : [Modulelist] the convolutional layers for scale-parameters in Weibull distribution
         '''
         super(WHAI_Encoder, self).__init__()
 
