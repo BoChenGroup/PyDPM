@@ -2,6 +2,7 @@ PyDPM
 =============
 [![PyPI](https://img.shields.io/pypi/v/gluonts.svg?style=flat-square)](https://pypi.org/project/gluonts/)
 [![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
+![visitors](https://visitor-badge.glitch.me/badge?page_id=jwenjian.visitor-badge)
 [![Downloads](https://pepy.tech/badge/pydpm)](https://pepy.tech/project/pydpm)
 
 
