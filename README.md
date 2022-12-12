@@ -1,7 +1,6 @@
 PyDPM
 =============
 [![PyPI](https://img.shields.io/pypi/v/gluonts.svg?style=flat-square)](https://pypi.org/project/gluonts/)
-[![Docs Status][docs-image]][docs-url]
 [![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
 [![Downloads](https://pepy.tech/badge/pydpm)](https://pepy.tech/project/pydpm)
 
@@ -11,7 +10,11 @@ Pydpm provides efficient distribution sampling functions and has included lots o
 
 :fire:**Note: We have released a new version that does not depend on Pycuda.**
 
-[Document](https://dustone-mu.github.io/)
+
+**[Documentation](https://dustone-mu.github.io/)** | **[Paper [JMLR]]()** | **[Tutorials](https://dustone-mu.github.io/Getting%20Started/Introduction.html)** | **[Benchmarks](https://github.com/divelab/DIG/tree/dig-stable/benchmarks)** |  **[Examples](https://dustone-mu.github.io/Getting%20Started/Mini%20example.html)** | **[Join the DIG slack community now!:fire:]()**
+
+
+
 
 ![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework.png)
 
