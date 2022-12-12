@@ -1,7 +1,7 @@
 PyDPM
 =============
 [![PyPI](https://img.shields.io/pypi/v/gluonts.svg?style=flat-square)](https://pypi.org/project/gluonts/)
-[![Docs Status][docs-image]](https://dustone-mu.github.io/)
+[![Docs Status][docs-image]][docs-url]
 [![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
 [![Downloads](https://pepy.tech/badge/pydpm)](https://pepy.tech/project/pydpm)
 
