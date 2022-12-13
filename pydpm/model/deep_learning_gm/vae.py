@@ -20,7 +20,7 @@ import copy
 import os
 
 class VAE(nn.Module):
-    def __init__(self, x_dim, h_dim1, h_dim2, z_dim, device='cpu'):
+    def __init__(self, in_dim: int, z_dim: int, encoder_hid_dims: list, decoder_hid_dims: list, device='cpu'):
         """
         The basic model for VAE
         Inputs:
@@ -33,10 +33,12 @@ class VAE(nn.Module):
         super(VAE, self).__init__()
         setattr(self, '_model_name', 'VAE')
         self.z_dim = z_dim
-        self.x_dim = x_dim
+        self.in_dim = in_dim
+        self.encoder_hid_dims = encoder_hid_dims
+        self.decoder_hid_dims = decoder_hid_dims
         self.device = device
-        self.vae_encoder = VAE_Encoder(x_dim=x_dim, h_dim1=h_dim1, h_dim2=h_dim2, z_dim=z_dim, device=device)
-        self.vae_decoder = VAE_Decoder(x_dim=x_dim, h_dim1=h_dim1, h_dim2=h_dim2, z_dim=z_dim, device=device)
+        self.vae_encoder = VAE_Encoder(in_dim=self.in_dim, hid_dims=self.encoder_hid_dims, z_dim=self.z_dim, device=self.device)
+        self.vae_decoder = VAE_Decoder(in_dim=self.in_dim, hid_dims=self.decoder_hid_dims, z_dim=self.z_dim, device=self.device)
 
     def compute_loss(self, recon_x, x, mu, log_var):
         BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
@@ -103,7 +105,7 @@ class VAE(nn.Module):
         for i, (data, _) in enumerate(train_bar):
             train_bar.set_description(f'Epoch [{epoch}/{n_epochs}]')
             train_bar.set_postfix(loss=loss_t / (i + 1), KL_loss=kl_loss_t / (i + 1), likelihood=likelihood_t / (i + 1))
-            data = data.view(data.size(0), self.x_dim).to(self.device)
+            data = data.view(data.size(0), self.in_dim).to(self.device)
             recon_x, mu, log_var = self.forward(data)
             llh, kl_loss = self.compute_loss(recon_x, data, mu, log_var)
             loss = llh + kl_loss
@@ -144,7 +146,7 @@ class VAE(nn.Module):
             for i, (data, _) in enumerate(test_bar):
                 test_bar.set_description(f'Testing stage: ')
                 test_bar.set_postfix(loss=loss_t / (i + 1), KL_loss=kl_loss_t / (i + 1), likelihood=likelihood_t / (i + 1))
-                data = data.view(data.size(0), self.x_dim).to(self.device)
+                data = data.view(data.size(0), self.in_dim).to(self.device)
                 recon_x, mu, log_var = self.forward(data)
                 llh, kl_loss = self.compute_loss(recon_x, data, mu, log_var)
                 loss_t += (llh.item() + kl_loss.item())
@@ -183,13 +185,21 @@ class VAE(nn.Module):
         self.load_state_dict(checkpoint['state_dict'])
 
 class VAE_Encoder(nn.Module):
-    def __init__(self, x_dim: int, h_dim1: int, h_dim2: int, z_dim: int, device: str='cpu'):
+    def __init__(self, in_dim: int, hid_dims: list, z_dim: int, device: str='cpu'):
         super(VAE_Encoder, self).__init__()
+        self.in_dim = in_dim
+        self.hid_dims = hid_dims
+        self.z_dim = z_dim
         self.device = device
-        self.fc1 = nn.Linear(x_dim, h_dim1).to(self.device)
-        self.fc2 = nn.Linear(h_dim1, h_dim2).to(self.device)
-        self.fc31 = nn.Linear(h_dim2, z_dim).to(self.device)
-        self.fc32 = nn.Linear(h_dim2, z_dim).to(self.device)
+        self.num_layers = len(self.hid_dims)
+        self.fc_encoder = nn.ModuleList()
+        self.fc_mu = nn.Linear(self.hid_dims[-1], self.z_dim).to(self.device)
+        self.fc_var = nn.Linear(self.hid_dims[-1], self.z_dim).to(self.device)
+        for layer_index in range(self.num_layers):
+            if layer_index == 0:
+                self.fc_encoder.append(nn.Linear(self.in_dim, self.hid_dims[layer_index]).to(device))
+            else:
+                self.fc_encoder.append(nn.Linear(self.hid_dims[layer_index - 1], self.hid_dims[layer_index]).to(device))
 
     def encoder(self, x):
         """
@@ -200,9 +210,14 @@ class VAE_Encoder(nn.Module):
             mu : [tensor] mean of posterior distribution;
             log_var : [tensor] log variance of posterior distribution;
         """
-        h = F.relu(self.fc1(x))
-        h = F.relu(self.fc2(h))
-        return self.fc31(h), self.fc32(h)  # mu, log_var
+        for layer_index in range(self.num_layers):
+            if layer_index == 0:
+                x = F.relu(self.fc_encoder[layer_index](x))
+            else:
+                x = F.relu(self.fc_encoder[layer_index](x))
+        mu = self.fc_mu(x)
+        var = self.fc_var(x)
+        return mu, var  # mu, log_var
 
     def reparameterize(self, mu, log_var):
         """
@@ -234,12 +249,21 @@ class VAE_Encoder(nn.Module):
 
 
 class VAE_Decoder(nn.Module):
-    def __init__(self, x_dim, h_dim1, h_dim2, z_dim, device: str='cpu'):
+    def __init__(self, in_dim, hid_dims, z_dim, device: str='cpu'):
         super(VAE_Decoder, self).__init__()
+        self.in_dim = in_dim
+        self.hid_dims = hid_dims
+        self.z_dim = z_dim
+        self.num_layers = len(self.hid_dims)
         self.device = device
-        self.fc4 = nn.Linear(z_dim, h_dim2).to(self.device)
-        self.fc5 = nn.Linear(h_dim2, h_dim1).to(self.device)
-        self.fc6 = nn.Linear(h_dim1, x_dim).to(self.device)
+        self.fc_decoder = nn.ModuleList()
+        for layer_index in range(self.num_layers):
+            if layer_index == 0:
+                self.fc_decoder.append(nn.Linear(self.z_dim, self.hid_dims[layer_index]).to(device))
+            else:
+                self.fc_decoder.append(nn.Linear(self.hid_dims[layer_index - 1], self.hid_dims[layer_index]).to(device))
+        self.fc_decoder.append(nn.Linear(self.hid_dims[-1], self.in_dim).to(device))
+
 
     def decoder(self, z):
         """
@@ -249,9 +273,10 @@ class VAE_Decoder(nn.Module):
         Outputs:
             recon_x : [tensor] the reconstruction of x
         """
-        h = F.relu(self.fc4(z))
-        h = F.relu(self.fc5(h))
-        return torch.sigmoid(self.fc6(h))  # recon_x
+        for layer_index in range(self.num_layers):
+            z = F.relu(self.fc_decoder[layer_index](z))
+        recon_x = torch.sigmoid(self.fc_decoder[-1](z))
+        return recon_x  # recon_x
 
     def forward(self, z):
         """
