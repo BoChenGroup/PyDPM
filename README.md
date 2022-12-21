@@ -1,5 +1,5 @@
 ![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_logo_2.png)
-<img src="http://....jpg](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_logo_2.png" width="200" height="200" />
+<img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_logo_2.png" width="200" height="200" />
 =============
 [![PyPI](https://img.shields.io/pypi/v/gluonts.svg?style=flat-square)](https://pypi.org/project/gluonts/)
 [![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
