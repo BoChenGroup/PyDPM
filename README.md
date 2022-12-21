@@ -1,4 +1,4 @@
-![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_logo_2.png|300)
+![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_logo_2.png){:height="36px" width="36px"}
 =============
 [![PyPI](https://img.shields.io/pypi/v/gluonts.svg?style=flat-square)](https://pypi.org/project/gluonts/)
 [![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
