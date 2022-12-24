@@ -1,3 +1,6 @@
+[contributing-image]: https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat
+[contributing-url]: https://github.com/BoChenGroup/PyDPM/blob/master/CONTRIBUTING.md
+
 <div align=center>
 <img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_logo_2.png" width="75%">
 
@@ -5,6 +8,7 @@
 [![PyPI](https://img.shields.io/pypi/v/gluonts.svg?style=flat-square)](https://pypi.org/project/gluonts/)
 [![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
 [![Downloads](https://pepy.tech/badge/pydpm)](https://pepy.tech/project/pydpm)
+[![Contributing][contributing-image]][contributing-url]
 </div>
 
 A python library focuses on constructing deep probabilistic models on GPU.
