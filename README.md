@@ -76,14 +76,11 @@ b = sampler.gamma(np.ones([100, 100])*5, 1, times=10)
 
 Compare
 =============
-
-Compare the sampling speed of distribution functions with numpy:
+Compare the distribution sampling efficiency with numpy:
 ![Image text](https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_numpy.png)  
-The compared code can be found in pydpm/example/Sampler_Speed_Demo.py
 
-Compare the sampling speed of distribution functions with tensorflow and torch:
+Compare the distribution sampling efficiency with tensorflow and torch:
 ![Image text](https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_tf2_torch.png)  
-The compared code can be found in pydpm/example/Sampler_Speed_Demo.py
 
 Contact
 ========
