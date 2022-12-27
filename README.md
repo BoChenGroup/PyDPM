@@ -64,7 +64,7 @@ results = ACC(train_local_params.Theta[0], test_local_params.Theta[0], train_lab
 model.save()
 ```
 
->Example: a few code lines to quickly 
+>Example: a few code lines to quickly deploy distribution sampler of Pydpm on GPU.
 
 ```python
 from pydpm._sampler import Basic_Sampler
