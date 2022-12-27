@@ -15,7 +15,7 @@
 [![Contributing][contributing-image]][contributing-url]
 </div>
 
-A python library focuses on constructing deep probabilistic models on GPU.
+A python library focuses on constructing Deep Probabilistic Models (DPMs) on GPU.
 Pydpm provides efficient distribution sampling functions and has included lots of implemented probabilistic models.
 
 
