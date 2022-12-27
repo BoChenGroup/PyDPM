@@ -26,9 +26,6 @@ Our developed Pydpm not only provides efficient distribution sampling functions 
 
 
 ![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework_old.png)
-<div align=center>
-  The overview of Pydpm
-<\div>
 
 Install
 =============
