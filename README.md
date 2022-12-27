@@ -28,18 +28,11 @@ Our developed Pydpm not only provides efficient distribution sampling functions 
 
 Install
 =============
-This library can be installed under both Windows and Linux systems.
+The curent version of PyDPM can be installed under either Windows or Linux systems. For Windows system, we recommed to install Visual Studio 2019 as the compiler equipped with CUDA 11.5 toolkit. For Linux system, we recommed to install the latest version of CUDA toolkit.
 
 ```
 $ pip install pydpm
 ```
-
-Under Windows system, we recommed to install Visual Studio 2019 and latest CUDA Toolkit. The combination of VS2019(with MSVC v142) and CUDA 11.5 has been tested in pydpm2.0.
-
-
-
-
-
 
 
 Create Probabilistic Model
