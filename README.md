@@ -43,9 +43,8 @@ Overview
 Usage
 =============
 
->Demo Create Probabilistic Model
+>Example: a few lines of code to construct a 3-layer PGBN [Link](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf).
 
-Create a PGBN model:
 ```python
 from pydpm.model import PGBN
 
