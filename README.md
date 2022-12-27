@@ -76,12 +76,12 @@ b = sampler.gamma(np.ones([100, 100])*5, 1, times=10)
 
 Compare
 =============
-Compare the distribution sampling efficiency of PyDPM with numpy:
+>Compare the distribution sampling efficiency of PyDPM with numpy:
 <div align=center>
 <img src="https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_numpy.png" width="70%">
 </div>
 
-Compare the distribution sampling efficiency of PyDPM with tensorflow and torch:
+>Compare the distribution sampling efficiency of PyDPM with tensorflow and torch:
 <div align=center>
 <img src="https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_tf2_torch.png" width="70%">
 </div>
