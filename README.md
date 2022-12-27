@@ -16,7 +16,7 @@
 </div>
 
 A python library focuses on constructing Deep Probabilistic Models (DPMs).
-Pydpm not only provides efficient distribution sampling functions on GPU, but also has included lots of implemented DPMs.
+The developed Pydpm not only provides efficient distribution sampling functions on GPU, but also has included the implementations of seires of existing popular DPMs.
 
 
 **[Documentation](https://dustone-mu.github.io/)** | **[Paper [Arxiv]]()** | **[Tutorials](https://dustone-mu.github.io/Getting%20Started/Introduction.html)** | **[Benchmarks](https://drive.google.com/drive/folders/1_BH_0N6wfbUvTS-CCWs4YLFpDWqGRw7w?usp=sharing)** |  **[Examples](https://dustone-mu.github.io/Getting%20Started/Mini%20example.html)** |
