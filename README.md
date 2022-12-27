@@ -43,7 +43,7 @@ Overview
 Usage
 =============
 
->Example: a few lines of code to construct a 3-layer PGBN [Link](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf).
+Example: a few code lines to quickly construct a 3-layer [PGBN](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf).
 
 ```python
 from pydpm.model import PGBN
