@@ -28,13 +28,12 @@ Install
 =============
 The curent version of PyDPM can be installed under either Windows or Linux systems. 
 
-For Windows system, we recommed to install Visual Studio 2019 as the compiler equipped with CUDA 11.5 toolkit. 
-
-For Linux system, we recommed to install the latest version of CUDA toolkit.
-
 ```
 $ pip install pydpm
 ```
+
+For Windows system, we recommed to install Visual Studio 2019 as the compiler equipped with CUDA 11.5 toolkit;
+For Linux system, we recommed to install the latest version of CUDA toolkit.
 
 Overview
 =============
