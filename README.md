@@ -26,7 +26,7 @@ Our developed Pydpm not only provides efficient distribution sampling functions 
 
 Install
 =============
-The curent version of PyDPM can be installed under either Windows or Linux systems. 
+The current version of PyDPM can be installed under either Windows or Linux system with PyPI. 
 
 ```
 $ pip install pydpm
