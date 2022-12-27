@@ -40,6 +40,9 @@ Overview
 ![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework_old.png)
 
 
+![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_workflow.png)
+
+
 Model List
 =============
 
