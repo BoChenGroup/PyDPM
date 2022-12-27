@@ -63,10 +63,6 @@ results = ACC(train_local_params.Theta[0], test_local_params.Theta[0], train_lab
 model.save()
 ```
 
-More model demos can be found in pydpm/examples/...
-
-
-
 >Example: a few code lines to quickly 
 
 ```python
