@@ -43,7 +43,7 @@ Overview
 Usage
 =============
 
->Example: a few code lines to quickly construct and evaluate a 3-layer Bayesian DPM named [PGBN](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf) on GPU.
+>Example: a few code lines to quickly construct and evaluate a 3-layer Bayesian model named [PGBN](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf) on GPU.
 
 ```python
 from pydpm.model import PGBN
@@ -62,15 +62,11 @@ results = ACC(train_local_params.Theta[0], test_local_params.Theta[0], train_lab
 # save the model after training
 model.save()
 ```
+
 More model demos can be found in pydpm/examples/...
 
 
-
-Sample on GPU
-=============
-
-
->Example
+>Example: a few code lines to quickly 
 
 ```python
 from pydpm._sampler import Basic_Sampler
@@ -79,10 +75,9 @@ sampler = Basic_Sampler('gpu')
 a = sampler.gamma(np.ones(100)*5, 1, times=10)
 b = sampler.gamma(np.ones([100, 100])*5, 1, times=10)
 ```
-More sampler demos can be found in pydpm/_sampler/...
 
 >Compare
->
+
 Compare the sampling speed of distribution functions with numpy:
 ![Image text](https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_numpy.png)  
 The compared code can be found in pydpm/example/Sampler_Speed_Demo.py
