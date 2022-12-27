@@ -44,7 +44,7 @@ The overview of the framework of PyDPM library
 
 The workflow of applying PyDPM for downstream tasks
 <div align=center>
-<img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_workflow.png" width="90%">
+<img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_workflow.png" width="85%">
 </div>
 
 
