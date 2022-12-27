@@ -37,8 +37,12 @@ For Linux system, we recommed to install the latest version of CUDA toolkit.
 
 Overview
 =============
-![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework_old.png)
+>The overview of the PyDPM library
+<div align=center>
+<img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework_old.png" width="100%">
+</div>
 
+>The workflow of PyDPM 
 <div align=center>
 <img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_workflow.png" width="90%">
 </div>
