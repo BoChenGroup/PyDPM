@@ -43,7 +43,7 @@ Overview
 Usage
 =============
 
-Example: a few code lines to quickly construct a 3-layer [PGBN](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf).
+>Example: a few code lines to quickly construct a 3-layer Bayesian DPM named [PGBN](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf) on GPU.
 
 ```python
 from pydpm.model import PGBN
