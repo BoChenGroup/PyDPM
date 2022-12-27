@@ -47,6 +47,7 @@ Usage
 
 ```python
 from pydpm.model import PGBN
+from pydpm.metric import ACC
 
 # create the model and deploy it on gpu or cpu
 model = PGBN([128, 64, 32], device='gpu')
