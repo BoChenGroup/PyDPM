@@ -15,8 +15,8 @@
 [![Contributing][contributing-image]][contributing-url]
 </div>
 
-A python library focuses on constructing deep probabilistic models on GPU.
-Pydpm provides efficient distribution sampling functions and has included lots of implemented probabilistic models.
+A python library focuses on constructing Deep Probabilistic Models (DPMs).
+Our developed Pydpm not only provides efficient distribution sampling functions on GPU, but also has included the implementations of existing popular DPMs.
 
 
 **[Documentation](https://dustone-mu.github.io/)** | **[Paper [Arxiv]]()** | **[Tutorials](https://dustone-mu.github.io/Getting%20Started/Introduction.html)** | **[Benchmarks](https://drive.google.com/drive/folders/1_BH_0N6wfbUvTS-CCWs4YLFpDWqGRw7w?usp=sharing)** |  **[Examples](https://dustone-mu.github.io/Getting%20Started/Mini%20example.html)** |
@@ -24,25 +24,24 @@ Pydpm provides efficient distribution sampling functions and has included lots o
 
 :fire:**Note: We have released a new version that does not depend on Pycuda.**
 
-
-![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework_old.png)
-
 Install
 =============
-This library can be installed under both Windows and Linux systems.
+The current version of PyDPM can be installed under either Windows or Linux system with PyPI. 
 
 ```
 $ pip install pydpm
 ```
 
-Under Windows system, we recommed to install Visual Studio 2019 and latest CUDA Toolkit. The combination of VS2019(with MSVC v142) and CUDA 11.5 has been tested in pydpm2.0.
+For Windows system, we recommed to install Visual Studio 2019 as the compiler equipped with CUDA 11.5 toolkit;
+For Linux system, we recommed to install the latest version of CUDA toolkit.
 
-Create Probabilistic Model
+Overview
 =============
+![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework_old.png)
 
->Model list
->
-Model list is as following:
+
+Model List
+=============
 
 |Probabilistic Model Name                  |Abbreviation |Paper Link|
 |------------------------------------------|-------------|----------|
@@ -59,13 +58,14 @@ Model list is as following:
 |Multimodal Poisson Gamma Belief Network   |MPGBN        |[Link](https://mingyuanzhou.github.io/Papers/mpgbn_aaai18.pdf)|
 |Graph Poisson Gamma Belief Network        |GPGBN        |[Link](https://proceedings.neurips.cc/paper/2020/file/05ee45de8d877c3949760a94fa691533-Paper.pdf)|
 
-More probabilistic models will be further included in pydpm/_model/...
+Usage
+=============
 
->Demo
+>Example: a few code lines to quickly construct and evaluate a 3-layer Bayesian model named [PGBN](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf) on GPU. 
 
-Create a PGBN model:
 ```python
 from pydpm.model import PGBN
+from pydpm.metric import ACC
 
 # create the model and deploy it on gpu or cpu
 model = PGBN([128, 64, 32], device='gpu')
@@ -81,34 +81,8 @@ results = ACC(train_local_params.Theta[0], test_local_params.Theta[0], train_lab
 # save the model after training
 model.save()
 ```
-More model demos can be found in pydpm/examples/...
 
-Source data can be found in [Link](https://drive.google.com/drive/folders/1_BH_0N6wfbUvTS-CCWs4YLFpDWqGRw7w?usp=sharing)
-
-
-Sample on GPU
-=============
->Function list
-
-The parameters of partial distribution functions are as following:
-
-|Function        | Parameters List   | 
-|----------------|-------------------|
-|Normal          |mean, std, times   |
-|Multinomial     |count, prob, times |
-|Poisson         |lambda, times      |
-|Gamma           |shape, scale, times|
-|Beta            |alpha, beta, times |
-|F               |n1, n2, times      |
-|StudentT        |n, times           |
-|Dirichlet       |alpha, times       |
-|Crt             |point, p, times    |
-|Weibull         |shape, scale, times|
-|Chisquare       |n, times           |
-|Geometric       |p, times           |
-|...             |...                |
-
->Example
+>Example: a few code lines to quickly deploy distribution sampler of Pydpm on GPU.
 
 ```python
 from pydpm._sampler import Basic_Sampler
@@ -117,17 +91,18 @@ sampler = Basic_Sampler('gpu')
 a = sampler.gamma(np.ones(100)*5, 1, times=10)
 b = sampler.gamma(np.ones([100, 100])*5, 1, times=10)
 ```
-More sampler demos can be found in pydpm/_sampler/...
 
->Compare
->
-Compare the sampling speed of distribution functions with numpy:
-![Image text](https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_numpy.png)  
-The compared code can be found in pydpm/example/Sampler_Speed_Demo.py
+Compare
+=============
+>Compare the distribution sampling efficiency of PyDPM with numpy:
+<div align=left>
+<img src="https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_numpy.png" width="70%">
+</div>
 
-Compare the sampling speed of distribution functions with tensorflow and torch:
-![Image text](https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_tf2_torch.png)  
-The compared code can be found in pydpm/example/Sampler_Speed_Demo.py
+>Compare the distribution sampling efficiency of PyDPM with tensorflow and torch:
+<div align=left>
+<img src="https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_tf2_torch.png" width="70%">
+</div>
 
 Contact
 ========
