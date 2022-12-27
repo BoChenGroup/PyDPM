@@ -40,7 +40,7 @@ Overview
 ![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework_old.png)
 
 <div align=center>
-<img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_workflow.png" width="70%">
+<img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_workflow.png" width="75%" height="110%">
 </div>
 
 
