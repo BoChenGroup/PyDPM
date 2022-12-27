@@ -43,7 +43,7 @@ Overview
 Usage
 =============
 
->Example: a few code lines to quickly construct and evaluate a 3-layer Bayesian model named [PGBN](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf) on GPU.
+>Example: a few code lines to quickly construct and evaluate a 3-layer Bayesian model named [PGBN](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf) on GPU. More model demos can be found in pydpm/examples/...
 
 ```python
 from pydpm.model import PGBN
@@ -62,9 +62,6 @@ results = ACC(train_local_params.Theta[0], test_local_params.Theta[0], train_lab
 # save the model after training
 model.save()
 ```
-
-More model demos can be found in pydpm/examples/...
-
 
 >Example: a few code lines to quickly 
 
