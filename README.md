@@ -74,7 +74,8 @@ a = sampler.gamma(np.ones(100)*5, 1, times=10)
 b = sampler.gamma(np.ones([100, 100])*5, 1, times=10)
 ```
 
->Compare
+Compare
+=============
 
 Compare the sampling speed of distribution functions with numpy:
 ![Image text](https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_numpy.png)  
