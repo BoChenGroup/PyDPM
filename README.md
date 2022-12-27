@@ -24,7 +24,6 @@ Our developed Pydpm not only provides efficient distribution sampling functions 
 
 :fire:**Note: We have released a new version that does not depend on Pycuda.**
 
-
 ![Image text](https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework_old.png)
 
 Install
@@ -36,6 +35,12 @@ $ pip install pydpm
 ```
 
 Under Windows system, we recommed to install Visual Studio 2019 and latest CUDA Toolkit. The combination of VS2019(with MSVC v142) and CUDA 11.5 has been tested in pydpm2.0.
+
+
+
+
+
+
 
 Create Probabilistic Model
 =============
