@@ -31,7 +31,7 @@ parser.add_argument("--gpu_id", type=int, default=0, help="the id of gpu to depl
 
 # dataset
 parser.add_argument("--dataset", type=str, default='CIFAR10', help="the name of dataset")
-parser.add_argument("--dataset_path", type=str, default='../../../dataset', help="the file path of dataset")
+parser.add_argument("--dataset_path", type=str, default='../../dataset', help="the file path of dataset")
 
 # network settings
 parser.add_argument("--T", type=int, default=1000, help="Number of time steps in DDPM")
@@ -58,11 +58,8 @@ parser.add_argument("--model_path", type=str, default="../../save_models/DDPM.pt
 parser.add_argument("--noisy_path", type=str, default="../../output/noisy.png", help="path to save noisy")
 parser.add_argument("--image_path", type=str, default="../../output/image.png", help="path to save sampled images")
 
-
 args = parser.parse_args()
 args.device = 'cpu' if not torch.cuda.is_available() else f'cuda:{args.gpu_id}'
-
-
 
 # dataset
 dataset = CIFAR10(
@@ -75,12 +72,11 @@ dataset = CIFAR10(
 dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4, drop_last=True, pin_memory=True)
 
 net_config = {"channel": args.channel,
-                "channel_mult": args.channel_mult,
-                "attn": args.attn,
-                "num_res_blocks": args.num_res_blocks,
-                "dropout": args.dropout,}
-ddpm_config = {"beta_1": 1e-4, "beta_T": 0.02,}
-
+              "channel_mult": args.channel_mult,
+              "attn": args.attn,
+              "num_res_blocks": args.num_res_blocks,
+              "dropout": args.dropout}
+ddpm_config = {"beta_1": 1e-4, "beta_T": 0.02}
 
 model = DDPM(T=args.T, net_cfg=net_config, ddpm_cfg=ddpm_config, device=args.device)
 

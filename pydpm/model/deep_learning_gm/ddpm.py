@@ -14,11 +14,13 @@ Sample implementation of Denoising Diffusion Probabilistic Models in PyTorch
 
 import os
 import math
+import numpy as np
+from tqdm import tqdm
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from tqdm import tqdm
-import numpy as np
+
 
 class DDPM(nn.Module):
     def __init__(self, T, net_cfg, ddpm_cfg, device='cuda:0'):
@@ -62,6 +64,7 @@ class DDPM(nn.Module):
         self.attn = net_cfg['attn']
         self.num_res_blocks = net_cfg['num_res_blocks']
         self.dropout = net_cfg['dropout']
+
         net = UNet(T=self.T, channel=self.channel, channel_mult=self.channel_mult, attn=self.attn,
                    num_res_blocks=self.num_res_blocks, dropout=self.dropout).to(self.device)
 
@@ -82,13 +85,15 @@ class DDPM(nn.Module):
         train_bar = tqdm(iterable=dataloader)
         for i, (images, labels) in enumerate(train_bar):
 
-            optim.zero_grad()
             x_0 = images.to(self.device)
             loss = trainer(x_0).sum() / 1000.
+
+            optim.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(
                 self.net.parameters(), args.grad_clip)
             optim.step()
+
             train_bar.set_postfix(ordered_dict={
                 "epoch": epoch_index,
                 "loss": loss.item(),
@@ -119,7 +124,6 @@ class DDPM(nn.Module):
 
             return noisy, sampled_img
 
-
     def load(self, model_path):
         """
         load model
@@ -130,7 +134,6 @@ class DDPM(nn.Module):
         # Load the model
         checkpoint = torch.load(model_path, map_location=self.device)
         self.load_state_dict(checkpoint['state_dict'])
-
 
     def save(self, model_path: str = '../../save_models'):
         """
@@ -171,16 +174,13 @@ class GaussianDiffusionTrainer(nn.Module):
         self.model = model
         self.T = T
 
-        self.register_buffer(
-            'betas', torch.linspace(beta_1, beta_T, T).double())
+        self.register_buffer('betas', torch.linspace(beta_1, beta_T, T).double())
         alphas = 1. - self.betas
         alphas_bar = torch.cumprod(alphas, dim=0)
 
         # calculations for diffusion q(x_t | x_{t-1}) and others
-        self.register_buffer(
-            'sqrt_alphas_bar', torch.sqrt(alphas_bar))
-        self.register_buffer(
-            'sqrt_one_minus_alphas_bar', torch.sqrt(1. - alphas_bar))
+        self.register_buffer('sqrt_alphas_bar', torch.sqrt(alphas_bar))
+        self.register_buffer('sqrt_one_minus_alphas_bar', torch.sqrt(1. - alphas_bar))
 
     def forward(self, x_0):
         """
@@ -193,7 +193,6 @@ class GaussianDiffusionTrainer(nn.Module):
             extract(self.sqrt_one_minus_alphas_bar, t, x_0.shape) * noise)
         loss = F.mse_loss(self.model(x_t, t), noise, reduction='none')
         return loss
-
 
 class GaussianDiffusionSampler(nn.Module):
     def __init__(self, model, beta_1, beta_T, T):
@@ -249,7 +248,7 @@ class GaussianDiffusionSampler(nn.Module):
             if time_step % 100 == 0:
                 print(time_step)
             t = x_t.new_ones([x_T.shape[0], ], dtype=torch.long) * time_step
-            mean, var= self.p_mean_variance(x_t=x_t, t=t)
+            mean, var = self.p_mean_variance(x_t=x_t, t=t)
             # no noise when t == 0
             if time_step > 0:
                 noise = torch.randn_like(x_t)
@@ -260,25 +259,29 @@ class GaussianDiffusionSampler(nn.Module):
         x_0 = x_t
         return torch.clip(x_0, -1, 1)
 
+# the network structure of Unet in diffusion model
 class Swish(nn.Module):
     def forward(self, x):
         return x * torch.sigmoid(x)
-
 
 class TimeEmbedding(nn.Module):
     def __init__(self, T, d_model, dim):
         '''
         Get time embedding
         '''
-        assert d_model % 2 == 0
         super().__init__()
+
+        assert d_model % 2 == 0
+
         emb = torch.arange(0, d_model, step=2) / d_model * math.log(10000)
         emb = torch.exp(-emb)
         pos = torch.arange(T).float()
         emb = pos[:, None] * emb[None, :]
         assert list(emb.shape) == [T, d_model // 2]
+
         emb = torch.stack([torch.sin(emb), torch.cos(emb)], dim=-1)
         assert list(emb.shape) == [T, d_model // 2, 2]
+
         emb = emb.view(T, d_model)
 
         self.timembedding = nn.Sequential(
@@ -327,8 +330,7 @@ class UpSample(nn.Module):
 
     def forward(self, x, temb):
         _, _, H, W = x.shape
-        x = F.interpolate(
-            x, scale_factor=2, mode='nearest')
+        x = F.interpolate(x, scale_factor=2, mode='nearest')
         x = self.conv(x)
         return x
 
@@ -395,14 +397,17 @@ class ResBlock(nn.Module):
             nn.Dropout(dropout),
             nn.Conv2d(out_channel, out_channel, 3, stride=1, padding=1),
         )
+
         if in_channel != out_channel:
             self.shortcut = nn.Conv2d(in_channel, out_channel, 1, stride=1, padding=0)
         else:
             self.shortcut = nn.Identity()
+
         if attn:
             self.attn = AttnBlock(out_channel)
         else:
             self.attn = nn.Identity()
+
         self.initialize()
 
     def initialize(self):
@@ -443,6 +448,7 @@ class UNet(nn.Module):
         self.time_embedding = TimeEmbedding(T, channel, tdim)
 
         self.head = nn.Conv2d(3, channel, kernel_size=3, stride=1, padding=1)
+
         self.downblocks = nn.ModuleList()
         channels = [channel]  # record output channelannel when dowmsample for upsample
         now_channel = channel
@@ -454,6 +460,7 @@ class UNet(nn.Module):
                     dropout=dropout, attn=(i in attn)))
                 now_channel = out_channel
                 channels.append(now_channel)
+
             if i != len(channel_mult) - 1:
                 self.downblocks.append(DownSample(now_channel))
                 channels.append(now_channel)
@@ -471,6 +478,7 @@ class UNet(nn.Module):
                     in_channel=channels.pop() + now_channel, out_channel=out_channel, tdim=tdim,
                     dropout=dropout, attn=(i in attn)))
                 now_channel = out_channel
+
             if i != 0:
                 self.upblocks.append(UpSample(now_channel))
         assert len(channels) == 0
@@ -480,6 +488,7 @@ class UNet(nn.Module):
             Swish(),
             nn.Conv2d(now_channel, 3, 3, stride=1, padding=1)
         )
+
         self.initialize()
 
     def initialize(self):
@@ -491,15 +500,18 @@ class UNet(nn.Module):
     def forward(self, x, t):
         # Timestep embedding
         temb = self.time_embedding(t)
+
         # Downsampling
         h = self.head(x)
         hs = [h]
         for layer in self.downblocks:
             h = layer(h, temb)
             hs.append(h)
+
         # Middle
         for layer in self.middleblocks:
             h = layer(h, temb)
+
         # Upsampling
         for layer in self.upblocks:
             if isinstance(layer, ResBlock):

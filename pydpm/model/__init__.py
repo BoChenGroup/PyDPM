@@ -14,5 +14,6 @@ from .bayesian_gm.mpgbn import MPGBN
 from .deep_learning_gm.vae import VAE
 from .deep_learning_gm.gan import GAN
 from .deep_learning_gm.rbm import RBM
+from .deep_learning_gm.ddpm import DDPM
 from .hybrid_gm.whai import WHAI
 from .hybrid_gm.wgaae import WGAAE
