@@ -53,6 +53,8 @@ The workflow of applying PyDPM for downstream tasks
 Model List
 =============
 
+### Basic DAG model
+
 |Probabilistic Model Name                  |Abbreviation |Paper Link|
 |------------------------------------------|-------------|----------|
 |Latent Dirichlet Allocation               |LDA          |[Link](http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf)|
