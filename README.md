@@ -101,7 +101,7 @@ model.save()
 >Example: a few code lines to quickly deploy distribution sampler of Pydpm on GPU.
 
 ```python
-from pydpm._sampler import Basic_Sampler
+from pydpm.sampler import Basic_Sampler
 
 sampler = Basic_Sampler('gpu')
 a = sampler.gamma(np.ones(100)*5, 1, times=10)
