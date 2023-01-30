@@ -53,7 +53,7 @@ The workflow of applying PyDPM for downstream tasks
 Model List
 =============
 
-### Basic DAG model
+### Bayesian Generative Models
 
 |Probabilistic Model Name                  |Abbreviation |Paper Link|
 |------------------------------------------|-------------|----------|
@@ -69,6 +69,10 @@ Model List
 |Word Embeddings Deep Topic Model          |WEDTM        |[Link](http://proceedings.mlr.press/v80/zhao18a/zhao18a.pdf)|
 |Multimodal Poisson Gamma Belief Network   |MPGBN        |[Link](https://mingyuanzhou.github.io/Papers/mpgbn_aaai18.pdf)|
 |Graph Poisson Gamma Belief Network        |GPGBN        |[Link](https://proceedings.neurips.cc/paper/2020/file/05ee45de8d877c3949760a94fa691533-Paper.pdf)|
+
+### Deep-Learning Generative Models
+
+### Hybrid Generative Models
 
 Usage
 =============
