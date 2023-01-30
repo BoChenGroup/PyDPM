@@ -57,7 +57,7 @@ Model List
 
 |Probabilistic Model Name                  |Abbreviation |Paper Link|
 |------------------------------------------|-------------|----------|
-|Latent Dirichlet Allocation               |LDA          |[David M. Blei et al. 2003](http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf)|
+|Latent Dirichlet Allocation               |LDA          |[(Blei et al. 2003)](http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf)|
 |Poisson Factor Analysis                   |PFA          |[Link](http://mingyuanzhou.github.io/Papers/AISTATS2012_NegBinoBeta_PFA_v19.pdf)|
 |Poisson Gamma Belief Network              |PGBN         |[Link](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf )|
 |Convolutional Poisson Factor Analysis     |CPFA         |[Link](http://mingyuanzhou.github.io/Papers/CPGBN_v12_arXiv.pdf)|
