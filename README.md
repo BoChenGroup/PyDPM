@@ -14,8 +14,8 @@
 [![Stars][stars-image]][stars-url]
 [![Downloads](https://pepy.tech/badge/pydpm)](https://pepy.tech/project/pydpm)
 [![Documentation Status](https://readthedocs.org/projects/quantus/badge/?version=latest)](https://dustone-mu.github.io/)
-</div>
 [![Contributing][contributing-image]][contributing-url]
+</div>
 
 
 A python library focuses on constructing Deep Probabilistic Models (DPMs).
