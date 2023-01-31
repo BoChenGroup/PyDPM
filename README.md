@@ -80,7 +80,7 @@ Model List
 |Restricted Boltzmann Machines                  |RBM          |[Hinton et al., 2010](https://www.cs.toronto.edu/~hinton/absps/guideTR.pdf)|
 |Variational Autoencoder                        |VAE          |[Kingma et al., 2014](https://arxiv.org/pdf/1312.6114)|
 |Generative Adversarial Network                 |GAN          |[Goodfellow et al., 2014](https://arxiv.org/pdf/1406.2661)|
-|Normlizing Flow                                |NF           |[Rezende et al., 2015](https://arxiv.org/pdf/1406.2661](https://arxiv.org/pdf/1505.05770.pdf)|
+|Normlizing Flow                                |NF           |[Rezende et al., 2015](https://arxiv.org/pdf/1505.05770.pdf)|
 |Denoising Diffusion Probabilistic Models       |DDPM         |[Ho et al., 2020](https://arxiv.org/pdf/2006.11239)|
 
 
