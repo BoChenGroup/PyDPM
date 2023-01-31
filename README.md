@@ -89,7 +89,6 @@ Model List
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
 |-----------------------------------------------|-------------|----------|
 |Weibull Hybrid Autoencoding Inference          |WHAI         |[Zhang et al., 2018](https://arxiv.org/pdf/1803.01328)|<!--WHAI: Weibull Hybrid Autoencoding Inference for Deep Topic Modeling -->
-|Generative Text Convolutional Neural Network   |GTCNN        |[Wang et al., 2022](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9833334)|<!--Generative Text Convolutional Neural Network for Hierarchial Document Representation Learning -->
 |Weibull Graph Attention Autoencoder            |WGAAE        |[Fan et al., 2020](https://proceedings.neurips.cc/paper/2020/file/bcff3f632fd16ff099a49c2f0932b47a-Paper.pdf)|<!--Bayesian Attention Modules -->
 |Deep Coupling Embedding Topic Model            |dc-ETM       |[Li et al., 2022](https://www3.ntu.edu.sg/home/boan/papers/NeurIPS_22_CWR.pdf)|<!--Alleviating ''Posterior Collapse'' in Deep Topic Models via Policy Gradient -->
 |Topic Taxonomy Mining with Hyperbolic Embedding|HyperMiner   |[Xu et al., 2022](https://arxiv.org/pdf/2210.10625)|<!--HyperMiner: Topic Taxonomy Mining with Hyperbolic Embedding -->
@@ -99,7 +98,7 @@ Model List
 |TopicNet                                       |TopicNet     |[Duan et al., 2021](https://arxiv.org/pdf/2110.14286)|<!--TopicNet: Semantic Graph-Guaided Topic Discovery -->
 |Variational Edge Parition Model |VEPM         |[He et al., 2022](https://arxiv.org/pdf/2202.03233)|<!--A Variational Edge Partition Model for Supervised Graph Representation Learning -->
 |Recurrent Gamma Belief Network                 |rGBN         |[Guo et al., 2020](https://arxiv.org/pdf/1912.10337v1)|<!--Recurrent Hierarchical Topic-Guided Neural Language Models -->
-
+|Generative Text Convolutional Neural Network   |GTCNN        |[Wang et al., 2022](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9833334)|<!--Generative Text Convolutional Neural Network for Hierarchial Document Representation Learning -->
 
 Usage
 =============
