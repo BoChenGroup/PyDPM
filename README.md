@@ -8,14 +8,15 @@
 <br>
 </br>
 
-[![PyPI](https://img.shields.io/badge/pypi-v4.0.2-blue.svg)](https://pypi.org/project/pydpm/)
 [![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
+[![PyPI](https://img.shields.io/badge/pypi-v4.0.2-blue.svg)](https://pypi.org/project/pydpm/)
+![Python version](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue.svg)
 [![Stars][stars-image]][stars-url]
 [![Downloads](https://pepy.tech/badge/pydpm)](https://pepy.tech/project/pydpm)
-[![Contributing][contributing-image]][contributing-url]
-![Python version](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue.svg)
 [![Documentation Status](https://readthedocs.org/projects/quantus/badge/?version=latest)](https://dustone-mu.github.io/)
 </div>
+[![Contributing][contributing-image]][contributing-url]
+
 
 A python library focuses on constructing Deep Probabilistic Models (DPMs).
 Our developed Pydpm not only provides efficient distribution sampling functions on GPU, but also has included the implementations of existing popular DPMs.
