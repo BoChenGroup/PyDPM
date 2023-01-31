@@ -71,7 +71,7 @@ Model List
 |Deep Poisson Factor Analysis                   |DPFA         |[Gan et al., 2015](http://proceedings.mlr.press/v37/gan15.pdf)|
 |Word Embeddings Deep Topic Model               |WEDTM        |[Zhao et al., 2018](http://proceedings.mlr.press/v80/zhao18a/zhao18a.pdf)|
 |Multimodal Poisson Gamma Belief Network        |MPGBN        |[Wang et al., 2018](https://mingyuanzhou.github.io/Papers/mpgbn_aaai18.pdf)|
-|Graph Poisson Gamma Belief Network             |GPGBN        |[Wang et al., 2022](https://proceedings.neurips.cc/paper/2020/file/05ee45de8d877c3949760a94fa691533-Paper.pdf)|
+|Graph Poisson Gamma Belief Network             |GPGBN        |[Wang et al., 2020](https://proceedings.neurips.cc/paper/2020/file/05ee45de8d877c3949760a94fa691533-Paper.pdf)|
 
 ### Deep-Learning Generative Models
 
@@ -89,7 +89,7 @@ Model List
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
 |-----------------------------------------------|-------------|----------|
 |Weibull Hybrid Autoencoding Inference          |WHAI         |[Zhang et al., 2018](https://arxiv.org/pdf/1803.01328)|<!--WHAI: Weibull Hybrid Autoencoding Inference for Deep Topic Modeling -->
-|Weibull Graph Attention Autoencoder            |WGAAE        |[Wang et al., 2022](https://proceedings.neurips.cc/paper/2020/file/05ee45de8d877c3949760a94fa691533-Paper.pdf)|<!--Bayesian Attention Modules -->
+|Weibull Graph Attention Autoencoder            |WGAAE        |[Wang et al., 2020](https://proceedings.neurips.cc/paper/2020/file/05ee45de8d877c3949760a94fa691533-Paper.pdf)|<!--Bayesian Attention Modules -->
 |Recurrent Gamma Belief Network                 |rGBN         |[Guo et al., 2020](https://arxiv.org/pdf/1912.10337v1)|<!--Recurrent Hierarchical Topic-Guided Neural Language Models -->
 |Sawtooth Embedding Topic Model                 |SawETM       |[Duan et al., 2021](https://arxiv.org/pdf/2107.02757)|<!--Sawtooth Factorial Topic Embeddings Guided Gamma Belief Network -->
 |TopicNet                                       |TopicNet     |[Duan et al., 2021](https://arxiv.org/pdf/2110.14286)|<!--TopicNet: Semantic Graph-Guaided Topic Discovery -->
