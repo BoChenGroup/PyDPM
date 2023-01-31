@@ -70,18 +70,19 @@ Model List
 |Dirichlet Belief Networks                      |DirBN        |[Zhao et al., 2018](https://arxiv.org/pdf/1811.00717.pdf)|
 |Deep Poisson Factor Analysis                   |DPFA         |[Gan et al., 2015](http://proceedings.mlr.press/v37/gan15.pdf)|
 |Word Embeddings Deep Topic Model               |WEDTM        |[Zhao et al., 2018](http://proceedings.mlr.press/v80/zhao18a/zhao18a.pdf)|
-|Multimodal Poisson Gamma Belief Network        |MPGBN        |[Wang et al., 2022](https://mingyuanzhou.github.io/Papers/mpgbn_aaai18.pdf)|
+|Multimodal Poisson Gamma Belief Network        |MPGBN        |[Wang et al., 2018](https://mingyuanzhou.github.io/Papers/mpgbn_aaai18.pdf)|
 |Graph Poisson Gamma Belief Network             |GPGBN        |[Wang et al., 2022](https://proceedings.neurips.cc/paper/2020/file/05ee45de8d877c3949760a94fa691533-Paper.pdf)|
 
 ### Deep-Learning Generative Models
 
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
 |-----------------------------------------------|-------------|----------|
-|Denoising Diffusion Probabilistic Models       |DDPM         |[Ho et al., 2020](https://arxiv.org/pdf/2006.11239)|
-|Generative Adversarial Network                 |GAN          |[Goodfellow et al., 2014](https://arxiv.org/pdf/1406.2661)|
-|Normlizing Flow                                |NF           |[Goodfellow et al., 2014](https://arxiv.org/pdf/1406.2661)|
 |Restricted Boltzmann Machines                  |RBM          |[Hinton et al., 2010](https://www.cs.toronto.edu/~hinton/absps/guideTR.pdf)|
 |Variational Autoencoder                        |VAE          |[Kingma et al., 2014](https://arxiv.org/pdf/1312.6114)|
+|Generative Adversarial Network                 |GAN          |[Goodfellow et al., 2014](https://arxiv.org/pdf/1406.2661)|
+|Normlizing Flow                                |NF           |[Goodfellow et al., 2014](https://arxiv.org/pdf/1406.2661)|
+|Denoising Diffusion Probabilistic Models       |DDPM         |[Ho et al., 2020](https://arxiv.org/pdf/2006.11239)|
+
 
 ### Hybrid Generative Models
 
