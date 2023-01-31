@@ -91,7 +91,7 @@ Model List
 |Weibull Hybrid Autoencoding Inference          |WHAI         |[Zhang et al., 2018](https://arxiv.org/pdf/1803.01328)|<!--WHAI: Weibull Hybrid Autoencoding Inference for Deep Topic Modeling -->
 |Weibull Graph Attention Autoencoder            |WGAAE        |[Wang et al., 2020](https://proceedings.neurips.cc/paper/2020/file/05ee45de8d877c3949760a94fa691533-Paper.pdf)|<!--Bayesian Attention Modules -->
 |Recurrent Gamma Belief Network                 |rGBN         |[Guo et al., 2020](https://arxiv.org/pdf/1912.10337v1)|<!--Recurrent Hierarchical Topic-Guided Neural Language Models -->
-|Multimodal Weibull Variational Autoencoder     |MEVAE        |[Wang et al., 2020](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9417864)|<!--Multimodal Weibull Variational Autoencoder for Jointly Modeling Image-Text Data -->
+|Multimodal Weibull Variational Autoencoder     |MWVAE        |[Wang et al., 2020](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9417864)|<!--Multimodal Weibull Variational Autoencoder for Jointly Modeling Image-Text Data -->
 |Sawtooth Embedding Topic Model                 |SawETM       |[Duan et al., 2021](https://arxiv.org/pdf/2107.02757)|<!--Sawtooth Factorial Topic Embeddings Guided Gamma Belief Network -->
 |TopicNet                                       |TopicNet     |[Duan et al., 2021](https://arxiv.org/pdf/2110.14286)|<!--TopicNet: Semantic Graph-Guaided Topic Discovery -->
 |Deep Coupling Embedding Topic Model            |dc-ETM       |[Li et al., 2022](https://www3.ntu.edu.sg/home/boan/papers/NeurIPS_22_CWR.pdf)|<!--Alleviating ''Posterior Collapse'' in Deep Topic Models via Policy Gradient -->
