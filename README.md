@@ -60,8 +60,8 @@ Model List
 
 |Probabilistic Model Name                  |Abbreviation |Paper Link|
 |------------------------------------------|-------------|----------|
-|Latent Dirichlet Allocation               |LDA          |[Blei et al., 2003](http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf)|
-|Poisson Factor Analysis                   |PFA          |[Zhou et al., 2012](http://mingyuanzhou.github.io/Papers/AISTATS2012_NegBinoBeta_PFA_v19.pdf)|
+|Latent Dirichlet Allocation               |LDA          |[Link](http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf)|
+|Poisson Factor Analysis                   |PFA          |[Link](http://mingyuanzhou.github.io/Papers/AISTATS2012_NegBinoBeta_PFA_v19.pdf)|
 |Poisson Gamma Belief Network              |PGBN         |[Link](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf )|
 |Convolutional Poisson Factor Analysis     |CPFA         |[Link](http://mingyuanzhou.github.io/Papers/CPGBN_v12_arXiv.pdf)|
 |Convolutional Poisson Gamma Belief Network|CPGBN        |[Link](http://mingyuanzhou.github.io/Papers/CPGBN_v12_arXiv.pdf)|
@@ -75,7 +75,29 @@ Model List
 
 ### Deep-Learning Generative Models
 
+|Probabilistic Model Name                  |Abbreviation |Paper Link|
+|------------------------------------------|-------------|----------|
+|Denoising Diffusion Probabilistic Models  |DDPM         |[Link](https://arxiv.org/pdf/2006.11239)|
+|Generative Adversarial Network            |GAN          |[Link](https://arxiv.org/pdf/1406.2661)|
+|Normlizing Flow                           |NF           |[Link](https://arxiv.org/pdf/1406.2661)|
+|Restricted Boltzmann Machines             |RBM          |[Link](https://www.cs.toronto.edu/~hinton/absps/guideTR.pdf)|
+|Variational Autoencoder                   |VAE          |[Link](https://arxiv.org/pdf/1312.6114)|
+
 ### Hybrid Generative Models
+
+|Probabilistic Model Name                       |Abbreviation |Paper Link|
+|-----------------------------------------------|-------------|----------|
+|Deep Coupling Embedding Topic Model            |dc-ETM       |[Link](https://www3.ntu.edu.sg/home/boan/papers/NeurIPS_22_CWR.pdf)|<!--Alleviating ''Posterior Collapse'' in Deep Topic Models via Policy Gradient -->
+|Generative Text Convolutional Neural Network   |GTCNN        |[Link](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9833334)|<!--Generative Text Convolutional Neural Network for Hierarchial Document Representation Learning -->
+|Topic Taxonomy Mining with Hyperbolic Embedding|HyperMiner   |[Link](https://arxiv.org/pdf/2210.10625)|<!--HyperMiner: Topic Taxonomy Mining with Hyperbolic Embedding -->
+|Knowledge Graph Embedding Topic Model          |KG-ETM       |[Link](https://arxiv.org/pdf/2209.14228v1)|<!-- Knowledge-Aware Bayesian Deep Topic Model-->
+|Multimodal Weibull Variational Autoencoder     |MEVAE        |[Link](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9417864)|<!--Multimodal Weibull Variational Autoencoder for Jointly Modeling Image-Text Data -->
+|Sawtooth Embedding Topic Model                 |SawETM       |[Link](https://arxiv.org/pdf/2107.02757)|<!--Sawtooth Factorial Topic Embeddings Guided Gamma Belief Network -->
+|TopicNet                                       |TopicNet     |[Link](https://arxiv.org/pdf/2110.14286)|<!--TopicNet: Semantic Graph-Guaided Topic Discovery -->
+|Variational Edge Parition Graph Neural Network |VEPM         |[Link](https://arxiv.org/pdf/2202.03233)|<!--A Variational Edge Partition Model for Supervised Graph Representation Learning -->
+|Recurrent Gamma Belief Network                 |rGBN         |[Link](https://arxiv.org/pdf/1912.10337v1)|<!--Recurrent Hierarchical Topic-Guided Neural Language Models -->
+|Weibull Graph Attention Autoencoder            |WGAAE        |[Link](https://proceedings.neurips.cc/paper/2020/file/bcff3f632fd16ff099a49c2f0932b47a-Paper.pdf)|<!--Bayesian Attention Modules -->
+|Weibull Hybrid Autoencoding Inference          |WHAI         |[Link](https://arxiv.org/pdf/1803.01328)|<!--WHAI: Weibull Hybrid Autoencoding Inference for Deep Topic Modeling -->
 
 Usage
 =============
