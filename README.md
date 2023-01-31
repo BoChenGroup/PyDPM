@@ -97,7 +97,7 @@ Model List
 |Multimodal Weibull Variational Autoencoder     |MEVAE        |[Wang et al., 2022](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9417864)|<!--Multimodal Weibull Variational Autoencoder for Jointly Modeling Image-Text Data -->
 |Sawtooth Embedding Topic Model                 |SawETM       |[Duan et al., 2021](https://arxiv.org/pdf/2107.02757)|<!--Sawtooth Factorial Topic Embeddings Guided Gamma Belief Network -->
 |TopicNet                                       |TopicNet     |[Duan et al., 2021](https://arxiv.org/pdf/2110.14286)|<!--TopicNet: Semantic Graph-Guaided Topic Discovery -->
-|Variational Edge Parition Graph Neural Network |VEPM         |[He et al., 2022](https://arxiv.org/pdf/2202.03233)|<!--A Variational Edge Partition Model for Supervised Graph Representation Learning -->
+|Variational Edge Parition Model |VEPM         |[He et al., 2022](https://arxiv.org/pdf/2202.03233)|<!--A Variational Edge Partition Model for Supervised Graph Representation Learning -->
 |Recurrent Gamma Belief Network                 |rGBN         |[Guo et al., 2020](https://arxiv.org/pdf/1912.10337v1)|<!--Recurrent Hierarchical Topic-Guided Neural Language Models -->
 
 
