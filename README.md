@@ -80,7 +80,7 @@ Model List
 |Restricted Boltzmann Machines                  |RBM          |[Hinton et al., 2010](https://www.cs.toronto.edu/~hinton/absps/guideTR.pdf)|
 |Variational Autoencoder                        |VAE          |[Kingma et al., 2014](https://arxiv.org/pdf/1312.6114)|
 |Generative Adversarial Network                 |GAN          |[Goodfellow et al., 2014](https://arxiv.org/pdf/1406.2661)|
-|Normlizing Flow                                |NF           |[Goodfellow et al., 2014](https://arxiv.org/pdf/1406.2661)|
+|Normlizing Flow                                |NF           |[Rezende et al., 2015](https://arxiv.org/pdf/1406.2661](https://arxiv.org/pdf/1505.05770.pdf)|
 |Denoising Diffusion Probabilistic Models       |DDPM         |[Ho et al., 2020](https://arxiv.org/pdf/2006.11239)|
 
 
@@ -88,8 +88,10 @@ Model List
 
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
 |-----------------------------------------------|-------------|----------|
-|Deep Coupling Embedding Topic Model            |dc-ETM       |[Li et al., 2022](https://www3.ntu.edu.sg/home/boan/papers/NeurIPS_22_CWR.pdf)|<!--Alleviating ''Posterior Collapse'' in Deep Topic Models via Policy Gradient -->
+|Weibull Hybrid Autoencoding Inference          |WHAI         |[Zhang et al., 2018](https://arxiv.org/pdf/1803.01328)|<!--WHAI: Weibull Hybrid Autoencoding Inference for Deep Topic Modeling -->
 |Generative Text Convolutional Neural Network   |GTCNN        |[Wang et al., 2022](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9833334)|<!--Generative Text Convolutional Neural Network for Hierarchial Document Representation Learning -->
+|Weibull Graph Attention Autoencoder            |WGAAE        |[Fan et al., 2020](https://proceedings.neurips.cc/paper/2020/file/bcff3f632fd16ff099a49c2f0932b47a-Paper.pdf)|<!--Bayesian Attention Modules -->
+|Deep Coupling Embedding Topic Model            |dc-ETM       |[Li et al., 2022](https://www3.ntu.edu.sg/home/boan/papers/NeurIPS_22_CWR.pdf)|<!--Alleviating ''Posterior Collapse'' in Deep Topic Models via Policy Gradient -->
 |Topic Taxonomy Mining with Hyperbolic Embedding|HyperMiner   |[Xu et al., 2022](https://arxiv.org/pdf/2210.10625)|<!--HyperMiner: Topic Taxonomy Mining with Hyperbolic Embedding -->
 |Knowledge Graph Embedding Topic Model          |KG-ETM       |[Wang et al., 2022](https://arxiv.org/pdf/2209.14228v1)|<!-- Knowledge-Aware Bayesian Deep Topic Model-->
 |Multimodal Weibull Variational Autoencoder     |MEVAE        |[Wang et al., 2022](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9417864)|<!--Multimodal Weibull Variational Autoencoder for Jointly Modeling Image-Text Data -->
@@ -97,8 +99,7 @@ Model List
 |TopicNet                                       |TopicNet     |[Duan et al., 2021](https://arxiv.org/pdf/2110.14286)|<!--TopicNet: Semantic Graph-Guaided Topic Discovery -->
 |Variational Edge Parition Graph Neural Network |VEPM         |[He et al., 2022](https://arxiv.org/pdf/2202.03233)|<!--A Variational Edge Partition Model for Supervised Graph Representation Learning -->
 |Recurrent Gamma Belief Network                 |rGBN         |[Guo et al., 2020](https://arxiv.org/pdf/1912.10337v1)|<!--Recurrent Hierarchical Topic-Guided Neural Language Models -->
-|Weibull Graph Attention Autoencoder            |WGAAE        |[Fan et al., 2020](https://proceedings.neurips.cc/paper/2020/file/bcff3f632fd16ff099a49c2f0932b47a-Paper.pdf)|<!--Bayesian Attention Modules -->
-|Weibull Hybrid Autoencoding Inference          |WHAI         |[Zhang et al., 2018](https://arxiv.org/pdf/1803.01328)|<!--WHAI: Weibull Hybrid Autoencoding Inference for Deep Topic Modeling -->
+
 
 Usage
 =============
