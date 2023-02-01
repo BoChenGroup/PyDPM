@@ -15,5 +15,6 @@ from .deep_learning_pm.vae import VAE
 from .deep_learning_pm.gan import GAN
 from .deep_learning_pm.rbm import RBM
 from .deep_learning_pm.ddpm import DDPM
+from .deep_learning_gm.nflow import *
 from .hybrid_pm.whai import WHAI
 from .hybrid_pm.wgaae import WGAAE
