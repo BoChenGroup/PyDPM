@@ -56,7 +56,7 @@ The workflow of applying PyDPM for downstream tasks
 Model List
 =============
 
-### Bayesian Generative Models
+### Bayesian Probabilistic Models
 
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
 |-----------------------------------------------|-------------|----------|
@@ -84,7 +84,7 @@ Model List
 |Denoising Diffusion Probabilistic Models       |DDPM         |[Ho et al., 2020](https://arxiv.org/pdf/2006.11239)|
 
 
-### Hybrid Generative Models
+### Hybrid Probabilistic Models
 
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
 |-----------------------------------------------|-------------|----------|
