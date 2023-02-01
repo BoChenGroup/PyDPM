@@ -73,7 +73,7 @@ Model List
 |Multimodal Poisson Gamma Belief Network        |MPGBN        |[Wang et al., 2018](https://mingyuanzhou.github.io/Papers/mpgbn_aaai18.pdf)|
 |Graph Poisson Gamma Belief Network             |GPGBN        |[Wang et al., 2020](https://proceedings.neurips.cc/paper/2020/file/05ee45de8d877c3949760a94fa691533-Paper.pdf)|
 
-### Deep-Learning Generative Models
+### Deep-Learning Probabilistic Models
 
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
 |-----------------------------------------------|-------------|----------|
