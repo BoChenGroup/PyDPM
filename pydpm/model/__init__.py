@@ -11,9 +11,9 @@ from .bayesian_pm.dirbn import DirBN
 from .bayesian_pm.dpfa import DPFA
 from .bayesian_pm.gpgbn import GPGBN
 from .bayesian_pm.mpgbn import MPGBN
-from .deep_learning_gm.vae import VAE
-from .deep_learning_gm.gan import GAN
-from .deep_learning_gm.rbm import RBM
-from .deep_learning_gm.ddpm import DDPM
+from .deep_learning_pm.vae import VAE
+from .deep_learning_pm.gan import GAN
+from .deep_learning_pm.rbm import RBM
+from .deep_learning_pm.ddpm import DDPM
 from .hybrid_pm.whai import WHAI
 from .hybrid_pm.wgaae import WGAAE
