@@ -100,9 +100,11 @@ Model List
 |Variational Edge Parition Model |VEPM         |[He et al., 2022](https://arxiv.org/pdf/2202.03233)|<!--A Variational Edge Partition Model for Supervised Graph Representation Learning -->
 |Generative Text Convolutional Neural Network   |GTCNN        |[Wang et al., 2022](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9833334)|<!--Generative Text Convolutional Neural Network for Hierarchial Document Representation Learning -->
 
-### The Deep Proabilistic Models is on building
+### The Deep Proabilistic Models on building
 
 :fire:**Welcome to pull requirests for us.**
+|　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
+|-----------------------------------------------|-------------|----------|
 
 
 Usage
