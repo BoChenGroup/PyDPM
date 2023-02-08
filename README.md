@@ -102,7 +102,7 @@ Model List
 
 ### Deep Proabilistic Models planned to be built
 
-:fire:**Welcome to pull requirests for us.**
+:fire:**Welcome to introduce classical or novel Deep Proabilistic Models for us.**
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
 |-----------------------------------------------|-------------|----------|
 
