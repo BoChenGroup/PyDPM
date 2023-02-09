@@ -97,7 +97,7 @@ Model List
 |Deep Coupling Embedding Topic Model            |dc-ETM       |[Li et al., 2022](https://www3.ntu.edu.sg/home/boan/papers/NeurIPS_22_CWR.pdf)|<!--Alleviating ''Posterior Collapse'' in Deep Topic Models via Policy Gradient -->
 |Topic Taxonomy Mining with Hyperbolic Embedding|HyperMiner   |[Xu et al., 2022](https://arxiv.org/pdf/2210.10625)|<!--HyperMiner: Topic Taxonomy Mining with Hyperbolic Embedding -->
 |Knowledge Graph Embedding Topic Model          |KG-ETM       |[Wang et al., 2022](https://arxiv.org/pdf/2209.14228v1)|<!-- Knowledge-Aware Bayesian Deep Topic Model-->
-|Variational Edge Parition Model |VEPM         |[He et al., 2022](https://arxiv.org/pdf/2202.03233)|<!--A Variational Edge Partition Model for Supervised Graph Representation Learning -->
+|Variational Edge Parition Model |VEPM          |[He et al., 2022](https://arxiv.org/pdf/2202.03233)|<!--A Variational Edge Partition Model for Supervised Graph Representation Learning -->
 |Generative Text Convolutional Neural Network   |GTCNN        |[Wang et al., 2022](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9833334)|<!--Generative Text Convolutional Neural Network for Hierarchial Document Representation Learning -->
 
 ### Deep Proabilistic Models planned to be built
@@ -105,7 +105,14 @@ Model List
 :fire:**Welcome to introduce classical or novel Deep Proabilistic Models for us.**
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
 |-----------------------------------------------|-------------|----------|
-
+|Stacked Denoising Autoencoder                  |SDAE         |[Vincent et al., 2010](http://www.jmlr.org/papers/volume11/vincent10a/vincent10a.pdf)|<!--Stacked Denoising Autoencoders: Learning Useful Representations ina Deep Network with a Local Denoising Criterion -->
+|Denoising Autoencoder                          |DAE          |[Vincent et al., 2008](http://www.cs.toronto.edu/~larocheh/publications/icml-2008-denoising-autoencoders.pdf)|<!--Extracting and Composing Robust Features with Denoising Autoencoders -->
+|Sparse Autoencoder                             |SAE          |[Link](https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf)|<!-- -->
+|Contractive Autoencoder                        |CAE          |[Rifai et al., 2011](https://dl.acm.org/doi/10.5555/3104482.3104587)|<!--Contractive Auto-Encoders: Explicit Invariance During Feature Extraction -->
+|Deep Convolutional GAN                         |DCGAN        |[Radford et al., 2016](https://arxiv.org/pdf/1511.06434)|<!--Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks -->
+|Wasserstein Generative Adversarial Nets        |WGAN         |[Arjovsky et al., 2017](https://dl.acm.org/doi/pdf/10.5555/3305381.3305404)|<!--Wasserstein generative adversarial networks -->
+|Score-Based Generative Models                  |SGM          |[Bortoli et al., 2022](https://arxiv.org/pdf/2202.02763)|<!--Riemannian Score-Based Generative Modelling -->
+|Poisson Flow Generative Models                 |PFGM         |[Xu et al., 2022](https://arxiv.org/pdf/2209.11178)|<!--Poisson Flow Generative Models -->
 
 Usage
 =============
