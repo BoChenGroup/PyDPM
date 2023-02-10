@@ -105,13 +105,15 @@ Model List
 :fire:**Welcome to introduce classical or novel Deep Proabilistic Models for us.**
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
 |-----------------------------------------------|-------------|----------|
-|Denoising Autoencoder                          |DAE          |[Vincent et al., 2008](http://www.cs.toronto.edu/~larocheh/publications/icml-2008-denoising-autoencoders.pdf)|<!--Extracting and Composing Robust Features with Denoising Autoencoders -->
-|Stacked Denoising Autoencoder                  |SDAE         |[Vincent et al., 2010](http://www.jmlr.org/papers/volume11/vincent10a/vincent10a.pdf)|<!--Stacked Denoising Autoencoders: Learning Useful Representations ina Deep Network with a Local Denoising Criterion -->
-|Contractive Autoencoder                        |CAE          |[Rifai et al., 2011](https://dl.acm.org/doi/10.5555/3104482.3104587)|<!--Contractive Auto-Encoders: Explicit Invariance During Feature Extraction -->
+|Nouveau Variational Autoencoder                |NVAE         |[Vahdat et al., 2020](https://arxiv.org/abs/2007.03898)|<!--NVAE: A Deep Hierarchical Variational Autoencoder -->
+|flow-based Variational Autoencoder             |f-VAE        |[Su et al., 2018](www.paperweekly.site/papers/2313)|<!--f-VAEs: Improve VAEs with Conditional Flows -->
+|Conditional Variational Autoencoder            |CVAE         |[Sohn et al., 2015](https://papers.nips.cc/paper/2015/file/8d55a249e6baa5c06772297520da2051-Paper.pdf)|<!--Learning Structured Output Representation using Deep Conditional Generative Models. NIPS2015 -->
 |Deep Convolutional Generative Adversarial Networks |DCGAN        |[Radford et al., 2016](https://arxiv.org/pdf/1511.06434)|<!--Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks -->
-|Wasserstein Generative Adversarial Networks        |WGAN         |[Arjovsky et al., 2017](https://dl.acm.org/doi/pdf/10.5555/3305381.3305404)|<!--Wasserstein generative adversarial networks -->
+|Wasserstein Generative Adversarial Networks    |WGAN         |[Arjovsky et al., 2017](https://dl.acm.org/doi/pdf/10.5555/3305381.3305404)|<!--Wasserstein generative adversarial networks -->
 |Score-Based Generative Models                  |SGM          |[Bortoli et al., 2022](https://arxiv.org/pdf/2202.02763)|<!--Riemannian Score-Based Generative Modelling -->
 |Poisson Flow Generative Models                 |PFGM         |[Xu et al., 2022](https://arxiv.org/pdf/2209.11178)|<!--Poisson Flow Generative Models -->
+|Stable Diffusion                               |LDM          |[Rombach et al., 2022](https://arxiv.org/abs/2112.10752)|<!--High-Resolution Image Synthesis with Latent Diffusion Models. CVPR 2022 -->
+
 
 Usage
 =============
