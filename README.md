@@ -58,6 +58,7 @@ Model List
 <div align=center>
 <img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/intro.png" >
 </div>
+
 ### Bayesian Probabilistic Models
 
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
