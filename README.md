@@ -55,7 +55,9 @@ The workflow of applying PyDPM for downstream tasks
 
 Model List
 =============
-
+<div align=center>
+<img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/intro.png" width="75%">
+</div>
 ### Bayesian Probabilistic Models
 
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
