@@ -124,7 +124,8 @@ The Model module in pyDPM has included a wide variety of popular DPMs, which can
 |Score-Based Generative Models                  |SGM          |[Bortoli et al., 2022](https://arxiv.org/pdf/2202.02763)|<!--Riemannian Score-Based Generative Modelling -->
 |Poisson Flow Generative Models                 |PFGM         |[Xu et al., 2022](https://arxiv.org/pdf/2209.11178)|<!--Poisson Flow Generative Models -->
 |Stable Diffusion                               |LDM          |[Rombach et al., 2022](https://arxiv.org/abs/2112.10752)|<!--High-Resolution Image Synthesis with Latent Diffusion Models. CVPR 2022 -->
-
+|Denoising Diffusion Implicit Models            |DDIM         |[Song et al., 2022](https://arxiv.org/pdf/2010.02502)|<!--Denoising Diffusion Implicit Models. NIPS 2022 -->
+|Vector Quantized Diffusion                     |VQ-Diffusion |[Tang et al., 2023](https://arxiv-export3.library.cornell.edu/pdf/2205.16007v1)|<!--Improved Vector Quantized Diffusion Models. CVPR 2023 -->
 
 Usage
 =============
