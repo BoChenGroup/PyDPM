@@ -40,7 +40,15 @@ For Linux system, we recommed to install the latest version of CUDA toolkit.
 
 Overview
 =============
-The overview of the framework of PyDPM library
+The overview of the framework of PyDPM library, which can be roughly split into four sectors, specifically Sampler, Model, Evaluation, and Example modules. 
+Generally speaking, 
+the Sampler module provides both the most basic distribution sampler and model sampler for training or testing the constructed DPMs on CPU or GPU; The Model module contains a wide variety of popular DPMs, which can be directly called as APIs in Python; 
+The Evaluation module includes a series of widely used metrics to evaluate these DPMs after training;
+For each DPM included in the Model module, the Example module provides a demo code equipped with a detailed tutorial about how to use and evaluate it under PyDPM.
+
+
+
+
 <div align=center>
 <img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework_old.png" width="100%">
 </div>
