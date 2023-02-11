@@ -55,6 +55,8 @@ The workflow of applying PyDPM for downstream tasks
 
 Model List
 =============
+The Model module in pyDPM has included a wide variety of popular DPMs, which can be roughly split into several categories, including Bayesian Probabilistic Model, Deep-Learning Probabilistic Models, and Hybrid Probabilistic Models.
+
 <div align=center>
 <img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/intro.png" >
 </div>
