@@ -173,6 +173,11 @@ Compare
 <img src="https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_tf2_torch.png" width="70%">
 </div>
 
+>Compare the distribution sampling efficiency of PyDPM with CuPy and PyCUDA(used by pydpm v1.0):
+<div align=left>
+<img src="https://raw.githubusercontent.com/BoChenGroup/PyDPM/master/compare_cupy_pycuda.png" width="70%">
+</div>
+
 Contact
 ========
 License: Apache License Version 2.0
