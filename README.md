@@ -45,14 +45,18 @@ The overview of the framework of PyDPM library can be roughly split into four se
 requirements of these DPMs constructed on either CPU or GPU;
 2) Model module contains a wide variety of classical and popular DPMs, which can be directly called as APIs in Python; 
 3) Evaluation module provides a DataLoader sub-module to process data samples in various forms, such as images, text, graphs etc., and also a Metric sub-module to comprehensively evaluate these DPMs after training;
-4) Example module, for each DPM included in the Model module, we provides a corresponding code demo equipped with a detailed explanation in the official docs;
+4) Example module, for each DPM included in the Model module, we provides a corresponding code demo equipped with a detailed explanation in the official docs.
 
 <div align=center>
 <img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework_old.png" width="100%">
 </div>
 
 
-The workflow of applying PyDPM for downstream tasks
+The workflow of applying PyDPM for downstream tasks, which can be splited into four steps as follows:
+1) Device level can choose the deployment on either CPU or GPU;
+2) Mechasnisms of model training or testing includes either or both of Gibbs sampling and back propagation,  implemented by pyDPM.sampler and pyTorch respecitveily;
+3) Models in pyDPM mainly include Bayesian Probabilistic Model, Deep-Learning Probabilistic Models, and Hybrid Probabilistic Models;
+4) Applications of DPMs has included Nature Language Processing (NLP), Graph Neural Network (GNN), and Recomandation System (RS) etc.
 <div align=center>
 <img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_workflow.png" width="75%">
 </div>
