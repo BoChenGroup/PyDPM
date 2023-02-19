@@ -53,7 +53,7 @@ requirements of these DPMs constructed on either CPU or GPU;
 
 
 The workflow of applying PyDPM for downstream tasks, which can be splited into four steps as follows:
-1) Device deployment of pyDPM can choose as a platform with either CPU or GPU;
+1) Device deployment of pyDPM can be choose as a platform with either CPU or GPU;
 2) Mechasnisms of model training or testing includes either or both of Gibbs sampling and back propagation,  implemented by pyDPM.sampler and pyTorch respecitveily;
 3) Models in pyDPM mainly include Bayesian Probabilistic Model, Deep-Learning Probabilistic Models, and Hybrid Probabilistic Models;
 4) Applications of DPMs has included Nature Language Processing (NLP), Graph Neural Network (GNN), and Recomandation System (RS) etc.
