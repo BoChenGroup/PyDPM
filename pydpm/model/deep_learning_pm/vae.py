@@ -68,7 +68,7 @@ class VAE(nn.Module):
             recon_x : [tensor] reconstruction of x
         """
         z = torch.randn(batch_size, self.z_dim).to(self.device)
-        recon_x = self.decoder(z)
+        recon_x = self.vae_decoder(z)
         return recon_x
 
     def show(self):
@@ -80,7 +80,7 @@ class VAE(nn.Module):
         x, y = torch.meshgrid([torch.arange(-3, 3, 0.5), torch.arange(-3, 3, 0.5)])
         z = torch.stack((x, y), 2).view(x.shape[0]**2, 2).to(self.device)
         # z = torch.randn(batch_size, self.z_dim).to(self.device)
-        recon_x = self.decoder(z)
+        recon_x = self.vae_decoder(z)
         # print(recon_x.shape)
         return recon_x
 
