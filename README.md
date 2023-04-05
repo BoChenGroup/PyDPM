@@ -56,7 +56,7 @@ The workflow of applying PyDPM for downstream tasks, which can be splited into f
 1) Device deployment of pyDPM can be choose as a platform with either CPU or GPU;
 2) Mechasnisms of model training or testing includes either or both of Gibbs sampling and back propagation,  implemented by pyDPM.sampler and pyTorch respecitveily;
 3) Model categories in pyDPM mainly include Bayesian Probabilistic Model, Deep-Learning Probabilistic Models, and Hybrid Probabilistic Models;
-4) Applications of DPMs has included Nature Language Processing (NLP), Graph Neural Network (GNN), and Recomandation System (RS) etc.
+4) Applications of DPMs has included Nature Language Processing (NLP), Graph Neural Network (GNN), and Recommendation System (RS) etc.
 <div align=center>
 <img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_workflow.png" width="75%">
 </div>
