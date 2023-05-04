@@ -26,7 +26,7 @@ Our developed Pydpm not only provides efficient distribution sampling functions 
 
 News
 =============
-:fire:**We have released a new version that does not depend on Pycuda.**  
+:fire:**A new version that does not depend on Pycuda has been released.**  
 :fire:**A tutorial of DPMs has been uploaded by Prof. Wilker Aziz (University of Amsterdam).**
 
 <div align="center">
