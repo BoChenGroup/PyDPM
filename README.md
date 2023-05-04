@@ -27,18 +27,6 @@ Our developed Pydpm not only provides efficient distribution sampling functions 
 
 :fire:**Note: We have released a new version that does not depend on Pycuda.**
 
-Videos
-=============
-<div align="center">
-   <a href="https://www.bilibili.com/video/BV1AP411Z78j/?spm_id_from=333.337.search-card.all.click&vd_source=98c31086838357413c23a6b7603d8ba3">
-   <img src="https://raw.githubusercontent.com/hpcaitech/public_assets/main/colossalai/img/JamesDemmel_Colossal-AI.png" width="600" />
-   </a>
-
-   Prof. James Demmel (UC Berkeley): Colossal-AI makes training AI models efficient, easy, and scalable.
-</div>
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
 Install
 =============
 The current version of PyDPM can be installed under either Windows or Linux system with PyPI. 
@@ -49,6 +37,17 @@ $ pip install pydpm
 
 For Windows system, we recommed to install Visual Studio 2019 as the compiler equipped with CUDA 11.5 toolkit;
 For Linux system, we recommed to install the latest version of CUDA toolkit.
+
+Videos
+=============
+<div align="center">
+   <a href="https://www.bilibili.com/video/BV1AP411Z78j/?spm_id_from=333.337.search-card.all.click&vd_source=98c31086838357413c23a6b7603d8ba3">
+   <img src="https://raw.githubusercontent.com/hpcaitech/public_assets/main/colossalai/img/JamesDemmel_Colossal-AI.png" width="600" />
+   </a>
+
+   Prof. Wilker Aziz (University of Amsterdam): A tutorial on variational inference and deep generative models.
+</div>
+
 
 Overview
 =============
