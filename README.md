@@ -38,15 +38,6 @@ $ pip install pydpm
 For Windows system, we recommed to install Visual Studio 2019 as the compiler equipped with CUDA 11.5 toolkit;
 For Linux system, we recommed to install the latest version of CUDA toolkit.
 
-Videos
-=============
-<div align="center">
-   <a href="https://www.bilibili.com/video/BV1AP411Z78j/?spm_id_from=333.337.search-card.all.click&vd_source=98c31086838357413c23a6b7603d8ba3">
-   <img src="https://raw.githubusercontent.com/BoChenGroup/PyDPM/master/dpm_tutorial.png" width="600" />
-   </a>
-
-   Prof. Wilker Aziz (University of Amsterdam): A tutorial on variational inference and deep generative models.
-</div>
 
 
 Overview
@@ -77,6 +68,16 @@ The workflow of applying PyDPM for downstream tasks, which can be splited into f
 Model List
 =============
 The Model module in pyDPM has included a wide variety of popular DPMs, which can be roughly split into several categories, including Bayesian Probabilistic Model, Deep-Learning Probabilistic Models, and Hybrid Probabilistic Models.
+
+
+<div align="center">
+   <a href="https://www.bilibili.com/video/BV1AP411Z78j/?spm_id_from=333.337.search-card.all.click&vd_source=98c31086838357413c23a6b7603d8ba3">
+   <img src="https://raw.githubusercontent.com/BoChenGroup/PyDPM/master/dpm_tutorial.png" width="600" />
+   </a>
+
+   Prof. Wilker Aziz (University of Amsterdam): A tutorial on variational inference and deep generative models.
+</div>
+
 
 <div align=center>
 <img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/intro.png" >
