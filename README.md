@@ -27,6 +27,10 @@ Our developed Pydpm not only provides efficient distribution sampling functions 
 
 :fire:**Note: We have released a new version that does not depend on Pycuda.**
 
+Tutorial
+=============
+**[Slides](https://probabll.github.io/slides/DL2/2023/probdl-1.pdf)**
+
 Install
 =============
 The current version of PyDPM can be installed under either Windows or Linux system with PyPI. 
