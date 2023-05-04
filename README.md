@@ -27,6 +27,15 @@ Our developed Pydpm not only provides efficient distribution sampling functions 
 
 :fire:**Note: We have released a new version that does not depend on Pycuda.**
 
+
+<div align="center">
+   <a href="https://www.bilibili.com/video/BV1AP411Z78j/?spm_id_from=333.337.search-card.all.click&vd_source=98c31086838357413c23a6b7603d8ba3">
+   <img src="https://raw.githubusercontent.com/BoChenGroup/PyDPM/master/dpm_tutorial.png" width="600" />
+   </a>
+
+   Prof. Wilker Aziz (University of Amsterdam): A tutorial on variational inference and deep generative models.
+</div>
+
 Install
 =============
 The current version of PyDPM can be installed under either Windows or Linux system with PyPI. 
@@ -69,14 +78,6 @@ Model List
 =============
 The Model module in pyDPM has included a wide variety of popular DPMs, which can be roughly split into several categories, including Bayesian Probabilistic Model, Deep-Learning Probabilistic Models, and Hybrid Probabilistic Models.
 
-
-<div align="center">
-   <a href="https://www.bilibili.com/video/BV1AP411Z78j/?spm_id_from=333.337.search-card.all.click&vd_source=98c31086838357413c23a6b7603d8ba3">
-   <img src="https://raw.githubusercontent.com/BoChenGroup/PyDPM/master/dpm_tutorial.png" width="600" />
-   </a>
-
-   Prof. Wilker Aziz (University of Amsterdam): A tutorial on variational inference and deep generative models.
-</div>
 
 
 <div align=center>
