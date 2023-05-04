@@ -25,8 +25,7 @@ Our developed Pydpm not only provides efficient distribution sampling functions 
 **[Documentation](https://dustone-mu.github.io/)** | **[Paper [Arxiv]]()** | **[Tutorials](https://dustone-mu.github.io/Getting%20Started/Introduction.html)** | **[Benchmarks](https://drive.google.com/drive/folders/1_BH_0N6wfbUvTS-CCWs4YLFpDWqGRw7w?usp=sharing)** |  **[Examples](https://dustone-mu.github.io/Getting%20Started/Mini%20example.html)** |
 
 
-:fire:**Note: We have released a new version that does not depend on Pycuda.**
-
+:fire:**Note: We have released a new version that does not depend on Pycuda.**\\
 :fire:**Note: A tutorial of DPMs has been uploaded by Prof. Wilker Aziz (University of Amsterdam).**
 
 <div align="center">
