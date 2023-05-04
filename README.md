@@ -31,6 +31,12 @@ Tutorial
 =============
 **[Slides](https://probabll.github.io/slides/DL2/2023/probdl-1.pdf)**
 
+```HTML
+<video width="320" height="240" controls>
+    <source src="[movie.mp4](https://www.bilibili.com/video/BV1AP411Z78j/?spm_id_from=333.337.search-card.all.click&vd_source=98c31086838357413c23a6b7603d8ba3)" type="video/mp4">
+</video>
+```
+
 Install
 =============
 The current version of PyDPM can be installed under either Windows or Linux system with PyPI. 
