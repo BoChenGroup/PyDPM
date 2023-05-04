@@ -42,7 +42,7 @@ Videos
 =============
 <div align="center">
    <a href="https://www.bilibili.com/video/BV1AP411Z78j/?spm_id_from=333.337.search-card.all.click&vd_source=98c31086838357413c23a6b7603d8ba3">
-   <img src="https://raw.githubusercontent.com/hpcaitech/public_assets/main/colossalai/img/JamesDemmel_Colossal-AI.png" width="600" />
+   <img src="https://raw.githubusercontent.com/BoChenGroup/PyDPM/master/dpm_tutorial.png" width="600" />
    </a>
 
    Prof. Wilker Aziz (University of Amsterdam): A tutorial on variational inference and deep generative models.
