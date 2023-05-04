@@ -27,11 +27,8 @@ Our developed Pydpm not only provides efficient distribution sampling functions 
 
 :fire:**Note: We have released a new version that does not depend on Pycuda.**
 
-Tutorial
+Videos
 =============
-**[Slides](https://probabll.github.io/slides/DL2/2023/probdl-1.pdf)**
-
-## Why Colossal-AI
 <div align="center">
    <a href="https://www.bilibili.com/video/BV1AP411Z78j/?spm_id_from=333.337.search-card.all.click&vd_source=98c31086838357413c23a6b7603d8ba3">
    <img src="https://raw.githubusercontent.com/hpcaitech/public_assets/main/colossalai/img/JamesDemmel_Colossal-AI.png" width="600" />
