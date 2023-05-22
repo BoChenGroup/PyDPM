@@ -16,6 +16,7 @@ import os
 import copy
 import time
 import numpy as np
+from tqdm import tqdm
 
 from ..basic_model import Basic_Model
 from ...sampler import Basic_Sampler
@@ -76,7 +77,7 @@ class LDA(Basic_Model):
         self.global_params.Phi = self.global_params.Phi / np.sum(self.global_params.Phi, axis=0)
 
 
-    def train(self, data: np.ndarray, iter_all: int=1, is_train: bool=True, is_initial_local: bool=True):
+    def train(self, data: np.ndarray, num_epochs: int=1, is_train: bool=True, is_initial_local: bool=True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of gibbs sampling
@@ -97,16 +98,16 @@ class LDA(Basic_Model):
         '''
         assert type(data) is np.ndarray, 'Data type error: the input dataset should be a 2-D np.ndarray'
         self._model_setting.N = data.shape[1]
-        self._model_setting.Iteration = iter_all
 
         # initial local parameters
         if is_initial_local or not hasattr(self.local_params, 'Theta'):
             self.local_params.Theta = np.ones([self._model_setting.K, self._model_setting.N]) / self._model_setting.K
 
         # gibbs sampling
-        for iter in range(self._model_setting.Iteration):
-            start_time = time.time()
+        train_bar = tqdm(iterable=range(num_epochs))
+        for epoch in train_bar:
 
+            start_time = time.time()
             ZSDS, WSZS = self._sampler.multi_aug(data, self.global_params.Phi, self.local_params.Theta)
 
             # update local params
@@ -125,14 +126,15 @@ class LDA(Basic_Model):
                     self.global_params.Phi = np.transpose(self._sampler.dirichlet(np.transpose(WSZS + self._hyper_params.Phi_eta)))
 
             end_time = time.time()
-            stages = 'Training' if is_train else 'Testing'
-            print(f'{stages} Stage: ',
-                  f'epoch {iter:3d} takes {end_time - start_time:.2f} seconds')
+
+            # tqdm
+            train_bar.set_description(f'Epoch [{epoch}/{num_epochs}]')
+            train_bar.set_postfix(time=end_time - start_time)
 
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, data: np.ndarray, iter_all: int=1, is_initial_local: bool=True):
+    def test(self, data: np.ndarray, num_epochs: int=1, is_initial_local: bool=True):
         '''
         Inputs:
             iter_all   : [int] scalar, the iterations of gibbs sampling
@@ -142,7 +144,7 @@ class LDA(Basic_Model):
             local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        local_params = self.train(data, iter_all=iter_all, is_train=False, is_initial_local=is_initial_local)
+        local_params = self.train(data, num_epochs=num_epochs, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 
@@ -179,6 +181,5 @@ class LDA(Basic_Model):
                 model[params] = getattr(self, params)
 
         np.save(model_path + '/' + self._model_name + '.npy', model)
-
 
 

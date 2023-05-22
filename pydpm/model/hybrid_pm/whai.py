@@ -74,6 +74,7 @@ class WHAI(Basic_Model, nn.Module):
         self.global_params = self.whai_decoder.global_params
         self._hyper_params = self.whai_decoder._hyper_params
 
+    # loss
     def log_max(self, x: torch.Tensor):
         '''
         return log(x+eps)
@@ -115,7 +116,8 @@ class WHAI(Basic_Model, nn.Module):
 
         return -(likelihood + kl_term) / x.shape[1], likelihood, likelihood + kl_term
 
-    def train_one_epoch(self, dataloader: DataLoader, optim: Optimizer, epoch_index, args=None, is_train=True):
+    # train and test
+    def train_one_epoch(self, dataloader: DataLoader, optim: Optimizer, epoch_idx: int, is_train=True, args=None):
         '''
         Train for one epoch
         Inputs:
@@ -129,18 +131,16 @@ class WHAI(Basic_Model, nn.Module):
             local_params.theta : Concatenation of theta with total dataset
         '''
         loss_t, likelihood_t, elbo_t = 0.0, 0.0, 0.0
-
-        # if is_train:
-        #     self.train()
-        # else:
-        #     self.eval()
-        self.train()
         if hasattr(self.local_params, 'Theta'):
             delattr(self.local_params, 'Theta')
 
+        if is_train:
+            self.train()
+        else:
+            self.eval()
         train_bar = tqdm(iterable=dataloader)
-        for i, (train_data, train_label) in enumerate(train_bar):
-
+        for batch_idx, (train_data, train_label) in enumerate(train_bar):
+            # forward
             theta, k, l = self.whai_encoder(torch.tensor(train_data, dtype=torch.float, device=self._model_setting.device), self.global_params.Phi, self.training)
 
             if is_train:
@@ -149,14 +149,17 @@ class WHAI(Basic_Model, nn.Module):
 
             loss, likelihood, elbo = self.loss(torch.tensor(train_data, dtype=torch.float, device=self._model_setting.device), self.global_params.Phi, theta, k, l)
 
+            # backward
             optim.zero_grad()
             loss.backward()
             optim.step()
 
+            # accumulate loss
             loss_t += loss.item()
             likelihood_t += likelihood.item()
             elbo_t += elbo.item()
 
+            # collect output
             if not hasattr(self.local_params, 'Theta'):
                 self.local_params.Theta = [0 for _ in range(self._model_setting.num_layers)]
                 for t in range(self._model_setting.num_layers):
@@ -165,8 +168,9 @@ class WHAI(Basic_Model, nn.Module):
                 for t in range(self._model_setting.num_layers):
                     self.local_params.Theta[t] = np.concatenate((self.local_params.Theta[t], theta[t].cpu().detach().numpy().T))
 
-            train_bar.set_description(f'Epoch [{epoch_index}/{args.num_epochs}]')
-            train_bar.set_postfix(loss=loss_t / (i + 1), likelihood=likelihood_t / (i + 1), elbo=elbo_t / (i + 1))
+            # tqdm
+            train_bar.set_description(f'Epoch [{epoch_idx}/{args.num_epochs}]')
+            train_bar.set_postfix(loss=loss_t / (batch_idx + 1), likelihood=likelihood_t / (batch_idx + 1), elbo=elbo_t / (batch_idx + 1))
 
         return copy.deepcopy(self.local_params)
 
@@ -181,28 +185,26 @@ class WHAI(Basic_Model, nn.Module):
             local_params.theta : Concatenation of theta with total dataset
             local_params.label : Concatenation of label with total dataset
         '''
-        self.eval()
         if hasattr(self.local_params, 'data'):
             delattr(self.local_params, 'Theta')
             delattr(self.local_params, 'data')
             delattr(self.local_params, 'label')
         loss_t, likelihood_t, elbo_t = 0.0, 0.0, 0.0
 
+        self.eval()
         test_bar = tqdm(iterable=dataloader)
         with torch.no_grad():
-            for i, (test_data, test_label) in enumerate(test_bar):
-                test_bar.set_description(f'Testing stage: ')
-                test_bar.set_postfix(loss=loss_t / (i + 1), likelihood=likelihood_t / (i + 1), elbo=elbo_t / (i + 1))
-
-
+            for batch_idx, (test_data, test_label) in enumerate(test_bar):
+                # forward
                 theta, k, l = self.whai_encoder(torch.tensor(test_data, dtype=torch.float, device=self._model_setting.device), self.global_params.Phi, self.training)
-
                 loss, likelihood, elbo = self.loss(torch.tensor(test_data, dtype=torch.float, device=self._model_setting.device), self.global_params.Phi, theta, k, l)
 
+                # accumulate loss
                 loss_t += loss.item()
                 likelihood_t += likelihood.item()
                 elbo_t += elbo.item()
 
+                # collect output
                 if not hasattr(self.local_params, 'Theta') or not hasattr(self.local_params, 'data') or not hasattr(self.local_params, 'label'):
                     self.local_params.Theta = [0 for _ in range(self._model_setting.num_layers)]
                     self.local_params.data = test_data.cpu().detach().numpy()
@@ -216,29 +218,13 @@ class WHAI(Basic_Model, nn.Module):
                     self.local_params.data = np.concatenate((self.local_params.data, test_data.cpu().detach().numpy()))
                     self.local_params.label = np.concatenate((self.local_params.label, test_label.cpu().detach().numpy()))
 
+                # tqdm
+                test_bar.set_description(f'Testing stage: ')
+                test_bar.set_postfix(loss=loss_t / (batch_idx + 1), likelihood=likelihood_t / (batch_idx + 1), elbo=elbo_t / (batch_idx + 1))
+
         return copy.deepcopy(self.local_params)
 
-
-    def load(self, checkpoint_path: str, directory_path: str):
-        '''
-        Load the model parameters from the checkpoint and the specified directory.
-        Inputs:
-            model_path : [str] the path to load the model.
-
-        '''
-        assert os.path.exists(checkpoint_path), 'Path Error: can not find the path to load the checkpoint'
-        assert os.path.exists(directory_path), 'Path Error: can not find the path to load the directory'
-
-        # load parameters of neural network
-        checkpoint = torch.load(checkpoint_path)
-        self.load_state_dict(checkpoint['state_dict'])
-
-        # load parameters of basic model
-        model = np.load(directory_path, allow_pickle=True).item()
-        for params in ['global_params', 'local_params', '_model_setting', '_hyper_params']:
-            if params in model:
-                setattr(self, params, model[params])
-
+    # save and load
     def save(self, model_path: str = '../save_models'):
         '''
         Save the model to the checkpoint the specified directory.
@@ -262,6 +248,26 @@ class WHAI(Basic_Model, nn.Module):
 
         np.save(model_path + '/' + self._model_name + '.npy', model)
         print('parameters of basic model have been saved by ' + model_path + '/' + self._model_name + '.npy')
+
+    def load(self, checkpoint_path: str, directory_path: str):
+        '''
+        Load the model parameters from the checkpoint and the specified directory.
+        Inputs:
+            model_path : [str] the path to load the model.
+
+        '''
+        assert os.path.exists(checkpoint_path), 'Path Error: can not find the path to load the checkpoint'
+        assert os.path.exists(directory_path), 'Path Error: can not find the path to load the directory'
+
+        # load parameters of neural network
+        checkpoint = torch.load(checkpoint_path)
+        self.load_state_dict(checkpoint['state_dict'])
+
+        # load parameters of basic model
+        model = np.load(directory_path, allow_pickle=True).item()
+        for params in ['global_params', 'local_params', '_model_setting', '_hyper_params']:
+            if params in model:
+                setattr(self, params, model[params])
 
 
 class Conv1D(nn.Module):
