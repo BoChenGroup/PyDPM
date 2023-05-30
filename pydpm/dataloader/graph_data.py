@@ -29,22 +29,27 @@ class Graph_Processer(object):
 
         return graph
 
-    def graph_from_edges(self, edge_index, n_nodes, to_sparse=True):
+    def graph_from_edges(self, edge_index, n_nodes, to_tensor=False, to_sparse=True):
 
-        if to_sparse:
+        if to_tensor:
             sp_adj = SparseTensor(row=edge_index[0],
                                   col=edge_index[1],
                                   value=torch.ones(edge_index[0].shape[0], device=edge_index.device),
                                   sparse_sizes=(n_nodes, n_nodes))
-            adj = sp_adj.to_dense()
+            if not to_sparse:
+                adj = sp_adj.to_dense()
+                return adj
         else:
             row = edge_index[0].detach().cpu().numpy()
             col = edge_index[1].detach().cpu().numpy()
             data = np.ones_like(row)
             sp_adj = sp.coo_matrix((data, (row, col)), shape=(n_nodes, n_nodes))
-            adj = sp_adj.todense()
 
-        return sp_adj, adj
+            if not to_sparse:
+                adj = sp_adj.todense()
+                return adj
+
+        return sp_adj
 
     def edges_from_graph(self, adj, device, is_sparse=True):
 
@@ -73,7 +78,7 @@ class Graph_Processer(object):
             pass
         return adj_normalized
 
-    def graph_to_tuple(self, sparse_mx, is_sparse: True):
+    def graph_to_tuple(self, sparse_mx, is_sparse: bool = True):
         if not sp.isspmatrix_coo(sparse_mx):
             sparse_mx = sparse_mx.tocoo()
         coords = np.vstack((sparse_mx.row, sparse_mx.col)).transpose()
@@ -98,6 +103,7 @@ class Graph_Processer(object):
     def subgraph_from_graph(self, sp_adj, sample_nodes, is_sparse=True):
         sp_csr_adj = sp_adj.tocsr()
         sample_adj = sp_csr_adj[sample_nodes, :][:, sample_nodes].tocoo()
+        # sample_adj = sample_adj.todense()
         sample_adj = SparseTensor.from_scipy(sample_adj).to_dense()
 
         return sample_adj
@@ -114,9 +120,9 @@ class Graph_Processer(object):
         assert np.diag(adj.todense()).sum() == 0
 
         adj_triu = sp.triu(adj)
-        adj_tuple = self.sparse_to_tuple(adj_triu)
+        adj_tuple = self.graph_to_tuple(adj_triu)
         edges = adj_tuple[0]
-        edges_all = self.sparse_to_tuple(adj)[0]
+        edges_all = self.graph_to_tuple(adj)[0]
         num_test = int(np.floor(edges.shape[0] / 10.))
         num_val = int(np.floor(edges.shape[0] / 20.))
 

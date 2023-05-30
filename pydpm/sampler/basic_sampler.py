@@ -3,9 +3,7 @@
 # License: BSD-3-Claus
 
 import platform
-import ctypes
-import os
-import numpy as np
+
 
 class Basic_Sampler(object):
     def __init__(self, device='cpu', seed=0, *args, **kwargs):
