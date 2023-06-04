@@ -13,17 +13,42 @@ Publised in International Conference on Machine Learning 2015
 # License: BSD-3-Clause
 
 import numpy as np
+import argparse
 import scipy.io as sio
-from pydpm.metric import ACC
-from pydpm.model import DPFA
+
 from torchvision import datasets, transforms
+
+from pydpm.model import DPFA
+from pydpm.metric import ACC
 from pydpm.dataloader.image_data import tensor_transforms
 
-# load dataset
+# =========================================== ArgumentParser ===================================================================== #
+parser = argparse.ArgumentParser()
+
+# device
+parser.add_argument("--device", type=str, default='gpu')
+
+# dataset
+parser.add_argument("--data_path", type=str, default='../../../dataset/mnist/', help="the path of loading data")
+
+# model
+parser.add_argument("--save_path", type=str, default='../../save_models', help="the path of saving model")
+parser.add_argument("--load_path", type=str, default='../../save_models/DPFA.npy', help="the path of loading model")
+
+parser.add_argument("--z_dims", type=list, default=[128, 64, 32], help="numbers of topics of 3 layers in DPFA(PFA+DSBN+Gibbs)")
+
+# optim
+parser.add_argument("--burnin", type=int, default=100, help="the iterations of burnin stage")
+parser.add_argument("--collection", type=int, default=80, help="the iterations of collection stage")
+
+args = parser.parse_args()
+
+# =========================================== Dataset ===================================================================== #
 # define transform for dataset and load orginal dataset
+# load dataset
 transform = transforms.Compose([transforms.ToTensor()])
-train_dataset = datasets.MNIST(root='../../dataset/mnist/', train=True, download=True)
-test_dataset = datasets.MNIST(root='../../dataset/mnist/', train=False, download=False)
+train_dataset = datasets.MNIST(root=args.data_path, train=True, download=True)
+test_dataset = datasets.MNIST(root=args.data_path, train=False, download=False)
 
 # transform dataset and reshape the dataset into [batch_size, feature_num]
 train_data = tensor_transforms(train_dataset.data, transform)
@@ -39,21 +64,25 @@ test_data = np.array(np.ceil(test_data[:999, :].T.numpy() * 5), order='C')
 train_label = train_label.numpy()[:999]
 test_label = test_label.numpy()[:999]
 
+# =========================================== Model ===================================================================== #
 # create the model and deploy it on gpu or cpu
-model = DPFA([128, 64, 32], 'gpu')  # topics of each layers
+model = DPFA(K=args.z_dims, device=args.device)
 model.initial(train_data)  # use the shape of train_data to initialize the params of model
-burnin, collection = 100, 80
-train_local_params = model.train(train_data, burnin=burnin, collection=collection)
-train_local_params = model.test(train_data, burnin=burnin, collection=collection)
-test_local_params = model.test(test_data, burnin=burnin, collection=collection)
+
+# train and evaluation
+train_local_params = model.train(train_data, burnin=args.burnin, collection=args.collection)
+train_local_params = model.test(train_data, burnin=args.burnin, collection=args.collection)
+test_local_params = model.test(test_data, burnin=args.burnin, collection=args.collection)
+
+# save the model after training
+model.save(args.save_path)
+# load the model
+model.load(args.load_path)
 
 # evaluate the model with classification accuracy
 # the demo accuracy can achieve 0.9099
 results = ACC(train_local_params.Theta, test_local_params.Theta, train_label, test_label, 'SVM')
 
-# save the model after training
-model.save()
-# model.load('./save_models/DPFA.npy')
 
 
 

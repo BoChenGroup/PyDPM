@@ -13,7 +13,7 @@ Publihsed in 2014
 
 import os
 import argparse
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 import torch
 import torch.optim as optim
@@ -83,3 +83,4 @@ with torch.no_grad():
     show_image = model.show()
     save_image(show_image.view(144, 1, 28, 28), '../../output/images/VAE_l_show_' + '.png', nrow=12)
 print('complete!!!')
+

@@ -7,15 +7,16 @@ import random
 import numpy as np
 import scipy.sparse as sp
 
+import torch
+import torch_geometric.transforms as T
+from torch_geometric.datasets import Planetoid
+
 from pydpm.model import WGAAE
 from pydpm.utils import *
 from pydpm.dataloader.graph_data import Graph_Processer
 from pydpm.metric.roc_score import ROC_AP_SCORE
 
-import torch
-import torch_geometric.transforms as T
-from torch_geometric.datasets import Planetoid
-
+# =========================================== ArgumentParser ===================================================================== #
 parser = argparse.ArgumentParser()
 
 # device
@@ -50,9 +51,9 @@ parser.add_argument('--theta_norm', type=bool, default=False, help='Whether thet
 args = parser.parse_args()
 args.device = 'cpu' if not torch.cuda.is_available() else f'cuda:{args.gpu_id}'
 
-
 seed_everything(args.seed)
 
+# =========================================== Dataset ===================================================================== #
 # Prepare for dataset
 dataset = Planetoid(args.dataset_path, args.dataset)
 data = dataset[0].to(args.device)
@@ -66,6 +67,7 @@ adj_train, train_edges, val_edges, val_edges_false, test_edges, test_edges_false
 adj_train = adj_train + sp.eye(adj_train.shape[0])
 data.edge_index = graph_processer.edges_from_graph(adj_train.tocoo(), args.device)
 
+# =========================================== Model ===================================================================== #
 model = WGAAE(in_dim=dataset.num_features, out_dim=args.out_dim, z_dims=args.z_dims, hid_dims=args.hid_dims, num_heads=args.num_heads, device=args.device)
 optim = torch.optim.Adam(model.parameters())
 

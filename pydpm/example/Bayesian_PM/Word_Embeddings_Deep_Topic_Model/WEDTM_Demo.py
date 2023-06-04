@@ -11,23 +11,50 @@ Published in International Council for Machinery Lubrication 2018
 
 # Author: Chaojie Wang <xd_silly@163.com>; Jiawen Wu <wjw19960807@163.com>; Wei Zhao <13279389260@163.com>
 # License: BSD-3-Clause
-import nltk
+
 import numpy as np
+import argparse
 import scipy.io as sio
-import torch
 
-from pydpm.metric import ACC
-from pydpm.model import WEDTM
-
+import nltk
 from nltk.corpus import stopwords
+
+import torch
 from torch.utils.data import Dataset, DataLoader
 from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import GloVe
 from torchtext.datasets import AG_NEWS
+
+from pydpm.model import WEDTM
+from pydpm.metric import ACC
 from pydpm.dataloader.text_data import Text_Processer, build_vocab_from_iterator
 
+# =========================================== ArgumentParser ===================================================================== #
+parser = argparse.ArgumentParser()
+
+# device
+parser.add_argument("--device", type=str, default='gpu')
+
+# dataset
+parser.add_argument("--data_path", type=str, default='../dataset/', help="the path of loading data")
+
+# model
+parser.add_argument("--save_path", type=str, default='../../save_models', help="the path of saving model")
+parser.add_argument("--load_path", type=str, default='../../save_models/WEDTM.npy', help="the path of loading model")
+
+parser.add_argument("--z_dim", type=int, default=100, help="number of topics in each layers")
+parser.add_argument("--T", type=int, default=3, help="number of vertical layers")
+parser.add_argument("--S", type=int, default=3, help="number of sub topics")
+
+# optim
+parser.add_argument("--num_epochs", type=int, default=300, help="number of epochs of training")
+
+args = parser.parse_args()
+
+# =========================================== Dataset ===================================================================== #
+# define transform for dataset and load orginal dataset
 # Load dataset (AG_NEWS from torchtext)
-train_iter, test_iter = AG_NEWS('../dataset/', split=('train', 'test'))
+train_iter, test_iter = AG_NEWS(args.data_path, split=('train', 'test'))
 tokenizer = get_tokenizer("basic_english")
 
 # build vocabulary
@@ -67,25 +94,24 @@ voc_embedding = voc_embedding.numpy()
 
 print('Data has been processed!')
 
-# params of model
-T = 3  # vertical layers
-S = 3  # sub topics
-K = [100] * T  # topics in each layers
-
+# =========================================== Model ===================================================================== #
 # create the model and deploy it on gpu or cpu
-model = WEDTM(K, 'gpu')
+model = WEDTM(K=[args.z_dim] * args.T, device=args.device)
 model.initial(train_data)  # use the shape of train_data to initialize the params of model
-train_local_params = model.train(voc_embedding, train_data, S, iter_all=300, is_initial_local=False)
-train_local_params = model.test(voc_embedding, train_data, S, iter_all=300)
-test_local_params = model.test(voc_embedding, test_data, S, iter_all=300)
 
+# train and evaluation
+train_local_params = model.train(voc_embedding, train_data, args.S, num_epochs=args.num_epochs, is_initial_local=False)
+train_local_params = model.test(voc_embedding, train_data, args.S, num_epochs=args.num_epochs)
+test_local_params = model.test(voc_embedding, test_data, args.S, num_epochs=args.num_epochs)
+
+# save the model after training
+model.save(args.save_path)
+# load the model
+model.load(args.load_path)
 
 # evaluate the model with classification accuracy
 results = ACC(train_local_params.Theta, test_local_params.Theta, train_labels, test_labels, 'SVM')
 
-# save the model after training
-model.save()
-# model.load('./save_models/WEDTM.npy')
 
 # # load dataset (WS.mat from paper)
 # dataset = sio.loadmat('../../dataset/WS.mat')

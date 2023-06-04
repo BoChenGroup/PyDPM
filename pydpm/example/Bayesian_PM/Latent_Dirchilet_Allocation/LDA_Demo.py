@@ -46,8 +46,8 @@ args = parser.parse_args()
 # =========================================== Dataset ===================================================================== #
 # define transform for dataset and load orginal dataset
 transform = transforms.Compose([transforms.ToTensor()])
-train_dataset = datasets.MNIST(root='../../dataset/mnist/', train=True, download=True)
-test_dataset = datasets.MNIST(root='../../dataset/mnist/', train=False, download=False)
+train_dataset = datasets.MNIST(root=args.data_path, train=True, download=True)
+test_dataset = datasets.MNIST(root=args.data_path, train=False, download=False)
 
 # transform dataset and reshape the dataset into [batch_size, feature_num]
 train_data = tensor_transforms(train_dataset.data, transform)

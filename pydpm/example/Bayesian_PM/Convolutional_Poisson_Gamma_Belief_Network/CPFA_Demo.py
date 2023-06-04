@@ -12,21 +12,42 @@ Published in International Conference on Machine Learning 2019
 # License: BSD-3-Clause
 
 import numpy as np
-import random
+import argparse
 import scipy.io as sio
 import _pickle as cPickle
-
-from pydpm.metric import ACC
-from pydpm.model import CPFA
-from pydpm.dataloader.text_data import Text_Processer, build_vocab_from_iterator
 
 from torch.utils.data import Dataset, DataLoader
 from torchtext.data.utils import get_tokenizer
 from torchtext.datasets import AG_NEWS
 
+from pydpm.model import CPFA
+from pydpm.metric import ACC
+from pydpm.dataloader.text_data import Text_Processer, build_vocab_from_iterator
 
+# =========================================== ArgumentParser ===================================================================== #
+parser = argparse.ArgumentParser()
+
+# device
+parser.add_argument("--device", type=str, default='gpu')
+
+# dataset
+parser.add_argument("--data_path", type=str, default='../../../dataset/', help="the path of loading data")
+
+# model
+parser.add_argument("--save_path", type=str, default='../../save_models', help="the path of saving model")
+parser.add_argument("--load_path", type=str, default='../../save_models/CPFA.npy', help="the path of loading model")
+
+parser.add_argument("--z_dim", type=int, default=200, help="dimensionality of the z latent space")
+
+# optim
+parser.add_argument("--num_epochs", type=int, default=100, help="number of epochs of training")
+
+args = parser.parse_args()
+
+# =========================================== Dataset ===================================================================== #
+# define transform for dataset and load orginal dataset
 # load dataset (AG_NEWS from torchtext)
-train_iter, test_iter = AG_NEWS('../../dataset/', split=('train', 'test'))
+train_iter, test_iter = AG_NEWS(args.data_path, split=('train', 'test'))
 tokenizer = get_tokenizer("basic_english")
 
 # build vocabulary
@@ -56,19 +77,24 @@ test_sparse_batch, test_labels = text_processer.word_index_from_file(test_files,
 print('Data has been processed!')
 
 # create the model and deploy it on gpu or cpu
-model = CPFA(200, 'gpu')
-
+model = CPFA(K=args.z_dim, device=args.device)
 model.initial(train_sparse_batch, is_sparse=True)  # use the shape of train_data to initialize the params of model
-train_local_params = model.train(train_sparse_batch, is_sparse=True, iter_all=100)
-train_local_params = model.test(train_sparse_batch, is_sparse=True, iter_all=100)
-test_local_params = model.test(test_sparse_batch, is_sparse=True, iter_all=100)
 
+# train and evaluation
+train_local_params = model.train(data=train_sparse_batch, is_sparse=True, num_epochs=args.num_epochs)
+train_local_params = model.test(data=train_sparse_batch, is_sparse=True, num_epochs=args.num_epochs)
+test_local_params = model.test(data=test_sparse_batch, is_sparse=True, num_epochs=args.num_epochs)
+
+# save the model after training
+model.save(args.save_path)
+# load the model
+model.load(args.load_path)
+
+# evaluate the model with classification accuracy
+# the demo accuracy can achieve 0.628
 train_theta = np.sum(np.sum(train_local_params.W_nk, axis=3), axis=2).T
 test_theta = np.sum(np.sum(test_local_params.W_nk, axis=3), axis=2).T
-
-# Score of test dataset's Theta: 0.628
 results = ACC(train_theta, test_theta, train_labels, test_labels, 'SVM')
-model.save()
 
 
 # # Use custom dataset
