@@ -94,10 +94,10 @@ class GPGBN(Basic_Model):
             self.global_params.U.append(self._sampler.gamma(1 * np.ones([self._model_setting.K[t], 1])) / (1 * np.ones([self._model_setting.K[t], 1])))
 
 
-    def train(self, data:np.ndarray, data_A:np.ndarray, iter_all: int, is_train: bool = True, is_initial_local: bool=True):
+    def train(self, data:np.ndarray, data_A:np.ndarray, num_epochs: int, is_train: bool = True, is_initial_local: bool=True):
         '''
         Inputs:
-            iter_all   : [int] scalar, the iterations of gibbs sampling
+            num_epochs   : [int] scalar, the iterations of gibbs sampling
             dataset       : [np.ndarray] V*N matrix, N bag-of-words vectors with a vocabulary of length V
             is_train   : [bool] True or False, whether to update the global params in the probabilistic model
 
@@ -118,7 +118,7 @@ class GPGBN(Basic_Model):
         # todo 1.调整注释  2.train/test  3.展示部分代码  4.cosine_simlar
         assert type(data) is np.ndarray, 'Data type error: the input dataset should be a 2-D np.ndarray'
         self._model_setting.N = data.shape[1]
-        self._model_setting.Iteration = iter_all
+        self._model_setting.Iteration = num_epochs
 
         # initial local params
         if is_initial_local or not hasattr(self.local_params, 'Theta') or not hasattr(self.local_params, 'c_j') or not hasattr(self.local_params, 'p_j') or not hasattr(self.local_params, 'Sigma'):
@@ -275,17 +275,17 @@ class GPGBN(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, data: np.ndarray, data_A:np.ndarray, iter_all: int, is_initial_local: bool=True):
+    def test(self, data: np.ndarray, data_A:np.ndarray, num_epochs: int, is_initial_local: bool=True):
         '''
         Inputs:
-            iter_all   : [int] scalar, the iterations of gibbs sampling
+            num_epochs   : [int] scalar, the iterations of gibbs sampling
             dataset       : [np.ndarray] V*N matrix, N bag-of-words vectors with a vocabulary of length V
 
         Outputs:
             local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        local_params = self.train(data, data_A=data_A, iter_all=iter_all, is_train=False, is_initial_local=is_initial_local)
+        local_params = self.train(data, data_A=data_A, num_epochs=num_epochs, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 

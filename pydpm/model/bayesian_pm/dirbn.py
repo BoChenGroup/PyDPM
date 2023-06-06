@@ -77,10 +77,10 @@ class DirBN(Basic_Model):
 
         self._hyper_params.Phi_eta = 0.05
 
-    def train(self, data: np.ndarray, iter_all: int, is_train: bool = True, is_initial_local: bool=True):
+    def train(self, data: np.ndarray, num_epochs: int, is_train: bool = True, is_initial_local: bool=True):
         '''
         Inputs:
-            iter_all   : [int] scalar, the iterations of sampling
+            num_epochs   : [int] scalar, the iterations of sampling
             dataset       : [np.ndarray] V*N matrix, N bag-of-words vectors with a vocabulary of length V
             is_train   : [bool] True or False, whether to update the global params in the probabilistic model
 
@@ -100,7 +100,7 @@ class DirBN(Basic_Model):
         '''
         assert type(data) is np.ndarray, 'Data type error: the input dataset should be a 2-D np.ndarray'
         self._model_setting.N = data.shape[1]
-        self._model_setting.Iteration = iter_all
+        self._model_setting.Iteration = num_epochs
 
         # initial local parameters
         if is_initial_local or not hasattr(self.local_params, 'Theta'):
@@ -154,17 +154,17 @@ class DirBN(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, data: np.ndarray, iter_all: int, is_initial_local: bool=True):
+    def test(self, data: np.ndarray, num_epochs: int, is_initial_local: bool=True):
         '''
         Inputs:
-            iter_all   : [int] scalar, the iterations of gibbs sampling
+            num_epochs   : [int] scalar, the iterations of gibbs sampling
             dataset       : [np.ndarray] V*N matrix, N bag-of-words vectors with a vocabulary of length V
 
         Outputs:
             local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        local_params = self.train(data, iter_all=iter_all, is_train=False, is_initial_local=is_initial_local)
+        local_params = self.train(data, num_epochs=num_epochs, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 

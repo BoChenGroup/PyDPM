@@ -111,10 +111,10 @@ class CPFA(Basic_Model):
             self.global_params.D_k[k, :, :, :] = self.global_params.D_k[k, :, :, :] / np.sum(self.global_params.D_k[k, :, :, :])
 
 
-    def train(self, data: list, is_sparse: bool=False, iter_all: int=1, is_train: bool=True, is_initial_local: bool=True):
+    def train(self, data: list, is_sparse: bool=False, num_epochs: int=1, is_train: bool=True, is_initial_local: bool=True):
         '''
         Inputs:
-            iter_all   : [int] scalar, the iterations of gibbs sampling
+            num_epochs   : [int] scalar, the iterations of gibbs sampling
             dense matrix representation
                 args[0] : [np.ndarray] N*V*L matrix, N documents represented as V*L sparse matrices
 
@@ -162,7 +162,7 @@ class CPFA(Basic_Model):
             batch_rows, batch_cols, batch_file_indices, batch_values = data[0]
             self._model_setting.N, self._model_setting.V, self._model_setting.L = data[1]
 
-        self._model_setting.Iteration = iter_all
+        self._model_setting.Iteration = num_epochs
         _structure = self._model_setting._structure
 
         # initial local parameters
@@ -199,10 +199,10 @@ class CPFA(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, data: list, is_sparse: bool=False, iter_all: int=1, is_initial_local: bool=True):
+    def test(self, data: list, is_sparse: bool=False, num_epochs: int=1, is_initial_local: bool=True):
         '''
         Inputs:
-            iter_all   : [int] scalar, the iterations of gibbs sampling
+            num_epochs   : [int] scalar, the iterations of gibbs sampling
             dense matrix representation
                 args[0] : [np.ndarray] N*V*L matrix, N documents represented as V*L sparse matrices
 
@@ -210,7 +210,7 @@ class CPFA(Basic_Model):
                 args[0] : [list] N documents under the sparse representation, batch.rows, batch.cols, batch.values
                 args[1] : [list] the shape of the input document matrix, N*V*L
         '''
-        local_params = self.train(data, is_sparse=is_sparse, iter_all=iter_all, is_train=False, is_initial_local=is_initial_local)
+        local_params = self.train(data, is_sparse=is_sparse, num_epochs=num_epochs, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 

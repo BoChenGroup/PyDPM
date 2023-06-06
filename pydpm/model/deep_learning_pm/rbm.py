@@ -7,12 +7,14 @@ Geoffrey Hinton
 Publihsed in 2010
 ===========================================
 """
+import os
+import numpy as np
+
 import torch
 import torch.utils.data
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-
 
 
 class RBM(nn.Module):
@@ -97,32 +99,44 @@ class RBM(nn.Module):
         hidden_term = wx_b.exp().add(1).log().sum(1)
         return (-hidden_term - vbias_term).mean()
 
-    def save(self, epoch, checkpoints):
+    # train and test
+    def train_one_epoch(self, dataloader, model_opt, epoch_idx, args):
+        loss_ = []
+        for batch_idx, (data, target) in enumerate(dataloader):
+            data = Variable(data.view(-1, 784))
+            sample_data = data.bernoulli()
+
+            v, v1 = self(sample_data)
+            loss = self.free_energy(v) - self.free_energy(v1)
+            loss_.append(loss.item())
+            model_opt.zero_grad()
+            loss.backward()
+            model_opt.step()
+        print('Train Epoch: {} Loss: {:.6f}'.format(epoch_idx, np.mean(loss_)))
+        return v, v1
+
+    # save and load
+    def save(self, model_path: str = '../save_models'):
         """
         save model
         Inputs:
-            epoch     : [int] train epoch;
-            checkpoints : [str] trained model path;
+            model_path : [str] the path to save the model, default '../save_models/RBM.pth';
         """
-        '======>>saving'
-        torch.save({'epoch': epoch ,
-                    'state_dict': self.state_dict()},
-                   checkpoints + '_epochs{}.pth'.format(epoch))
+        # create the directory path
+        if not os.path.isdir(model_path):
+            os.mkdir(model_path)
 
-    def load(self, start_ep, checkpoints):
+        # Save the model
+        torch.save({'state_dict': self.state_dict()}, model_path + '/' + self._model_name + '.pth')
+        print('model has been saved by ' + model_path + '/' + self._model_name + '.pth')
+
+    def load(self, model_path):
         """
         load model
         Inputs:
-            start_ep : [int] the epoch of checkpoint;
-            checkpoints : [str] trained model path;
+            model_path : [str] the path to load the model;
         """
-        try:
-            print("Loading Chechpoint from ' {} '".format(checkpoints + '_epochs{}.pth'.format(start_ep)))
-            checkpoint = torch.load(checkpoints + '_epochs{}.pth'.format(start_ep))
-            self.start_epoch = checkpoint['epoch']
-            self.load_state_dict(checkpoint['state_dict'])
-            print("Resuming Training From Epoch {}".format(self.start_epoch))
-            self.start_epoch = 0
-        except:
-            print("No Checkpoint Exists At '{}'".format(checkpoints))
-            self.start_epoch = 0
+        assert os.path.exists(model_path), 'Path Error: can not find the path to load the model'
+        # Load the model
+        checkpoint = torch.load(model_path)
+        self.load_state_dict(checkpoint['state_dict'])

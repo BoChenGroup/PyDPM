@@ -74,12 +74,12 @@ class WEDTM(Basic_Model):
         self.global_params.Phi = np.zeros((self._model_setting.K[0], self._model_setting.V)).astype(int)
 
 
-    def train(self, embeddings: np.ndarray, data: np.ndarray, S: int, iter_all: int=1, is_train: bool = True, is_initial_local: bool=True):
+    def train(self, embeddings: np.ndarray, data: np.ndarray, S: int, num_epochs: int=1, is_train: bool = True, is_initial_local: bool=True):
         '''
         Inputs:
             embeddings     : [np.ndarray] V*D, word embedding of training words
             S              : [int] sub topics
-            iter_all       : [np.ndarray] scalar, the iterations of gibbs sampling
+            num_epochs       : [np.ndarray] scalar, the iterations of gibbs sampling
             dataset           : [np.ndarray] V*N_train matrix, N_train bag-of-words vectors with a vocabulary length of V
             is_train       : [bool] True or False, whether to update the global params in the probabilistic model
 
@@ -98,7 +98,7 @@ class WEDTM(Basic_Model):
         '''
         assert type(data) is np.ndarray, 'Data type error: the input dataset should be a 2-D np.ndarray'
 
-        self._model_setting.Iteration = [iter_all] * self._model_setting.T
+        self._model_setting.Iteration = [num_epochs] * self._model_setting.T
         self._model_setting.N = data.shape[1]
 
         # initial local paramters
@@ -260,19 +260,19 @@ class WEDTM(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, embeddings: np.ndarray, data: np.ndarray, S: int, iter_all: int=1, is_initial_local: bool=True):
+    def test(self, embeddings: np.ndarray, data: np.ndarray, S: int, num_epochs: int=1, is_initial_local: bool=True):
         '''
         Inputs:
             embeddings     : [np.ndarray] V*D, word embedding of training words
             S              : [int] number of sub topics
-            iter_all       : [np.ndarray] scalar, the iterations of gibbs sampling
+            num_epochs       : [np.ndarray] scalar, the iterations of gibbs sampling
             dataset           : [np.ndarray] V*N_train matrix, N_train bag-of-words vectors with a vocabulary length of V
 
         Outputs:
                 local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        local_params = self.train(embeddings, data, S, iter_all=iter_all, is_train=False, is_initial_local=is_initial_local)
+        local_params = self.train(embeddings, data, S, num_epochs=num_epochs, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 

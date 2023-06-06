@@ -108,10 +108,10 @@ class DPGDS(Basic_Model):
         self._hyper_params.eta0 = 0.1
         self._hyper_params.epilson0 = 0.1
 
-    def train(self, data: np.ndarray, iter_all: int=1, is_train: bool = True, is_initial_local: bool=True):
+    def train(self, data: np.ndarray, num_epochs: int=1, is_train: bool = True, is_initial_local: bool=True):
         '''
         Inputs:
-            iter_all   : [int] scalar, the iterations of sampling
+            num_epochs   : [int] scalar, the iterations of sampling
             train_data : [np.ndarray] V*N_train matrix, N_train bag-of-words vectors with a vocabulary length of V
             is_train   : [bool] True or False, whether to update the global params in the probabilistic model
 
@@ -166,7 +166,7 @@ class DPGDS(Basic_Model):
             L_kdott[l] = np.zeros((self._model_setting.K[l], self._model_setting.T + 1))
             X_layer[l] = np.zeros((self._model_setting.K[l], self._model_setting.T, 2))
 
-        for iter in range(iter_all):
+        for iter in range(num_epochs):
 
             start_time = time.time()
             for l in range(self._model_setting.L):
@@ -322,17 +322,17 @@ class DPGDS(Basic_Model):
         return copy.deepcopy(self.local_params)
 
 
-    def test(self, data: np.ndarray, iter_all: int=1, is_initial_local :bool=True):
+    def test(self, data: np.ndarray, num_epochs: int=1, is_initial_local :bool=True):
         '''
         Inputs:
-            iter_all   : [int] scalar, the iterations of sampling
+            num_epochs   : [int] scalar, the iterations of sampling
             dataset       : [np.ndarray] V*N matrix, N bag-of-words vectors with a vocabulary of length V
 
         Outputs:
             local_params  : [Params] the local parameters of the probabilistic model
 
         '''
-        local_params = self.train(data, iter_all=iter_all, is_train=False, is_initial_local=is_initial_local)
+        local_params = self.train(data, num_epochs=num_epochs, is_train=False, is_initial_local=is_initial_local)
 
         return local_params
 
