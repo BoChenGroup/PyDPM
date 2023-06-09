@@ -27,7 +27,7 @@ News
 =============
 :fire:**A new version that does not depend on Pycuda has been released.**  
 
-:fire:**An abundance of highly useful and professional learning materials (contain course notes and slides) on [deep generative models](https://deepgenerativemodels.github.io) from the Ermom's group at Stanford University. (CS236 - Fall 2021)**
+:fire:**An abundance of professional learning materials on [Deep Generative Models](https://deepgenerativemodels.github.io) from the Ermom's group at Stanford University. (CS236 - Fall 2021)**
 
 :fire:**A tutorial of DPMs has been uploaded by Prof. Wilker Aziz (University of Amsterdam).**
 
