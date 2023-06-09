@@ -21,12 +21,14 @@
 A python library focuses on constructing Deep Probabilistic Models (DPMs).
 Our developed Pydpm not only provides efficient distribution sampling functions on GPU, but also has included the implementations of existing popular DPMs.
 
-
 **[Documentation](https://dustone-mu.github.io/)** | **[Paper [Arxiv]]()** | **[Tutorials](https://dustone-mu.github.io/Getting%20Started/Introduction.html)** | **[Benchmarks](https://drive.google.com/drive/folders/1_BH_0N6wfbUvTS-CCWs4YLFpDWqGRw7w?usp=sharing)** |  **[Examples](https://dustone-mu.github.io/Getting%20Started/Mini%20example.html)** |
 
 News
 =============
 :fire:**A new version that does not depend on Pycuda has been released.**  
+
+:fire:**An abundance of highly useful and professional learning materials (contain course notes and slides) on [deep generative models](https://deepgenerativemodels.github.io) from the Ermom's group at Stanford University. (CS236 - Fall 2021)**
+
 :fire:**A tutorial of DPMs has been uploaded by Prof. Wilker Aziz (University of Amsterdam).**
 
 <div align="center">
