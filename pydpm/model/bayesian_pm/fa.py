@@ -175,7 +175,7 @@ class FA(Basic_Model):
         self._model_setting.Iteration = num_epochs
 
         # initial local parameters
-        X = data - np.tile(np.mean(data, axis=1, keepdims=True), self._model_setting.N)
+        # X = data - np.tile(np.mean(data, axis=1, keepdims=True), self._model_setting.N)
         if is_initial_local or not hasattr(self.local_params):
             self.local_params.w = np.ones([self._model_setting.D, self._model_setting.M])
             self.local_params.z = np.ones([self._model_setting.M, self._model_setting.N])
@@ -216,22 +216,22 @@ class FA(Basic_Model):
                 fcr = fcr + self.local_params.cr
                 fAr = fAr + self.local_params.Ar
                 count = count + 1
-            self.local_params = self.sample_w(X, self.local_params, self._model_setting.N, self._model_setting.M,
+            self.local_params = self.sample_w(data, self.local_params, self._model_setting.N, self._model_setting.M,
                                            self._model_setting.D)
-            self.local_params = self.sample_z(X, self.local_params, self._model_setting.N, self._model_setting.M,
+            self.local_params = self.sample_z(data, self.local_params, self._model_setting.N, self._model_setting.M,
                                            self._model_setting.D)
-            self.local_params = self.sample_cz(X, self.local_params, self._hyper_params, self._model_setting.N, self._model_setting.M,
+            self.local_params = self.sample_cz(data, self.local_params, self._hyper_params, self._model_setting.N, self._model_setting.M,
                                            self._model_setting.D)
-            self.local_params = self.sample_cr(X, self.local_params, self._hyper_params, self._model_setting.N, self._model_setting.M,
+            self.local_params = self.sample_cr(data, self.local_params, self._hyper_params, self._model_setting.N, self._model_setting.M,
                                            self._model_setting.D)
-            self.local_params = self.sample_cw(X, self.local_params, self._hyper_params, self._model_setting.N, self._model_setting.M,
+            self.local_params = self.sample_cw(data, self.local_params, self._hyper_params, self._model_setting.N, self._model_setting.M,
                                            self._model_setting.D)
 
             fw_t = fw / (count + 1)
             fz_t = fz / (count + 1)
-            res = X - np.matmul(fw_t, fz_t)
+            res = data - np.matmul(fw_t, fz_t)
             resq = np.mean(np.sum(np.power(res, 2)))
-            resx = np.mean(np.sum(np.power(X, 2)))
+            resx = np.mean(np.sum(np.power(data, 2)))
             error = resq / resx
             print("Epoch {}|{} error = {:.6f}".format(iter, self._model_setting.Iteration, error))
 
