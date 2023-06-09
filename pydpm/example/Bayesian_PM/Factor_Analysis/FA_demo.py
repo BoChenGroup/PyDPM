@@ -14,7 +14,7 @@ import argparse
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
 from pydpm.model import FA
-from pydpm.metric import ACC
+from pydpm.utils.utils import *
 from pydpm.dataloader.image_data import tensor_transforms
 
 # # load data
@@ -57,9 +57,11 @@ test_label = test_dataset.test_labels
 # transpose the dataset to fit the model and convert a tensor to numpy array
 # !!! Transposition, data: [D, N]
 train_data = np.array(np.ceil(train_data[:999, :].T.numpy()), order='C')
-test_data = np.array(np.ceil(test_data[:999, :].T.numpy()), order='C')
+# test_data = np.array(np.ceil(test_data[:999, :].T.numpy()), order='C')
+train_data = standardization(train_data)
+# test_data = standardization(test_data)
 train_label = train_label.numpy()[:999]
-test_label = test_label.numpy()[:999]
+# test_label = test_label.numpy()[:999]
 
 # create the model and deploy it on gpu or cpu
 model =FA(args.z_dim, 'gpu')
@@ -71,7 +73,7 @@ train_local_params = model.train(train_data, args.num_epochs)
 x_hat = np.matmul(train_local_params.w, train_local_params.z)
 
 # visualization for one sample
-plt.plot(train_local_params.x[:, 880], 'ro', marker='*', label="train data")
+plt.plot(train_data[:, 880], 'ro', marker='*', label="train data")
 plt.plot(x_hat[:, 880], 'bo', marker='v', label="reconstruction")
 plt.legend(loc="best")
 plt.show()
