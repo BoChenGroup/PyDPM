@@ -4,10 +4,9 @@
 [stars-url]: https://github.com/BoChenGroup/PyDPM/stargazers
 
 <div align=center>
-<img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_logo_2.png" width="70%">
+<img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/pydpm_logo_2.png" width="70%">
 <br>
 </br>
-
 [![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
 [![PyPI](https://img.shields.io/badge/pypi-v4.0.2-blue.svg)](https://pypi.org/project/pydpm/)
 ![Python version](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue.svg)
@@ -33,9 +32,10 @@ News
 
 <div align="center">
    <a href="https://www.bilibili.com/video/BV1AP411Z78j/?spm_id_from=333.337.search-card.all.click&vd_source=98c31086838357413c23a6b7603d8ba3">
-   <img src="https://raw.githubusercontent.com/BoChenGroup/PyDPM/master/dpm_tutorial.png" width="600" />
+   <img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/dpm_tutorial.png" width="600" />
    </a>
 </div>
+
 
 Install
 =============
@@ -60,8 +60,9 @@ requirements of these DPMs constructed on either CPU or GPU;
 4) Example module, for each DPM included in the Model module, we provides a corresponding code demo equipped with a detailed explanation in the official docs.
 
 <div align=center>
-<img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_framework_old.png" width="100%">
+<img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/pydpm_framework_old.png" width="100%">
 </div>
+
 
 
 The workflow of applying PyDPM for downstream tasks, which can be splited into four steps as follows:
@@ -70,8 +71,10 @@ The workflow of applying PyDPM for downstream tasks, which can be splited into f
 3) Model categories in pyDPM mainly include Bayesian Probabilistic Model, Deep-Learning Probabilistic Models, and Hybrid Probabilistic Models;
 4) Applications of DPMs has included Nature Language Processing (NLP), Graph Neural Network (GNN), and Recommendation System (RS) etc.
 <div align=center>
-<img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/pydpm_workflow.png" width="75%">
+<img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/pydpm_workflow.png" width="75%">
 </div>
+
+
 
 
 
@@ -83,8 +86,9 @@ The Model module in pyDPM has included a wide variety of popular DPMs, which can
 
 
 <div align=center>
-<img src="https://raw.githubusercontent.com/BoChenGroup/pydpm/master/intro.png" >
+<img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/intro.png" >
 </div>
+
 
 ### Bayesian Probabilistic Models
 
@@ -184,17 +188,19 @@ Compare
 =============
 >Compare the distribution sampling efficiency of PyDPM with numpy:
 <div align=left>
-<img src="https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_numpy.png" width="70%">
+<img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/compare_numpy.png" width="70%">
 </div>
+
 
 >Compare the distribution sampling efficiency of PyDPM with tensorflow and torch:
 <div align=left>
-<img src="https://raw.githubusercontent.com/BoChenGroup/Pydpm/master/compare_tf2_torch.png" width="70%">
+<img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/compare_tf2_torch.png" width="70%">
 </div>
+
 
 >Compare the distribution sampling efficiency of PyDPM with CuPy and PyCUDA(used by pydpm v1.0):
 <div align=left>
-<img src="https://raw.githubusercontent.com/BoChenGroup/PyDPM/master/compare_cupy_pycuda.png" width="70%">
+<img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/compare_cupy_pycuda.png" width="70%">
 </div>
 
 Contact
