@@ -7,7 +7,6 @@
 <img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/pydpm_logo_2.png" width="70%">
 <br>
 </br>
-
 [![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
 [![PyPI](https://img.shields.io/badge/pypi-v4.0.2-blue.svg)](https://pypi.org/project/pydpm/)
 ![Python version](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue.svg)
