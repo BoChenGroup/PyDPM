@@ -71,7 +71,7 @@ The workflow of applying PyDPM for downstream tasks, which can be splited into f
 3) Model categories in pyDPM mainly include Bayesian Probabilistic Model, Deep-Learning Probabilistic Models, and Hybrid Probabilistic Models;
 4) Applications of DPMs has included Nature Language Processing (NLP), Graph Neural Network (GNN), and Recommendation System (RS) etc.
 <div align=center>
-<img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/pydpm_workflow.png" width="75%">
+<img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/pydpm_workflow.png" width="90%">
 </div>
 
 
