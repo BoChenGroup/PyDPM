@@ -25,10 +25,10 @@ class VAE(nn.Module):
         """
         The basic model for VAE
         Inputs:
-            x_dim : [int] the size of input;
-            h_dim1 : [int] latent dimension1;
-            h_dim2 : [int] latent dimension2;
-            z_dim : [int] the normal distribution dimension;
+            in_dim : [int] dimension of input
+            encoder_hid_dims : [list] list of dimension in encoder
+            decoder_hid_dims : [list] list of dimension in decoder
+            z_dim : [int] dimension of the latent variable
             device : [str] 'cpu' or 'gpu';
         """
         super(VAE, self).__init__()
@@ -70,8 +70,8 @@ class VAE(nn.Module):
         Inputs:
             model_opt  : Optimizer for model
             dataloader : Train dataset with form of dataloader
-            epoch      : Current epoch on training stage
-            n_epoch    : Total number of epochs on training stage
+            epoch_idx  : Current epoch on training stage
+            args       : Argument dict
 
         Attributes:
             local_mu      : Concatenation of mu with total dataset
@@ -194,18 +194,18 @@ class VAE(nn.Module):
         recon_x = self.vae_decoder(z)
         return recon_x
 
-    def show(self):
-        """
-        Show the learned latent variables' effect
-        Outputs:
-            recon_x : [tensor] reconstruction of x
-        """
-        x, y = torch.meshgrid([torch.arange(-3, 3, 0.5), torch.arange(-3, 3, 0.5)])
-        z = torch.stack((x, y), 2).view(x.shape[0]**2, 2).to(self.device)
-        # z = torch.randn(batch_size, self.z_dim).to(self.device)
-        recon_x = self.vae_decoder(z)
-        # print(recon_x.shape)
-        return recon_x
+    # def show(self):
+    #     """
+    #     Show the learned latent variables' effect
+    #     Outputs:
+    #         recon_x : [tensor] reconstruction of x
+    #     """
+    #     x, y = torch.meshgrid([torch.arange(-3, 3, 0.5), torch.arange(-3, 3, 0.5)])
+    #     z = torch.stack((x, y), 2).view(x.shape[0]**2, 2).to(self.device)
+    #     # z = torch.randn(batch_size, self.z_dim).to(self.device)
+    #     recon_x = self.vae_decoder(z)
+    #     # print(recon_x.shape)
+    #     return recon_x
 
 class VAE_Encoder(nn.Module):
     def __init__(self, in_dim: int, hid_dims: list, z_dim: int, device: str='cpu'):

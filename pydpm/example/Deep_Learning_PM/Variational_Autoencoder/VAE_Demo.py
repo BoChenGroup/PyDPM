@@ -13,14 +13,12 @@ Publihsed in 2014
 
 import os
 import argparse
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
+import sys
 import torch
 import torch.optim as optim
 
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
-
 from pydpm.model import VAE
 
 # =========================================== ArgumentParser ===================================================================== #
@@ -66,21 +64,18 @@ model_opt = optim.Adam(model.parameters(), lr=args.lr)
 for epoch_idx in range(args.num_epochs):
     local_mu, local_log_var = model.train_one_epoch(dataloader=train_loader, model_opt=model_opt, epoch_idx=epoch_idx, args=args)
     if epoch_idx % 25 == 0:
-        test_mu, test_log_var = model.test_one_epoch(dataloader=test_dataset)
+        test_mu, test_log_var = model.test_one_epoch(dataloader=test_loader)
 
 # save
 model.save(args.save_path)
 # load
 model.load(args.load_path)
 
-# =========================================== Visualization ===================================================================== #
-# visualize
+# =================== Visualization ====================== #
 os.makedirs("../../output/images", exist_ok=True)
 print('sample image,please wait!')
 with torch.no_grad():
     sample = model.sample(64)
-    save_image(sample.view(64, 1, 28, 28), '../../output/images/VAE_l_sample_' + '.png')
-    show_image = model.show()
-    save_image(show_image.view(144, 1, 28, 28), '../../output/images/VAE_l_show_' + '.png', nrow=12)
+    save_image(sample.view(64, 1, 28, 28), '../../output/images/VAE_sample.png')
 print('complete!!!')
 

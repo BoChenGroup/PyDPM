@@ -11,10 +11,15 @@ from .bayesian_pm.dirbn import DirBN
 from .bayesian_pm.dpfa import DPFA
 from .bayesian_pm.gpgbn import GPGBN
 from .bayesian_pm.mpgbn import MPGBN
+from .bayesian_pm.fa import FA
+from .bayesian_pm.gmm import GMM
 from .deep_learning_pm.vae import VAE
+from .deep_learning_pm.cvae import CVAE
 from .deep_learning_pm.gan import GAN
+from .deep_learning_pm.wgan import WGAN
 from .deep_learning_pm.rbm import RBM
 from .deep_learning_pm.ddpm import DDPM
-from .deep_learning_pm.nflow import *
+from .deep_learning_pm.nflow import NFlow
+from .deep_learning_pm.realnvp import RealNVP
 from .hybrid_pm.whai import WHAI
 from .hybrid_pm.wgaae import WGAAE

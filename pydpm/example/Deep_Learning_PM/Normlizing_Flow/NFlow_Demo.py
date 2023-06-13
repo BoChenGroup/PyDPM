@@ -13,7 +13,6 @@ Publihsed in  2017
 
 import os
 import argparse
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 import torch
 import torch.optim as optim
@@ -22,7 +21,8 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_moons
 
-from pydpm.model import NFlow, RealNVP_2D
+from pydpm.model import NFlow
+from pydpm.model.deep_learning_pm.nflow import RealNVP_2D
 
 # =========================================== ArgumentParser ===================================================================== #
 parser = argparse.ArgumentParser()
@@ -43,7 +43,7 @@ parser.add_argument("--flow_name", type=str, default="RealNVP_2D")
 parser.add_argument("--hid_dim", type=int, default=128)
 
 # optim
-parser.add_argument("--n_epochs", type=int, default=1000)
+parser.add_argument("--num_epochs", type=int, default=1000)
 parser.add_argument("--batch_size", type=int, default=128, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.001, help="adam: learning rate")
 
@@ -67,9 +67,9 @@ model = NFlow(in_dim=2, flows=flows, device=args.device)
 model_opt = optim.Adam(model.parameters(), lr=args.lr)
 
 # train
-for epoch_idx in range(args.n_epochs):
-    local_z = model.train_one_epoch(model_opt=model_opt, dataloader=dataloader, epoch=epoch_idx, n_epochs=args.n_epochs)
-    if epoch_idx == args.n_epochs - 1:
+for epoch_idx in range(args.num_epochs):
+    local_z = model.train_one_epoch(model_opt=model_opt, dataloader=dataloader, epoch=epoch_idx, num_epochs=args.num_epochs)
+    if epoch_idx == args.num_epochs - 1:
         test_local_z = model.test_one_epoch(dataloader=dataloader)
 
 # save

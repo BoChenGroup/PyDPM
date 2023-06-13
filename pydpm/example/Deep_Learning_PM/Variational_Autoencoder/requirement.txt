@@ -1,2 +1,0 @@
-torch_sparse-0.6.17
-torch_geometric-2.3.1

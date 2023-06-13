@@ -13,7 +13,6 @@ Publihsed in 2014
 
 import os
 import argparse
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 import torch
 from torch.utils.data import DataLoader
@@ -42,9 +41,8 @@ parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first 
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--g_z_dim", type=int, default=128, help="generator dimensionality of the noise")
 parser.add_argument("--g_hid_dims", type=list, default=[100, 200, 400, 800], help="generator dimensionality of the latent space")
-# parser.add_argument("--d_z_dim", type=int, default=128, help="discriminator dimensionality of the latent space")
 parser.add_argument("--d_hid_dims", type=list, default=[256, 128], help="discriminator dimensionality of the latent space")
-parser.add_argument("--channels", type=int, default=1, help="number of image channels")
+parser.add_argument("--channels", type=int, default=1, help="number of image channels")  # 1 for mnist
 parser.add_argument("--sample_interval", type=int, default=800, help="interval betwen image samples")
 
 # optim
@@ -76,17 +74,14 @@ model_opt_D = torch.optim.Adam(model.discriminator.parameters(), lr=args.lr, bet
 
 # train
 for epoch_idx in range(args.num_epochs):
-    local_mu, local_log_var = model.train_one_epoch(model_opt_G=model_opt_G, model_opt_D=model_opt_D, dataloader=train_loader, sample_interval=args.sample_interval, epoch=epoch_idx, n_epochs=args.num_epochs)
-    if epoch_idx % 25 == 0:
-        test_mu, test_log_var = model.test_one_epoch(dataloader=test_dataset)
+    model.train_one_epoch(model_opt_G=model_opt_G, model_opt_D=model_opt_D, dataloader=train_loader, sample_interval=args.sample_interval, epoch=epoch_idx, n_epochs=args.num_epochs)
 
 # save
 model.save(args.save_path)
 # load
 model.load(args.load_path)
 
-# =========================================== Visualization ===================================================================== #
-# visualize
+# ===================== Visualization ============================== #
 os.makedirs("../../output/images", exist_ok=True)
 print('sample image,please wait!')
 save_image(model.sample(64), "../../output/images/GAN_images.png", nrow=8, normalize=True)

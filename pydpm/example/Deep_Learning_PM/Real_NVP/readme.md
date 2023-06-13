@@ -1,0 +1,2 @@
+This is the demo code for the more powerful RealNVP, one of the traditional flow-based models from the 2017 paper with the title "Density Estimation Using Real NVP".
+Reference code can be found in https://github.com/fmu2/realNVP 
