@@ -13,7 +13,7 @@
 ![Python version](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue.svg)
 [![Documentation Status](https://readthedocs.org/projects/quantus/badge/?version=latest)](https://dustone-mu.github.io/)
 [![Stars][stars-image]][stars-url]
-[![Downloads](https://pepy.tech/badge/pydpm)](https://pepy.tech/project/pydpm)
+[![Downloads](https://pepy.tech/badge/pydpm)](https://pepy.tech/project/pydpm)\
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FBoChenGroup%2FPyDPM&count_bg=%2379C83D&title_bg=%23555555&icon=teamspeak.svg&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)[![Contributing][contributing-image]][contributing-url]
 </div>
 
