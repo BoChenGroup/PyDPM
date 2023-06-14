@@ -60,7 +60,7 @@ requirements of these DPMs constructed on either CPU or GPU;
 4) Example module, for each DPM included in the Model module, we provides a corresponding code demo equipped with a detailed explanation in the official docs.
 
 <div align=center>
-<img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/pydpm_framework_old.png" width="100%">
+<img src="https://github.com/BoChenGroup/PyDPM/blob/master/docs/imgs/pydpm_framework.png" width="100%">
 </div>
 
 
