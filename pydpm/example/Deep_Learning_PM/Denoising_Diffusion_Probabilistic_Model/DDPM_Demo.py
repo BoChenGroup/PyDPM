@@ -35,7 +35,8 @@ parser.add_argument("--dataset_path", type=str, default='../../dataset', help="t
 
 # network settings
 parser.add_argument("--T", type=int, default=1000, help="Number of time steps in DDPM")
-parser.add_argument("--channel", type=int, default=128, help="Number of channels in the input image")
+parser.add_argument("--in_channel", type=int, default=3, help="Number of channels in the input image")
+parser.add_argument("--channel", type=int, default=128, help="Number of channels after head layer")
 parser.add_argument("--channel_mult", type=list, default=[1, 2, 3, 4], help="Number of mult-channels")
 parser.add_argument("--attn", type=list, default=[2], help="Number of attention-blocks")
 parser.add_argument("--num_res_blocks", type=int, default=2, help="Number of residual-blocksn")
@@ -70,8 +71,15 @@ dataset = CIFAR10(
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ]))
 dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4, drop_last=True, pin_memory=True)
+if dataset == 'CIFAR10':
+    args.in_channel = 3
+elif dataset == 'mnist':
+    args.in_channel = 1
+else:
+    assert print('args.in_channel must be given')
 
-net_config = {"channel": args.channel,
+net_config = {"in_channel": args.in_channel,
+              "channel": args.channel,
               "channel_mult": args.channel_mult,
               "attn": args.attn,
               "num_res_blocks": args.num_res_blocks,

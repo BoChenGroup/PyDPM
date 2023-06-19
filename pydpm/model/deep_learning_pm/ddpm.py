@@ -59,13 +59,14 @@ class DDPM(nn.Module):
             net     : The model of net
         '''
         self.T = T
+        self.in_channel = net_cfg['in_channel']
         self.channel = net_cfg['channel']
         self.channel_mult = net_cfg['channel_mult']
         self.attn = net_cfg['attn']
         self.num_res_blocks = net_cfg['num_res_blocks']
         self.dropout = net_cfg['dropout']
 
-        net = UNet(T=self.T, channel=self.channel, channel_mult=self.channel_mult, attn=self.attn,
+        net = UNet(T=self.T, in_channel=self.in_channel, channel=self.channel, channel_mult=self.channel_mult, attn=self.attn,
                    num_res_blocks=self.num_res_blocks, dropout=self.dropout).to(self.device)
 
         return net
@@ -118,7 +119,7 @@ class DDPM(nn.Module):
 
             # Sampled from standard normal distribution
             noisy_img = torch.randn(
-                size=[args.batch_size, 3, 32, 32], device=self.device)
+                size=[args.batch_size, self.in_channel, 32, 32], device=self.device)
             noisy = torch.clamp(noisy_img * 0.5 + 0.5, 0, 1)
             sampled_img = self.ddpm_sampler(noisy_img)
 
@@ -428,7 +429,7 @@ class ResBlock(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self, T, channel, channel_mult, attn, num_res_blocks, dropout):
+    def __init__(self, T, in_channel, channel, channel_mult, attn, num_res_blocks, dropout):
         '''
         The network of DDPM
         Inputs:
@@ -446,8 +447,8 @@ class UNet(nn.Module):
         assert all([i < len(channel_mult) for i in attn]), 'attn index out of bound'
         tdim = channel * 4
         self.time_embedding = TimeEmbedding(T, channel, tdim)
-
-        self.head = nn.Conv2d(3, channel, kernel_size=3, stride=1, padding=1)
+        self.in_channel = in_channel
+        self.head = nn.Conv2d(self.in_channel, channel, kernel_size=3, stride=1, padding=1)
 
         self.downblocks = nn.ModuleList()
         channels = [channel]  # record output channelannel when dowmsample for upsample
@@ -486,7 +487,7 @@ class UNet(nn.Module):
         self.tail = nn.Sequential(
             nn.GroupNorm(32, now_channel),
             Swish(),
-            nn.Conv2d(now_channel, 3, 3, stride=1, padding=1)
+            nn.Conv2d(now_channel, self.in_channel, 3, stride=1, padding=1)
         )
 
         self.initialize()

@@ -7,6 +7,9 @@ Geoffrey Hinton
 Publihsed in 2010
 ===========================================
 """
+# Author: Muyao Wang <flare935694542@163.com>, Xinyang Liu <lxy771258012@163.com>
+# License: BSD-3-Clause
+
 import os
 import numpy as np
 
@@ -20,13 +23,14 @@ from torch.autograd import Variable
 class RBM(nn.Module):
     def __init__(self, n_vis=784, n_hin=500, k=5):
         """
-        The basic model for VAE
+        The basic model for RBM
         Inputs:
             n_vis : [int] number of visible units;
             n_hin : [int] number of latent units;
             k : [int] layers of RBM;
         """
         super(RBM, self).__init__()
+        setattr(self, '_model_name', 'RBM')
         self.W = nn.Parameter(torch.randn(n_hin, n_vis) * 1e-2)
         self.v_bias = nn.Parameter(torch.zeros(n_vis))
         self.h_bias = nn.Parameter(torch.zeros(n_hin))
