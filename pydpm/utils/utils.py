@@ -47,3 +47,9 @@ def standardization(data):
     mu = np.mean(data, axis=1, keepdims=True)
     sigma = np.std(data, axis=1, keepdims=True)
     return (data - mu) / (sigma + 2.2e-8)
+
+def normalize_to_neg_one_to_one(img):
+    return img * 2 - 1
+
+def unnormalize_to_zero_to_one(t):
+    return (t + 1) * 0.5
