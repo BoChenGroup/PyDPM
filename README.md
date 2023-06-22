@@ -99,13 +99,15 @@ The Model module in pyDPM has included a wide variety of popular DPMs, which can
 |Poisson Gamma Belief Network                   |PGBN         |[Zhou et al., 2015](http://mingyuanzhou.github.io/Papers/DeepPoGamma_v5.pdf )|
 |Convolutional Poisson Factor Analysis          |CPFA         |[Wang et al., 2019](http://mingyuanzhou.github.io/Papers/CPGBN_v12_arXiv.pdf)|
 |Convolutional Poisson Gamma Belief Network     |CPGBN        |[Wang et al., 2019](http://mingyuanzhou.github.io/Papers/CPGBN_v12_arXiv.pdf)|
-|Poisson Gamma Dynamical Systems                |PGDS         |[Zhou et al., 2016](http://mingyuanzhou.github.io/Papers/ScheinZhouWallach2016_paper.pdf )|
-|Deep Poisson Gamma Dynamical Systems           |DPGDS        |[Guo et al., 2018](http://mingyuanzhou.github.io/Papers/Guo_DPGDS_NIPS2018.pdf)|
-|Dirichlet Belief Networks                      |DirBN        |[Zhao et al., 2018](https://arxiv.org/pdf/1811.00717.pdf)|
-|Deep Poisson Factor Analysis                   |DPFA         |[Gan et al., 2015](http://proceedings.mlr.press/v37/gan15.pdf)|
-|Word Embeddings Deep Topic Model               |WEDTM        |[Zhao et al., 2018](http://proceedings.mlr.press/v80/zhao18a/zhao18a.pdf)|
-|Multimodal Poisson Gamma Belief Network        |MPGBN        |[Wang et al., 2018](https://mingyuanzhou.github.io/Papers/mpgbn_aaai18.pdf)|
-|Graph Poisson Gamma Belief Network             |GPGBN        |[Wang et al., 2020](https://proceedings.neurips.cc/paper/2020/file/05ee45de8d877c3949760a94fa691533-Paper.pdf)|
+| Factor Analysis                            | FA           |                                                              |
+| Gaussian Mixed Model                       | GMM          |                                                              |
+| Poisson Gamma Dynamical Systems            | PGDS         | [Zhou et al., 2016](http://mingyuanzhou.github.io/Papers/ScheinZhouWallach2016_paper.pdf ) |
+| Deep Poisson Gamma Dynamical Systems       | DPGDS        | [Guo et al., 2018](http://mingyuanzhou.github.io/Papers/Guo_DPGDS_NIPS2018.pdf) |
+| Dirichlet Belief Networks                  | DirBN        | [Zhao et al., 2018](https://arxiv.org/pdf/1811.00717.pdf)    |
+| Deep Poisson Factor Analysis               | DPFA         | [Gan et al., 2015](http://proceedings.mlr.press/v37/gan15.pdf) |
+| Word Embeddings Deep Topic Model           | WEDTM        | [Zhao et al., 2018](http://proceedings.mlr.press/v80/zhao18a/zhao18a.pdf) |
+|Multimodal Poisson Gamma Belief Network |MPGBN |[Wang et al., 2018](https://mingyuanzhou.github.io/Papers/mpgbn_aaai18.pdf)|
+|Graph Poisson Gamma Belief Network |GPGBN |[Wang et al., 2020](https://proceedings.neurips.cc/paper/2020/file/05ee45de8d877c3949760a94fa691533-Paper.pdf)|
 
 ### Deep-Learning Probabilistic Models
 
@@ -114,9 +116,13 @@ The Model module in pyDPM has included a wide variety of popular DPMs, which can
 |Restricted Boltzmann Machines                  |RBM          |[Hinton et al., 2010](https://www.cs.toronto.edu/~hinton/absps/guideTR.pdf)|
 |Variational Autoencoder                        |VAE          |[Kingma et al., 2014](https://arxiv.org/pdf/1312.6114)|
 |Generative Adversarial Network                 |GAN          |[Goodfellow et al., 2014](https://arxiv.org/pdf/1406.2661)|
-|Normlizing Flow                                |NF           |[Dinh et al., 2017](https://arxiv.org/pdf/1605.08803.pdf)|
+|Density estimation using Real NVP                                |RealNVP (2d)           |[Dinh et al., 2017](https://arxiv.org/pdf/1605.08803.pdf)|
 |Denoising Diffusion Probabilistic Models       |DDPM         |[Ho et al., 2020](https://arxiv.org/pdf/2006.11239)|
-
+|Density estimation using Real NVP |RealNVP (image) |[Dinh et al., 2018](https://arxiv.org/abs/1605.08803)|
+|Conditional Variational Autoencoder |CVAE |[Sohn et al., 2015](https://papers.nips.cc/paper/2015/file/8d55a249e6baa5c06772297520da2051-Paper.pdf)|
+|Deep Convolutional Generative Adversarial Networks |DCGAN |[Radford et al., 2016](https://arxiv.org/pdf/1511.06434)|
+|Wasserstein Generative Adversarial Networks |WGAN |[Arjovsky et al., 2017](https://dl.acm.org/doi/pdf/10.5555/3305381.3305404)|
+|Information Maximizing Generative Adversarial Nets |InfoGAN |[Xi Chen et al., 2016](https://arxiv.org/abs/1606.03657)|
 
 ### Hybrid Probabilistic Models
 
@@ -139,16 +145,13 @@ The Model module in pyDPM has included a wide variety of popular DPMs, which can
 :fire:**Welcome to introduce classical or novel Deep Proabilistic Models for us.**
 |　　　　　　Probabilistic Model Name　　　　　　|Abbreviation |　　 Paper Link　　　|
 |-----------------------------------------------|-------------|----------|
-|Nouveau Variational Autoencoder                |NVAE         |[Vahdat et al., 2020](https://arxiv.org/abs/2007.03898)|<!--NVAE: A Deep Hierarchical Variational Autoencoder -->
-|flow-based Variational Autoencoder             |f-VAE        |[Su et al., 2018](www.paperweekly.site/papers/2313)|<!--f-VAEs: Improve VAEs with Conditional Flows -->
-|Conditional Variational Autoencoder            |CVAE         |[Sohn et al., 2015](https://papers.nips.cc/paper/2015/file/8d55a249e6baa5c06772297520da2051-Paper.pdf)|<!--Learning Structured Output Representation using Deep Conditional Generative Models. NIPS2015 -->
-|Deep Convolutional Generative Adversarial Networks |DCGAN        |[Radford et al., 2016](https://arxiv.org/pdf/1511.06434)|<!--Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks -->
-|Wasserstein Generative Adversarial Networks    |WGAN         |[Arjovsky et al., 2017](https://dl.acm.org/doi/pdf/10.5555/3305381.3305404)|<!--Wasserstein generative adversarial networks -->
-|Score-Based Generative Models                  |SGM          |[Bortoli et al., 2022](https://arxiv.org/pdf/2202.02763)|<!--Riemannian Score-Based Generative Modelling -->
-|Poisson Flow Generative Models                 |PFGM         |[Xu et al., 2022](https://arxiv.org/pdf/2209.11178)|<!--Poisson Flow Generative Models -->
-|Stable Diffusion                               |LDM          |[Rombach et al., 2022](https://arxiv.org/abs/2112.10752)|<!--High-Resolution Image Synthesis with Latent Diffusion Models. CVPR 2022 -->
-|Denoising Diffusion Implicit Models            |DDIM         |[Song et al., 2022](https://arxiv.org/pdf/2010.02502)|<!--Denoising Diffusion Implicit Models. NIPS 2022 -->
-|Vector Quantized Diffusion                     |VQ-Diffusion |[Tang et al., 2023](https://arxiv-export3.library.cornell.edu/pdf/2205.16007v1)|<!--Improved Vector Quantized Diffusion Models. CVPR 2023 -->
+|Nouveau Variational Autoencoder                |NVAE         |[Vahdat et al., 2020](https://arxiv.org/abs/2007.03898)|
+|flow-based Variational Autoencoder             |f-VAE        |[Su et al., 2018](www.paperweekly.site/papers/2313)|
+| Score-Based Generative Models       | SGM          | [Bortoli et al., 2022](https://arxiv.org/pdf/2202.02763)     |
+| Poisson Flow Generative Models      | PFGM         | [Xu et al., 2022](https://arxiv.org/pdf/2209.11178)          |
+| Stable Diffusion                    | LDM          | [Rombach et al., 2022](https://arxiv.org/abs/2112.10752)     |
+| Denoising Diffusion Implicit Models | DDIM         | [Song et al., 2022](https://arxiv.org/pdf/2010.02502)        |
+| Vector Quantized Diffusion          | VQ-Diffusion | [Tang et al., 2023](https://arxiv-export3.library.cornell.edu/pdf/2205.16007v1) |
 
 Usage
 =============
