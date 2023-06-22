@@ -147,11 +147,16 @@ The Model module in pyDPM has included a wide variety of popular DPMs, which can
 |-----------------------------------------------|-------------|----------|
 |Nouveau Variational Autoencoder                |NVAE         |[Vahdat et al., 2020](https://arxiv.org/abs/2007.03898)|
 |flow-based Variational Autoencoder             |f-VAE        |[Su et al., 2018](www.paperweekly.site/papers/2313)|
-| Score-Based Generative Models       | SGM          | [Bortoli et al., 2022](https://arxiv.org/pdf/2202.02763)     |
-| Poisson Flow Generative Models      | PFGM         | [Xu et al., 2022](https://arxiv.org/pdf/2209.11178)          |
-| Stable Diffusion                    | LDM          | [Rombach et al., 2022](https://arxiv.org/abs/2112.10752)     |
-| Denoising Diffusion Implicit Models | DDIM         | [Song et al., 2022](https://arxiv.org/pdf/2010.02502)        |
-| Vector Quantized Diffusion          | VQ-Diffusion | [Tang et al., 2023](https://arxiv-export3.library.cornell.edu/pdf/2205.16007v1) |
+| Score-Based Generative Models                                | SGM          | [Bortoli et al., 2022](https://arxiv.org/pdf/2202.02763)     |
+| Poisson Flow Generative Models                               | PFGM         | [Xu et al., 2022](https://arxiv.org/pdf/2209.11178)          |
+| Stable Diffusion                                             | LDM          | [Rombach et al., 2022](https://arxiv.org/abs/2112.10752)     |
+| Denoising Diffusion Implicit Models                          | DDIM         | [Song et al., 2022](https://arxiv.org/pdf/2010.02502)        |
+| Vector Quantized Diffusion                                   | VQ-Diffusion | [Tang et al., 2023](https://arxiv-export3.library.cornell.edu/pdf/2205.16007v1) |
+| Vector Quantized Variational Autoencoder                     | VQ-VAE       | [Aaron van den Oord et al., 2017](https://arxiv.org/abs/1711.00937) |
+| Conditional Generative Adversarial Nets                      | cGAN         | [Mirza et al., 2014](https://arxiv.org/abs/1411.1784)        |
+| Information Maximizing Variational Autoencoders              | InfoVAE      | [zhao et al.,2017](https://arxiv.org/abs/1706.02262)         |
+| Generative Flow                                              | Glow         | [Kingama et al., 2018](https://arxiv.org/abs/1807.03039)     |
+| Structured Denoising Diffusion Models in Discrete State-Spaces | DP3M         | [Austin et al., 2021](https://arxiv.org/abs/2107.03006)      |
 
 Usage
 =============
