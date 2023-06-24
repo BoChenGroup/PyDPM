@@ -87,7 +87,7 @@ train_loader = DataLoader([train_data for train_data in zip(train_bows, train_la
 test_loader = DataLoader([test_data for test_data in zip(test_bows, test_labels)], batch_size=256, shuffle=False, num_workers=4, drop_last=True)
 
 # =========================================== Model ===================================================================== #
-model = WHAI(in_dim=args.voc_size, z_dims=args.z_dims, hid_dims=args.hid_dims, device=args.device)
+model = WHAI(in_dim=args.voc_size, z_dims=args.z_dims, hid_dims=args.hid_dims, device=args.device, encode_prior=False)
 model_opt = torch.optim.Adam(model.parameters())
 
 for epoch_idx in range(args.num_epochs):

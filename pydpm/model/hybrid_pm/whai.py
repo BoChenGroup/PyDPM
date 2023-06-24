@@ -32,7 +32,7 @@ from ...utils import *
 warnings.filterwarnings("ignore")
 
 class WHAI(Basic_Model, nn.Module):
-    def __init__(self, in_dim: int, z_dims: list, hid_dims: list, device: str='cpu'):
+    def __init__(self, in_dim: int, z_dims: list, hid_dims: list, device: str='cpu', encode_prior=False):
         """
         The basic model for WHAI
         Inputs:
@@ -62,6 +62,7 @@ class WHAI(Basic_Model, nn.Module):
         self._model_setting.hid_dims = hid_dims
         self._model_setting.num_layers = len(self._model_setting.z_dims)
         self._model_setting.device = device
+        self.encode_prior = encode_prior
 
         self.real_min = torch.tensor(2.2e-10, device=self._model_setting.device)
 
@@ -69,7 +70,7 @@ class WHAI(Basic_Model, nn.Module):
 
     def initial(self):
         _model_setting = self._model_setting
-        self.whai_encoder = WHAI_Encoder(_model_setting.in_dim, _model_setting.z_dims, _model_setting.hid_dims, _model_setting.device)
+        self.whai_encoder = WHAI_Encoder(_model_setting.in_dim, _model_setting.z_dims, _model_setting.hid_dims, _model_setting.device, encode_prior=self.encode_prior)
         self.whai_decoder = WHAI_Decoder(_model_setting.in_dim, _model_setting.z_dims, _model_setting.device)
         self.global_params = self.whai_decoder.global_params
         self._hyper_params = self.whai_decoder._hyper_params
@@ -320,7 +321,7 @@ class Conv1D(nn.Module):
         return x
 
 class WHAI_Encoder(nn.Module):
-    def __init__(self, in_dim: int, z_dims: list, hid_dims: list, device: str = 'cpu'):
+    def __init__(self, in_dim: int, z_dims: list, hid_dims: list, device: str = 'cpu', encode_prior=False):
         '''
         Inputs:
             in_dims     : [int] Length of the vocabulary for convolutional layers in WHAI;
@@ -341,6 +342,7 @@ class WHAI_Encoder(nn.Module):
         self.num_layers = len(z_dims)
         self.device = device
         self.real_min = torch.tensor(2.2e-10, device=self.device)
+        self.encode_prior = encode_prior
 
         self.h_encoders = nn.ModuleList([Conv1D(in_dim, out_dim, 1, self.device) for in_dim, out_dim in zip([self.in_dim] + self.hid_dims[:-1], self.hid_dims)])
         self.shape_encoders = nn.ModuleList([Conv1D(h_dim, 1, 1, self.device) for h_dim in self.hid_dims])
@@ -383,8 +385,10 @@ class WHAI_Encoder(nn.Module):
         k_tmp = k_tmp.repeat(1, self.z_dims[layer_index])
         l = torch.max(torch.exp(self.scale_encoders[layer_index](x)), self.real_min)
         if layer_index != self.num_layers - 1:
-            # k = torch.max(k_tmp + torch.matmul(torch.tensor(phi, dtype=torch.float32, device=self.device), theta).permute(1, 0), self._real_min).to(self.device)
-            k = torch.max(k_tmp, self.real_min)
+            if self.encode_prior:
+                k = torch.max(k_tmp + torch.matmul(torch.tensor(phi, dtype=torch.float32, device=self.device), theta).permute(1, 0), self.real_min)
+            else:
+                k = torch.max(k_tmp, self.real_min)
         else:
             k = torch.max(k_tmp, self.real_min)
         return k.permute(1, 0), l.permute(1, 0)
