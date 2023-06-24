@@ -48,7 +48,9 @@ $ pip install pydpm
 For Windows system, we recommed to install Visual Studio 2019 as the compiler equipped with CUDA 11.5 toolkit;
 For Linux system, we recommed to install the latest version of CUDA toolkit.
 
-
+```
+$ conda env create -f enviroment.yaml
+```
 
 Overview
 =============
