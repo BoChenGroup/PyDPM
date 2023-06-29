@@ -22,7 +22,8 @@ from .deep_learning_pm.infogan import InfoGAN
 from .deep_learning_pm.rbm import RBM
 from .deep_learning_pm.ddpm import DDPM
 from .deep_learning_pm.nflow import NFlow
-# from .deep_learning_pm.fvae import fVAE
+from .deep_learning_pm.fvae import fVAE
 from .deep_learning_pm.realnvp import RealNVP
 from .hybrid_pm.whai import WHAI
 from .hybrid_pm.wgaae import WGAAE
+from .hybrid_pm.sawetm import SawETM

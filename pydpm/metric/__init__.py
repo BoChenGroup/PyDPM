@@ -5,3 +5,4 @@ from .topic_coherence import Topic_Coherence
 from .perplexity import Perplexity
 from .normalized_mutual_information import NMI
 from .roc_score import ROC_AP_SCORE
+from .purity import Purity
