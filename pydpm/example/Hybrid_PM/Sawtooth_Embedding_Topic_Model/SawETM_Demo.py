@@ -1,8 +1,8 @@
 """
 ===========================================
-WHAI: WEIBULL HYBRID AUTOENCODING INFERENCE FOR DEEP TOPIC MODELING (Demo)
-Hao Zhang, Bo Chen， Dandan Guo and Mingyuan Zhou
-Published as a conference paper at ICLR 2018
+Sawtooth Factorial Topic Embeddings Guided Gamma Belief Network
+Zhibin Duan, Dongsheng Wang, Bo Chen, Chaojie Wang, Wenchao Chen, Yewen Li, Jie Ren and Mingyuan Zhou
+Published as a conference paper at ICML 2021
 
 ===========================================
 

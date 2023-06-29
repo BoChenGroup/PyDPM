@@ -1,3 +1,16 @@
+"""
+===========================================
+Sawtooth Factorial Topic Embeddings Guided Gamma Belief Network
+Zhibin Duan, Dongsheng Wang, Bo Chen, Chaojie Wang, Wenchao Chen, Yewen Li, Jie Ren and Mingyuan Zhou
+Published as a conference paper at ICML 2021
+
+===========================================
+
+"""
+
+# Author: Xinyang Liu <lxy771258012@163.com>
+# License: BSD-3-Clause
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
