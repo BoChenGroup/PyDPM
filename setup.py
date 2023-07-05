@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pydpm',
-    version='4.0.1',
+    version='5.0.0',
     description='A python library focuses on constructing deep probabilistic models on GPU.',
     py_modules=['pydpm'],
     long_description=open('README.md').read(),
