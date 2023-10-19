@@ -15,6 +15,7 @@ from .bayesian_pm.fa import FA
 from .bayesian_pm.gmm import GMM
 from .deep_learning_pm.vae import VAE
 from .deep_learning_pm.cvae import CVAE
+form .deep_learning_pm.vqvae import VQVAE
 from .deep_learning_pm.gan import GAN
 from .deep_learning_pm.wgan import WGAN
 from .deep_learning_pm.dcgan import DCGAN
