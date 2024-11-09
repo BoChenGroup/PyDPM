@@ -221,4 +221,4 @@ License: Apache License Version 2.0
 
 Contact:  Chaojie Wang <xd_silly@163.com>, Xinyang Liu <lxy771258012@163.com>, Wei Zhao <13279389260@163.com>, Bufeng Ge <20009100138@stu.xidian.edu.cn>, Jiawen Wu <wjw19960807@163.com>
 
-Copyright (c), 2020, Chaojie Wang, Wei Zhao, Xinyang Liu, Jiawen Wu, Jie Ren, Yewen Li, Hao Zhang, Bo Chen and Mingyuan Zhou
+Copyright (c), 2020, Chaojie Wang, Xinyang Liu, Wei Zhao, Jiawen Wu, Jie Ren, Yewen Li, Hao Zhang, Bo Chen and Mingyuan Zhou
