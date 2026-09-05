@@ -11,7 +11,7 @@
 [![GitHub](https://img.shields.io/github/license/awslabs/gluon-ts.svg?style=flat-square)](./LICENSE)
 [![PyPI](https://img.shields.io/badge/pypi-v5.1.0-blue.svg)](https://pypi.org/project/pydpm/)
 ![Python version](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue.svg)
-[![Documentation Status](https://readthedocs.org/projects/quantus/badge/?version=latest)](https://dustone-mu.github.io/)
+[![Documentation](https://img.shields.io/badge/docs-online-brightgreen.svg)](https://dustone-mu.github.io/)
 [![Stars][stars-image]][stars-url]
 [![Downloads](https://pepy.tech/badge/pydpm)](https://pepy.tech/project/pydpm)
 [![Contributing][contributing-image]][contributing-url]
